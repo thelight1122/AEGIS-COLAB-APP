@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Artifact Archive - Unified Data Schema</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-glow {
+            text-shadow: 0 0 10px rgba(19, 236, 218, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1a2e2c;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #234845;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #13ecda;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-200 min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-solid border-[#234845] px-6 py-3 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">deployed_code</span>
+</div>
+<div class="flex flex-col">
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight uppercase">Artifact Archive</h2>
+<div class="flex items-center gap-2">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] text-primary/80 font-mono tracking-widest uppercase">System Online</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center justify-center rounded h-9 w-9 bg-[#234845] text-white hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</button>
+<button class="flex items-center justify-center rounded h-9 w-9 bg-[#234845] text-white hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="flex items-center justify-center rounded h-9 w-9 bg-[#234845] text-white hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<!-- Left Sidebar / Content Navigation (Optional/Empty space) -->
+<div class="hidden lg:flex w-16 border-r border-[#234845] flex-col items-center py-6 gap-6 bg-background-dark/40">
+<span class="material-symbols-outlined text-primary/40">folder_open</span>
+<span class="material-symbols-outlined text-primary">description</span>
+<span class="material-symbols-outlined text-primary/40">account_tree</span>
+<span class="material-symbols-outlined text-primary/40">settings_ethernet</span>
+</div>
+<!-- Central Workspace -->
+<div class="flex flex-col flex-1 overflow-hidden">
+<!-- Header Summary Area -->
+<div class="p-6 border-b border-[#234845] bg-[#142927]">
+<div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3">
+<h1 class="text-white text-3xl font-black tracking-tight">Unified Data Schema</h1>
+<span class="px-2 py-0.5 bg-primary/10 border border-primary text-primary text-[10px] font-bold rounded uppercase tracking-widest">LOCKED (v0.8)</span>
+</div>
+<p class="text-primary/60 text-xs font-mono">ARCHIVE_ID: ADS-9921-X-LOCKED</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="flex items-center gap-2">
+<span class="text-xs text-primary/80 uppercase font-medium">Coverage</span>
+<span class="text-primary font-bold">100%</span>
+</div>
+<div class="w-48 h-1.5 bg-[#234845] rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_8px_#13ecda]" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Closure Rationale Chip -->
+<div class="flex items-center gap-3 bg-primary/5 border border-primary/20 p-3 rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm">verified</span>
+<p class="text-slate-300 text-xs font-medium italic">
+<span class="text-primary font-bold not-italic mr-2">Closure Rationale:</span>
+                        All semantic and logic tensions resolved via terminological alignment in session SID-8829-QX
+                    </p>
+</div>
+</div>
+<!-- Code Viewer Workspace -->
+<div class="flex-1 relative overflow-auto custom-scrollbar bg-[#0d1b1a] p-8 font-mono text-sm leading-relaxed">
+<!-- Watermark -->
+<div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+<span class="text-[12rem] font-black rotate-[-30deg] uppercase border-8 border-white p-10">LOCKED</span>
+</div>
+<div class="relative z-10 max-w-3xl mx-auto">
+<div class="flex gap-4">
+<div class="text-primary/20 text-right select-none pr-4 border-r border-primary/10">
+                            01<br/>02<br/>03<br/>04<br/>05<br/>06<br/>07<br/>08<br/>09<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20
+                        </div>
+<div class="text-slate-400">
+<span class="text-primary/60">{</span><br/>
+                              <span class="text-primary/90">"schema_version"</span>: <span class="text-amber-200">"0.8.4-stable"</span>,<br/>
+                              <span class="text-primary/90">"identity_protocol"</span>: <span class="text-amber-200">"AES-GCM-256"</span>,<br/>
+                              <span class="text-primary/90">"canonical_state"</span>: {<br/>
+                                <span class="text-primary/90">"persistence_layer"</span>: <span class="text-amber-200">"Decentralized_Mesh"</span>,<br/>
+                                <span class="text-primary/90">"value_standard"</span>: 
+                            <!-- Highlighted Canonical Value -->
+<span class="relative group cursor-help px-2 py-1 bg-primary/20 border border-primary rounded text-primary font-bold code-glow mx-1 inline-block">
+                                "Contextually Persistent"
+                                <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-black text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold uppercase">Canonical Value</span>
+</span>,<br/>
+                                <span class="text-primary/90">"drift_tolerance"</span>: <span class="text-amber-200">0.00000000</span><br/>
+                              },<br/>
+                              <span class="text-primary/90">"logic_flow"</span>: [<br/>
+                                { <span class="text-primary/90">"step"</span>: <span class="text-amber-200">1</span>, <span class="text-primary/90">"action"</span>: <span class="text-amber-200">"Validate_Context"</span> },<br/>
+                                { <span class="text-primary/90">"step"</span>: <span class="text-amber-200">2</span>, <span class="text-primary/90">"action"</span>: <span class="text-amber-200">"Stabilize_Nodes"</span> },<br/>
+                                { <span class="text-primary/90">"step"</span>: <span class="text-amber-200">3</span>, <span class="text-primary/90">"action"</span>: <span class="text-amber-200">"Finalize_Term"</span> }<br/>
+                              ],<br/>
+                              <span class="text-primary/90">"governance"</span>: {<br/>
+                                <span class="text-primary/90">"ledger_lock"</span>: <span class="text-primary/80">true</span>,<br/>
+                                <span class="text-primary/90">"consensus_id"</span>: <span class="text-amber-200">"SID-8829-QX"</span><br/>
+                              }<br/>
+<span class="text-primary/60">}</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Simulator Panel -->
+<div class="h-16 bg-[#142927] border-t border-[#234845] flex items-center px-6 justify-between shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">vital_signs</span>
+<span class="text-xs font-bold text-white uppercase tracking-tighter">Scenario Simulator</span>
+</div>
+<div class="h-6 w-px bg-[#234845]"></div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] text-primary/60 uppercase font-mono tracking-widest">Baseline Inputs:</span>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-background-dark rounded border border-primary/20">
+<span class="text-[11px] font-bold text-primary uppercase">Ambient</span>
+<div class="size-1.5 rounded-full bg-primary"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6 text-[10px] font-mono text-primary/40">
+<span>CPU: 12.4%</span>
+<span>MEM: 4.2GB</span>
+<span>NET: STABLE</span>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Peer Consideration Ledger -->
+<aside class="w-80 border-l border-[#234845] bg-[#112221] flex flex-col">
+<div class="p-6 border-b border-[#234845]">
+<div class="flex justify-between items-center mb-1">
+<h3 class="text-white text-sm font-bold uppercase tracking-wider">Peer Consideration Ledger</h3>
+<span class="text-primary text-xs font-mono">5/5</span>
+</div>
+<p class="text-primary/50 text-[10px] uppercase font-medium">Lenses Aligned</p>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-3">
+<!-- Lens Item 1 -->
+<div class="bg-background-dark/40 border border-primary/20 p-4 rounded-lg flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold">Canon Guardian</span>
+<span class="text-[10px] text-primary/60 uppercase">Structural Integrity</span>
+</div>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+<!-- Lens Item 2 -->
+<div class="bg-background-dark/40 border border-primary/20 p-4 rounded-lg flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold">Drift Sentinel</span>
+<span class="text-[10px] text-primary/60 uppercase">Variance Monitoring</span>
+</div>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+<!-- Lens Item 3 -->
+<div class="bg-background-dark/40 border border-primary/20 p-4 rounded-lg flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold">Domain Architect</span>
+<span class="text-[10px] text-primary/60 uppercase">Schema Taxonomy</span>
+</div>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+<!-- Lens Item 4 -->
+<div class="bg-background-dark/40 border border-primary/20 p-4 rounded-lg flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold">Logic Engine</span>
+<span class="text-[10px] text-primary/60 uppercase">Semantic Validation</span>
+</div>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+<!-- Lens Item 5 -->
+<div class="bg-background-dark/40 border border-primary/20 p-4 rounded-lg flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold">Temporal Lens</span>
+<span class="text-[10px] text-primary/60 uppercase">Historical Context</span>
+</div>
+<span class="material-symbols-outlined text-primary fill-1">check_circle</span>
+</div>
+<div class="mt-auto pt-6">
+<div class="p-4 bg-primary/10 rounded-lg border border-primary/30 text-center">
+<span class="material-symbols-outlined text-primary mb-2">security</span>
+<p class="text-white text-[11px] font-bold uppercase mb-1">Full Consensus Reach</p>
+<p class="text-primary/70 text-[10px]">Manual override disabled for version 0.8</p>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-[#234845] bg-background-dark/80">
+<button class="w-full bg-primary text-black font-black text-xs py-3 rounded uppercase tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Export Manifest
+                </button>
+</div>
+</aside>
+</main>
+</body></html>

@@ -1,0 +1,218 @@
+import { Activity, Lock, PieChart, CheckCircle2, Circle, Zap, MinusCircle, Users, ShieldCheck } from 'lucide-react';
+import { type TelemetryData, type Peer, LOCK_INCLUSION_THRESHOLD } from '../../types';
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
+
+import { useState } from 'react';
+
+interface TelemetryPanelProps {
+    telemetry: TelemetryData;
+    peers: Peer[];
+    onInvokeLens: (lensName: string) => void;
+    onDeferLens: (lensName: string, rationale?: string) => void;
+    onLockVersion: () => void;
+}
+
+export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, onLockVersion }: TelemetryPanelProps) {
+    const { inclusionScore, drift, lenses } = telemetry;
+    const [deferringLens, setDeferringLens] = useState<string | null>(null);
+    const [rationale, setRationale] = useState('');
+
+    const allAcknowledged = peers.length > 0 && peers.every((p) => p.acknowledged);
+    const noMissingLenses = !lenses.some((l) => l.status === 'missing');
+    const inclusionMet = inclusionScore >= LOCK_INCLUSION_THRESHOLD;
+    const lockAvailable = allAcknowledged && noMissingLenses && inclusionMet;
+
+    const activeLenses = lenses.filter((l) => l.status === 'active');
+    const missingLenses = lenses.filter((l) => l.status === 'missing');
+    const deferredLenses = lenses.filter((l) => l.status === 'deferred');
+
+    const handleDeferSubmit = (lensName: string) => {
+        onDeferLens(lensName, rationale);
+        setDeferringLens(null);
+        setRationale('');
+    };
+
+    return (
+        <div className="h-full bg-card border-l border-border flex flex-col p-4 space-y-5 overflow-y-auto">
+            {/* Header */}
+            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Coherence Telemetry
+            </h3>
+
+            {/* Inclusion Meter */}
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                    <span>Inclusion Score</span>
+                    <span className={cn(
+                        "font-medium",
+                        inclusionMet ? "text-green-500" : "text-yellow-500"
+                    )}>{inclusionScore}%</span>
+                </div>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                        className={cn("h-full transition-all duration-500", inclusionMet ? "bg-green-500" : "bg-yellow-500")}
+                        style={{ width: `${inclusionScore}%` }}
+                    />
+                </div>
+                {!inclusionMet && (
+                    <p className="text-[10px] text-muted-foreground">Needs ≥{LOCK_INCLUSION_THRESHOLD}% for lock</p>
+                )}
+            </div>
+
+            {/* Drift Indicator */}
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                    <span>Drift Signal</span>
+                    <span className={cn("font-medium", drift < 10 ? "text-green-500" : "text-red-500")}>
+                        {drift}%
+                    </span>
+                </div>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                        className={cn("h-full transition-all duration-500", drift < 10 ? "bg-green-500" : "bg-red-500")}
+                        style={{ width: `${drift}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Peer Acknowledgment */}
+            <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5" />
+                    Peer Acknowledgment
+                </h4>
+                <div className="space-y-1.5">
+                    {peers.map((peer) => (
+                        <div key={peer.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-muted/30">
+                            <div className="flex items-center gap-2">
+                                {peer.acknowledged ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                ) : (
+                                    <Circle className="w-3.5 h-3.5 text-muted-foreground" />
+                                )}
+                                <div className="flex flex-col">
+                                    <span className={cn(peer.acknowledged ? "text-foreground" : "text-muted-foreground")}>
+                                        {peer.name}
+                                    </span>
+                                    <div className="flex gap-1 mt-0.5">
+                                        {peer.domains.map(d => (
+                                            <span key={d} className="text-[8px] text-muted-foreground bg-muted px-1 rounded">
+                                                {d}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <span className={cn(
+                                "text-[10px] font-medium",
+                                peer.acknowledged ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                            )}>
+                                {peer.acknowledged ? '✓' : '...'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                {allAcknowledged && (
+                    <p className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" /> All peers acknowledged
+                    </p>
+                )}
+            </div>
+
+            {/* Lens Coverage */}
+            <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                    <PieChart className="w-3.5 h-3.5" />
+                    Lens Coverage
+                </h4>
+
+                {/* Active */}
+                <div className="flex flex-wrap gap-1.5">
+                    {activeLenses.map((lens) => (
+                        <span key={lens.name} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
+                            {lens.name}
+                        </span>
+                    ))}
+                    {deferredLenses.map((lens) => (
+                        <span key={lens.name} className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full border border-border line-through">
+                            {lens.name}
+                        </span>
+                    ))}
+                </div>
+
+                {/* Missing — with actions */}
+                {missingLenses.length > 0 && (
+                    <div className="space-y-1.5">
+                        {missingLenses.map((lens) => (
+                            <div key={lens.name} className="flex flex-col gap-2 p-2 rounded-md bg-destructive/5 border border-destructive/20 transition-all">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-destructive font-medium">⚠ {lens.name}</span>
+                                    <div className="flex gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 px-1.5 text-[10px] gap-1 text-primary hover:text-primary"
+                                            onClick={() => onInvokeLens(lens.name)}
+                                        >
+                                            <Zap className="w-3 h-3" />
+                                            Invoke
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground"
+                                            onClick={() => setDeferringLens(lens.name)}
+                                        >
+                                            <MinusCircle className="w-3 h-3" />
+                                            Defer
+                                        </Button>
+                                    </div>
+                                </div>
+                                {deferringLens === lens.name && (
+                                    <div className="flex flex-col gap-2 mt-1 animate-in slide-in-from-top-1 duration-200">
+                                        <textarea
+                                            className="text-[10px] bg-background border border-border rounded p-1.5 min-h-[40px] focus:outline-none focus:ring-1 focus:ring-primary"
+                                            placeholder="Reason for deferral (optional)..."
+                                            value={rationale}
+                                            onChange={(e) => setRationale(e.target.value)}
+                                        />
+                                        <div className="flex justify-end gap-1">
+                                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setDeferringLens(null)}>Cancel</Button>
+                                            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name)}>Save</Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Lock Button */}
+            <div className="pt-3 border-t border-border mt-auto">
+                <button
+                    className={cn(
+                        "w-full py-2.5 px-4 rounded-md flex items-center justify-center gap-2 font-medium transition-all text-sm",
+                        lockAvailable
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                            : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                    )}
+                    disabled={!lockAvailable}
+                    onClick={onLockVersion}
+                >
+                    <Lock className="w-4 h-4" />
+                    {lockAvailable ? "Lock Version" : "Convergence Pending"}
+                </button>
+                {!lockAvailable && (
+                    <div className="mt-2 space-y-0.5 text-[10px] text-muted-foreground">
+                        {!allAcknowledged && <p>• Waiting for peer acknowledgments</p>}
+                        {!noMissingLenses && <p>• Missing lens coverage</p>}
+                        {!inclusionMet && <p>• Inclusion below {LOCK_INCLUSION_THRESHOLD}%</p>}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

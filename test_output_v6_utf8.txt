@@ -1,0 +1,42 @@
+﻿
+Running 4 tests using 4 workers
+
+  Γ£ô  1 [chromium] ΓÇ║ tests\governance.spec.ts:24:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (718ms)
+  Γ£ô  4 [chromium] ΓÇ║ tests\governance.spec.ts:68:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (794ms)
+  Γ£ô  3 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (1.0s)
+  Γ£ÿ  2 [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (1.0s)
+
+
+  1) [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('input[value*="Operational Layer"]')
+    Expected: visible
+    Error: strict mode violation: locator('input[value*="Operational Layer"]') resolved to 2 elements:
+        1) <input aria-label="Artifact Title" placeholder="Artifact Title" value="Operational Layer ΓÇö Prism Refract Behavior" class="bg-muted border border-border rounded px-3 py-1 text-sm flex-1 font-semibold"/> aka getByRole('textbox', { name: 'Artifact Title' })
+        2) <input aria-label="Target Domains" placeholder="Domains (comma separated)" value="Operational Layer, Canon Integrity" class="bg-muted border border-border rounded px-3 py-1 text-xs w-64"/> aka getByRole('textbox', { name: 'Target Domains' })
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('input[value*="Operational Layer"]')[22m
+
+
+      42 |         // Use value locator (more robust for inputs with existing values)
+      43 |         const domainInput = page.locator('input[value*="Operational Layer"]');
+    > 44 |         await expect(domainInput).toBeVisible();
+         |                                   ^
+      45 |         await domainInput.clear();
+      46 |         await domainInput.fill('Security, Engineering');
+      47 |
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:44:35
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+
+  1 failed
+    [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+  3 passed (2.5s)

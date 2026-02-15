@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(216 34% 17%);
+  --color-input: hsl(216 34% 17%);
+  --color-ring: hsl(216 34% 17%);
+  --color-background: hsl(224 71% 4%);
+  --color-foreground: hsl(213 31% 91%);
+
+  --color-primary: hsl(210 40% 98%);
+  --color-primary-foreground: hsl(222.2 47.4% 11.2%);
+
+  --color-secondary: hsl(222.2 47.4% 11.2%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+
+  --color-destructive: hsl(0 63% 31%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+
+  --color-muted: hsl(223 47% 11%);
+  --color-muted-foreground: hsl(215.4 16.3% 56.9%);
+
+  --color-accent: hsl(216 34% 17%);
+  --color-accent-foreground: hsl(210 40% 98%);
+
+  --color-popover: hsl(224 71% 4%);
+  --color-popover-foreground: hsl(213 31% 91%);
+
+  --color-card: hsl(224 71% 4%);
+  --color-card-foreground: hsl(213 31% 91%);
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom React Flow Styles (Premium Overrides) */
+.react-flow__controls {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden !important;
+  background: var(--color-card) !important;
+  margin: 10px !important;
+}
+
+.react-flow__controls-button {
+  background: var(--color-card) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-foreground) !important;
+  fill: var(--color-foreground) !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-accent) !important;
+}
+
+.react-flow__controls-button svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: var(--color-foreground) !important;
+}
+
+.react-flow__minimap {
+  background-color: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4) !important;
+  overflow: hidden !important;
+  margin: 10px !important;
+}
+
+.react-flow__minimap-mask {
+  fill: var(--color-muted) !important;
+  fill-opacity: 0.6 !important;
+}
+
+.react-flow__minimap-node {
+  fill: var(--color-muted-foreground) !important;
+  fill-opacity: 0.3 !important;
+  stroke: none !important;
+  rx: 2 !important;
+  ry: 2 !important;
+}
+
+.react-flow__attribution {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.react-flow__attribution a {
+  color: var(--color-muted-foreground) !important;
+  opacity: 0.3 !important;
+  font-size: 8px !important;
+  text-decoration: none !important;
+}
+
+.react-flow__background {
+  background-color: transparent !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--color-muted-foreground) !important;
+  stroke-width: 2 !important;
+  opacity: 0.4 !important;
+}

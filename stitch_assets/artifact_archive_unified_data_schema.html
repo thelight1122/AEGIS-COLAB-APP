@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS Coherence Chamber - Artifact Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                        "surface-dark": "#162e2c",
+                        "border-dark": "#234845",
+                        "accent-amber": "#ffb347",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .schema-grid {
+            background-size: 20px 20px;
+            background-image: radial-gradient(circle, #234845 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-border-dark px-6 py-3 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold tracking-tight uppercase">AEGIS Coherence Chamber</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-medium border-b-2 border-primary pb-4 mt-4" href="#">Archive</a>
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Simulations</a>
+<a class="text-slate-400 hover:text-primary text-sm font-medium transition-colors" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="bg-surface-dark border-none rounded text-sm pl-9 pr-4 py-2 w-64 focus:ring-1 focus:ring-primary placeholder:text-slate-500" placeholder="Search archive..." type="text"/>
+</div>
+<button class="bg-primary text-background-dark px-4 py-2 rounded text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">diamond</span>
+                Crystallize
+            </button>
+<div class="size-8 rounded-full bg-surface-dark border border-border-dark overflow-hidden">
+<img alt="User Profile" data-alt="Abstract geometric user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_Ok6SBDDOQn830RDWAhnqmmycktiAtPQJHqdt_cmqqH4hDSe3zDQalaeG05X_C3TLzAfwdzaG6_MMeKM-1EnMZ1GtEGZZfuddp8lRTYlHfFsor-PlQ8NidpJrhX5ytk-vzYFv64Z9EVbj75oc-tUvBu_hCyObEXVmqUg94lNiTNpSDCEUSOt_cOdX9JseYanaNSbB21pgLF6MeNNQCp_5jJgrv9mrSjoUvkB8uKug_q7CDKP4_PMiW2RgqarDoCRefbRgBgv-K0I"/>
+</div>
+</div>
+</header>
+<!-- Sub-Header / Content Info -->
+<div class="border-b border-border-dark bg-background-dark px-6 py-4">
+<div class="flex flex-wrap justify-between items-end gap-4">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h1 class="text-3xl font-black tracking-tighter text-white">Unified Data Schema</h1>
+<span class="px-2 py-0.5 rounded bg-accent-amber/20 text-accent-amber text-[10px] font-bold border border-accent-amber/30 uppercase tracking-widest">LOCKED (v0.7)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-xs font-mono text-primary/70">#telemetry</span>
+<span class="text-xs font-mono text-primary/70">#ingestion</span>
+<span class="text-xs font-mono text-primary/70">#canon-core</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 min-w-[300px]">
+<div class="flex justify-between text-[11px] font-bold uppercase tracking-wider">
+<span class="text-primary">System Awareness</span>
+<span class="text-white">82%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-dark rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 82%"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-[10px] text-slate-400 uppercase tracking-widest">Lens Coverage: 4/5</span>
+<button class="text-[10px] text-primary underline uppercase font-bold">Review Stance</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Center: Canonical Content (Read-Only) -->
+<section class="flex-1 overflow-y-auto schema-grid relative border-r border-border-dark">
+<div class="p-8 max-w-4xl mx-auto">
+<div class="flex items-center gap-4 mb-6 border-b border-border-dark pb-4">
+<div class="flex gap-4">
+<button class="text-primary text-xs font-bold border-b-2 border-primary pb-2">CANONICAL CONTENT</button>
+<button class="text-slate-500 text-xs font-bold pb-2 hover:text-slate-300">SCHEMA LOGIC</button>
+<button class="text-slate-500 text-xs font-bold pb-2 hover:text-slate-300">JSON METADATA</button>
+</div>
+</div>
+<!-- Code/Schema Viewer -->
+<div class="bg-black/40 backdrop-blur shadow-2xl rounded-lg border border-border-dark p-6 font-mono text-sm leading-relaxed overflow-hidden">
+<div class="flex justify-between mb-4 border-b border-border-dark/30 pb-2">
+<span class="text-slate-500 text-xs italic">// Immutable Source of Truth (v0.7)</span>
+<span class="material-symbols-outlined text-slate-500 text-sm">lock</span>
+</div>
+<pre class="text-slate-300"><span class="text-primary">schema</span> <span class="text-white">UnifiedTelemetry</span> {
+    <span class="text-primary">version</span>: "0.7.4-stable",
+    <span class="text-primary">integrity_hash</span>: "SHA256:8f3c...12a",
+    
+    <span class="text-accent-amber">@lens</span>(Primary)
+    <span class="text-white">base_coordinates</span>: {
+        x: Float64,
+        y: Float64,
+        z: Float64,
+        precision: <span class="text-primary">0.0001ms</span>
+    },
+
+    <span class="text-accent-amber">@lens</span>(Temporal)
+    <span class="text-white">epoch_synchronization</span>: {
+        source: "AtomicClock_Alpha",
+        drift_tolerance: "2ms",
+        rebound_logic: <span class="text-primary">"Logarithmic"</span>
+    },
+
+    <span class="text-slate-500">// Thermal Gradient Maps - Locked until v0.8</span>
+    <span class="text-white">thermal_signature</span>: {
+        sensor_id: UUID,
+        kelvin_normalized: Float,
+        interference_pattern: Map&lt;String, Float&gt;
+    }
+}
+                    </pre>
+</div>
+</div>
+</section>
+<!-- Right Sidebar: Ledger & Proposals -->
+<aside class="w-80 overflow-y-auto bg-surface-dark/30 flex flex-col gap-6 p-4">
+<!-- Peer Consideration Ledger -->
+<div>
+<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Peer Consideration Ledger</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-2 rounded bg-surface-dark border border-border-dark">
+<img alt="Peer" class="size-6 rounded" data-alt="Peer avatar identicon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0WG1tleQEmETkeSdRlyYyEymFyrH3nQdh_UPN5Diea_ed5MliyYDIs-PPSws8pNZflJuBEQ8xYJ96Di0C8qX_Vh2Vr_Pg3mxB8tjwZVWKRRhFz7NA-ssmJd9IdifcZWObOL0vS-I5ai05mGWfaYTbriX8mUjbYKgSJUq1_hVUaOFPQxTmy_9Y-K7M2i0fqg8hRlImBifqt6Zedvf8CKLVJIXS8CwaLSDf41b0thltjl3MLiM_FzJ2IFz2_wpcGCBOdpGgYcZtSgg"/>
+<div class="flex-1">
+<p class="text-xs font-bold text-white">Canon Guardian</p>
+<p class="text-[9px] text-primary uppercase font-medium">Primary Lens Represented</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-2 rounded bg-surface-dark border border-border-dark">
+<img alt="Peer" class="size-6 rounded" data-alt="Peer avatar identicon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtKKrAm_xNosNc-jzFOGgPPE41n94IiU7Vs_9muBK_Zrcf1rrJKKB2XO4rydWHyXFs4tnR9cLtjLInWhrZpxrmq3QT_KrkbjJfZT3cGr2sIKB77wwaQ_VCUUss4Qrv-D-PTxnFTeGTTucK64kKFQ3x92wvWKzx2-YXZAtZGQoacetN4Lfnm0tykQaKQzzAee2kONUwqj2EwkG_W0wlqzCwzHSVl8H4oO2Aq01E-usu59l1fCJt12LNgivZngDFuzkH2rrySqT8aYA"/>
+<div class="flex-1">
+<p class="text-xs font-bold text-white">Alex Rivers</p>
+<p class="text-[9px] text-primary uppercase font-medium">Temporal Lens Represented</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-2 rounded bg-surface-dark border border-border-dark">
+<img alt="Peer" class="size-6 rounded" data-alt="Peer avatar identicon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRxtfIH3Ph4_S6sbC5miuUV2C_yFqOl5-_0EF8ovzhKBghJeg2N-NpfmOwHAJMlofJP8fRnhx9XlAvFEbsgLxvz5IC7x4UL2llAS4bzB_K0vmrv8ZiDLI7tWsMJCQGEL_EFuMbx18FzWbpXkadZvttdbyj0ls941p1i11CtHHhFX_uSUiHAKhKZastEJ1yrhsE4W8ynrWe-yvXoKRt1jVrdpuz6a80kqSQ-34cpnzz-Lh-VfBQCEzx1GTEvBQpShTgQtjF1eHVzHY"/>
+<div class="flex-1">
+<p class="text-xs font-bold text-white">Drift Sentinel</p>
+<p class="text-[9px] text-primary uppercase font-medium">Logic Integrity Represented</p>
+</div>
+</div>
+</div>
+<div class="mt-4 p-3 rounded bg-accent-amber/5 border border-accent-amber/20">
+<p class="text-[10px] font-bold text-accent-amber uppercase mb-1">Lenses Deferred</p>
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 rounded-full bg-accent-amber/20 text-accent-amber text-[9px] font-medium border border-accent-amber/30">
+                            Time constraint - domain overlap
+                        </span>
+</div>
+</div>
+</div>
+<hr class="border-border-dark"/>
+<!-- Proposal Overlays -->
+<div>
+<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Active Proposals</h3>
+<div class="bg-background-dark border border-border-dark rounded p-3 space-y-3">
+<div class="flex justify-between items-start">
+<p class="text-xs font-bold text-white leading-tight">v0.8-alpha: Modal Telemetry Update</p>
+<span class="material-symbols-outlined text-primary text-sm">history_toggle_off</span>
+</div>
+<p class="text-[10px] text-slate-400">Rationale: Expansion of thermal sensing bounds for high-entropy zones.</p>
+<div class="space-y-1">
+<div class="flex justify-between text-[9px] font-bold uppercase">
+<span class="text-primary">Stance Distribution</span>
+</div>
+<div class="h-1.5 w-full bg-surface-dark flex rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 70%" title="Align"></div>
+<div class="h-full bg-accent-amber" style="width: 20%" title="Concern"></div>
+<div class="h-full bg-slate-600" style="width: 10%" title="Alternative"></div>
+</div>
+<div class="flex justify-between text-[8px] text-slate-500 font-medium">
+<span>70% Align</span>
+<span>20% Concern</span>
+</div>
+</div>
+<button class="w-full py-1.5 bg-surface-dark text-primary text-[10px] font-bold uppercase rounded border border-primary/20 hover:bg-primary/10 transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">difference</span>
+                        Toggle Diff View
+                    </button>
+</div>
+</div>
+<hr class="border-border-dark"/>
+<!-- Version History -->
+<div>
+<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Historical Lineage</h3>
+<div class="space-y-4 ml-2 border-l border-border-dark pl-4">
+<div class="relative">
+<div class="absolute -left-[21px] top-1 size-2 rounded-full bg-primary"></div>
+<p class="text-xs font-bold text-white">v0.6 Canonical</p>
+<a class="text-[10px] text-primary/70 hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[12px]">play_circle</span> Session Replay
+                        </a>
+</div>
+<div class="relative">
+<div class="absolute -left-[21px] top-1 size-2 rounded-full bg-slate-600"></div>
+<p class="text-xs font-bold text-slate-400">v0.5 Initial Ingestion</p>
+<a class="text-[10px] text-slate-500 hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[12px]">play_circle</span> Session Replay
+                        </a>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Bottom Section: Scenario Simulator -->
+<footer class="bg-background-dark border-t border-border-dark p-4">
+<div class="max-w-6xl mx-auto">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary">terminal</span>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-white">Scenario Simulator</h3>
+<span class="text-[10px] text-slate-500 ml-4 italic">Test signal logic against v0.7 architecture</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="md:col-span-1 space-y-3">
+<div>
+<label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Input Signal Type</label>
+<select class="w-full bg-surface-dark border-border-dark rounded text-xs text-white focus:ring-primary focus:border-primary">
+<option>Thermal Gradient</option>
+<option>Acoustic Resonance</option>
+<option>Kinetic Flux</option>
+</select>
+</div>
+<div>
+<label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Payload Content (JSON)</label>
+<textarea class="w-full bg-surface-dark border-border-dark rounded text-xs text-white font-mono h-20 focus:ring-primary focus:border-primary" placeholder='{ "signal_type": "thermal", "intensity": 0.82 }'></textarea>
+</div>
+</div>
+<div class="md:col-span-2 bg-black/40 rounded border border-border-dark p-3 font-mono text-[11px] relative">
+<div class="absolute top-2 right-2 flex gap-2">
+<span class="size-2 rounded-full bg-red-500/50"></span>
+<span class="size-2 rounded-full bg-yellow-500/50"></span>
+<span class="size-2 rounded-full bg-green-500/50"></span>
+</div>
+<p class="text-slate-500 mb-2 uppercase text-[9px] tracking-widest">// Logic Trace Output</p>
+<div class="text-slate-300">
+<p><span class="text-primary">&gt;</span> Initializing ingestion pipeline...</p>
+<p><span class="text-primary">&gt;</span> Applying v0.7 base_coordinates...</p>
+<p><span class="text-accent-amber">&gt; Warning:</span> Payload missing precision_tag. Defaulting to 0.0001ms.</p>
+<p><span class="text-primary">&gt;</span> Thermal signature locked. Routing to future v0.8 buffer.</p>
+<p class="text-green-400 font-bold mt-2 tracking-widest">[ COHERENCE CHECK: PASSED ]</p>
+</div>
+</div>
+<div class="md:col-span-1 flex flex-col gap-2 justify-center">
+<button class="bg-primary/20 text-primary border border-primary/40 py-3 rounded font-bold uppercase text-xs tracking-widest hover:bg-primary/30 transition-all">
+                        Execute Simulation
+                    </button>
+<button class="bg-surface-dark text-slate-400 py-3 rounded font-bold uppercase text-xs tracking-widest hover:text-white transition-all">
+                        Reset Buffer
+                    </button>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

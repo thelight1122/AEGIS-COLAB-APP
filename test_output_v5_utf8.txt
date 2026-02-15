@@ -1,0 +1,41 @@
+﻿
+Running 4 tests using 4 workers
+
+  Γ£ô  1 [chromium] ΓÇ║ tests\governance.spec.ts:24:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (716ms)
+  Γ£ô  2 [chromium] ΓÇ║ tests\governance.spec.ts:67:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (1.2s)
+  Γ£ô  3 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (1.4s)
+  Γ£ÿ  4 [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (6.0s)
+
+
+  1) [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('input[placeholder*="Engineering"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('input[placeholder*="Engineering"]')[22m
+
+
+      42 |         // Use a more specific locator for the domain input
+      43 |         const domainInput = page.locator('input[placeholder*="Engineering"]');
+    > 44 |         await expect(domainInput).toBeVisible();
+         |                                   ^
+      45 |         await domainInput.fill('Security, Engineering');
+      46 |
+      47 |         // Click Save (using the title)
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:44:35
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+
+  1 failed
+    [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+  3 passed (7.5s)

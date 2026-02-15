@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS Coherence Chamber - Session History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "accent-amber": "#ffbf00",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                        "neutral-dark": "#1a2e2c",
+                        "neutral-border": "#234845",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #102220;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #234845;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #13ecda;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-white font-display overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-neutral-border flex flex-col bg-background-dark">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-background-dark text-xl font-bold">shield</span>
+</div>
+<div>
+<h1 class="text-sm font-black tracking-tighter text-white">AEGIS</h1>
+<p class="text-[10px] text-primary uppercase tracking-widest">Coherence Chamber</p>
+</div>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">circle</span>
+<span class="text-sm font-medium">Chamber</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="text-sm font-medium">Artifacts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary border-l-2 border-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="text-sm font-medium">Sessions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Peers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">target</span>
+<span class="text-sm font-medium">Lenses</span>
+</a>
+<div class="pt-10">
+<a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-neutral-border">
+<div class="flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent-amber" data-alt="User profile avatar with teal gradient"></div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">A. VANCE</p>
+<p class="text-[10px] text-white/40 uppercase">Senior Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Global Header -->
+<header class="h-16 border-b border-neutral-border flex items-center justify-between px-6 bg-background-dark/50 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<h2 class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Session Audit Trail</h2>
+<div class="h-4 w-px bg-neutral-border"></div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-bold text-primary uppercase">Inclusion Coverage:</span>
+<div class="w-32 h-1 bg-neutral-border rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 94%"></div>
+</div>
+<span class="text-[10px] font-mono text-primary">94%</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">search</span>
+<input class="bg-neutral-dark border-none rounded-lg pl-9 pr-4 py-1.5 text-xs w-64 focus:ring-1 focus:ring-primary placeholder:text-white/20" placeholder="Search SID / Content" type="text"/>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<!-- Session List (Left Column) -->
+<section class="w-80 border-r border-neutral-border flex flex-col">
+<div class="p-4 border-b border-neutral-border bg-neutral-dark/30">
+<div class="flex gap-2 mb-4">
+<button class="flex-1 py-1 px-2 text-[10px] font-bold border border-primary text-primary bg-primary/10 rounded uppercase">All</button>
+<button class="flex-1 py-1 px-2 text-[10px] font-bold border border-neutral-border text-white/40 hover:text-white rounded uppercase transition-colors">High Conv.</button>
+<button class="flex-1 py-1 px-2 text-[10px] font-bold border border-neutral-border text-white/40 hover:text-white rounded uppercase transition-colors">Flagged</button>
+</div>
+<p class="text-[10px] font-bold text-white/40 uppercase tracking-widest">Recent Sessions</p>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- Active Session Card -->
+<div class="p-4 border-b border-primary/30 bg-primary/5 cursor-pointer relative">
+<div class="absolute right-4 top-4">
+<span class="text-[10px] font-bold px-1.5 py-0.5 bg-primary text-background-dark rounded uppercase">SID-0812</span>
+</div>
+<h3 class="text-xs font-bold text-primary mb-1 pr-14 leading-tight">Unified Data Schema v0.7 Crystallization</h3>
+<p class="text-[10px] text-white/40 mb-3 uppercase">AUG 12, 2024 • 09:42 UTC</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-1.5">
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-600 flex items-center justify-center overflow-hidden" data-alt="AI module avatar with geometric teal pattern">
+<span class="text-[8px] font-bold">A1</span>
+</div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-500" data-alt="Monochrome human user avatar"></div>
+</div>
+<div class="text-[10px] text-primary/80 font-mono">8/8 Lenses</div>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[9px] font-black uppercase text-primary">Version Locked</span>
+</div>
+</div>
+<!-- Session Card 2 -->
+<div class="p-4 border-b border-neutral-border hover:bg-white/5 cursor-pointer transition-colors group">
+<h3 class="text-xs font-bold text-white/80 group-hover:text-white mb-1 leading-tight">Neural Linkage Optimization Protocol</h3>
+<p class="text-[10px] text-white/40 mb-3 uppercase">AUG 11, 2024 • 22:15 UTC</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-1.5">
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-700 flex items-center justify-center overflow-hidden" data-alt="AI module avatar with geometric teal pattern">
+<span class="text-[8px] font-bold">A3</span>
+</div>
+</div>
+<div class="text-[10px] text-accent-amber/80 font-mono">6/8 - 2 Def.</div>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-white/20"></span>
+<span class="text-[9px] font-black uppercase text-white/40">Proposal Created</span>
+</div>
+</div>
+<!-- Session Card 3 -->
+<div class="p-4 border-b border-neutral-border hover:bg-white/5 cursor-pointer transition-colors group">
+<h3 class="text-xs font-bold text-white/80 group-hover:text-white mb-1 leading-tight">Cross-Quadrant Logic Validation</h3>
+<p class="text-[10px] text-white/40 mb-3 uppercase">AUG 11, 2024 • 14:02 UTC</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-1.5">
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-600" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-300" data-alt="Monochrome human user avatar"></div>
+</div>
+<div class="text-[10px] text-primary/80 font-mono">8/8 Lenses</div>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-white/20"></span>
+<span class="text-[9px] font-black uppercase text-white/40">Archived</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Session Detail Area (Main) -->
+<section class="flex-1 flex flex-col overflow-y-auto bg-neutral-dark/10">
+<!-- Detail Header -->
+<div class="p-6 border-b border-neutral-border bg-background-dark/30">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="text-2xl font-black tracking-tight mb-2">Unified Data Schema v0.7</h2>
+<div class="flex items-center gap-4 text-[10px] uppercase font-bold text-white/60">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">calendar_today</span> Aug 12, 2024</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">schedule</span> 42m Duration</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">fingerprint</span> Hash: 0x8F2A...E41</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-neutral-dark border border-neutral-border text-[10px] font-bold uppercase tracking-widest hover:border-primary transition-colors">Export Log</button>
+<button class="px-4 py-2 bg-primary text-background-dark text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all">Restore Workspace</button>
+</div>
+</div>
+<!-- Telemetry Snapshot Grid -->
+<div class="grid grid-cols-4 gap-4">
+<div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
+<p class="text-[10px] font-bold text-white/40 uppercase mb-2">Inclusion Awareness</p>
+<div class="text-xl font-black text-primary">98.4%</div>
+<div class="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 98.4%"></div>
+</div>
+</div>
+<div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
+<p class="text-[10px] font-bold text-white/40 uppercase mb-2">Convergence Velocity</p>
+<div class="text-xl font-black text-white">0.82 <span class="text-xs font-normal text-white/40">pts/min</span></div>
+<div class="mt-2 text-[8px] text-primary">OPTIMAL PROGRESSION</div>
+</div>
+<div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
+<p class="text-[10px] font-bold text-white/40 uppercase mb-2">Stance Distribution</p>
+<div class="flex h-1 gap-0.5 mt-4">
+<div class="flex-1 bg-primary"></div>
+<div class="flex-1 bg-primary"></div>
+<div class="flex-[0.5] bg-primary/40"></div>
+<div class="flex-[0.2] bg-accent-amber"></div>
+</div>
+<p class="mt-2 text-[8px] text-white/40 uppercase">72% Alignment / 8% Divergence</p>
+</div>
+<div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
+<p class="text-[10px] font-bold text-white/40 uppercase mb-2">Lens Coverage</p>
+<div class="text-xl font-black text-white">8 / 8</div>
+<div class="mt-2 flex gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Workspace Area -->
+<div class="p-6 grid grid-cols-12 gap-6">
+<!-- Left Panel: Replay & IDS -->
+<div class="col-span-8 space-y-6">
+<!-- Whiteboard Replay -->
+<div class="bg-background-dark border border-neutral-border rounded-xl overflow-hidden relative group">
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-50"></div>
+<div class="p-4 border-b border-neutral-border flex justify-between items-center bg-neutral-dark/40">
+<h3 class="text-[10px] font-bold uppercase tracking-widest text-white/60">Shared Cognitive Field - Final Snapshot</h3>
+<div class="flex gap-2">
+<button class="w-6 h-6 rounded bg-neutral-border flex items-center justify-center hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">fullscreen</span>
+</button>
+</div>
+</div>
+<div class="h-80 relative flex items-center justify-center p-8">
+<!-- Stylized Graph/Nodes Representation -->
+<div class="w-full h-full border border-dashed border-white/5 rounded relative">
+<!-- Central Node -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border border-primary/40 rounded-full flex items-center justify-center">
+<div class="w-16 h-16 bg-primary/10 border border-primary rounded-full flex items-center justify-center">
+<span class="text-[8px] font-bold text-primary text-center leading-tight uppercase">Core<br/>Schema</span>
+</div>
+</div>
+<!-- Peripheral Nodes -->
+<div class="absolute top-1/4 left-1/4 w-12 h-12 border border-white/20 bg-background-dark rounded p-1 flex items-center justify-center">
+<span class="text-[7px] text-white/40 uppercase font-bold text-center">Entity Validation</span>
+</div>
+<div class="absolute bottom-1/4 right-1/4 w-12 h-12 border border-white/20 bg-background-dark rounded p-1 flex items-center justify-center">
+<span class="text-[7px] text-white/40 uppercase font-bold text-center">API Interface</span>
+</div>
+<div class="absolute top-1/3 right-1/3 w-10 h-10 border border-primary/20 bg-background-dark rounded p-1 flex items-center justify-center">
+<span class="text-[7px] text-primary/60 uppercase font-bold text-center">Metadata</span>
+</div>
+<!-- Connections (SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+<line stroke="#13ecda" stroke-width="1" x1="25%" x2="50%" y1="25%" y2="50%"></line>
+<line stroke="#13ecda" stroke-width="1" x1="75%" x2="50%" y1="75%" y2="50%"></line>
+<line stroke="#13ecda" stroke-width="1" x1="66%" x2="50%" y1="33%" y2="50%"></line>
+</svg>
+</div>
+<div class="absolute bottom-4 left-4 flex gap-2">
+<span class="text-[8px] font-mono text-white/20 uppercase">REPLAY LOCKED</span>
+</div>
+</div>
+</div>
+<!-- IDS Stream Replay -->
+<div class="space-y-3">
+<h3 class="text-[10px] font-bold uppercase tracking-widest text-white/60">IDS Stream Log</h3>
+<div class="space-y-2">
+<!-- ID Card -->
+<div class="p-3 bg-neutral-dark/40 border-l-2 border-primary/50 flex gap-4 rounded-r-lg">
+<div class="flex flex-col items-center gap-1 shrink-0">
+<div class="w-6 h-6 rounded-full bg-slate-400" data-alt="Human participant avatar"></div>
+<span class="text-[7px] font-bold text-white/40 uppercase">Vance</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[8px] font-black text-primary uppercase">Identify</span>
+<span class="text-[8px] text-white/20">09:12:04</span>
+</div>
+<p class="text-xs text-white/80 leading-relaxed">Structural ambiguity in the 'AuthLayer' module might impede convergence on the identity schema.</p>
+</div>
+</div>
+<!-- DEFINE Card -->
+<div class="p-3 bg-neutral-dark/40 border-l-2 border-primary/80 flex gap-4 rounded-r-lg">
+<div class="flex flex-col items-center gap-1 shrink-0">
+<div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center overflow-hidden" data-alt="AI module avatar">
+<span class="text-[8px] font-bold">A1</span>
+</div>
+<span class="text-[7px] font-bold text-white/40 uppercase">Aegis-1</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[8px] font-black text-primary uppercase">Define</span>
+<span class="text-[8px] text-white/20">09:15:22</span>
+</div>
+<p class="text-xs text-white/80 leading-relaxed">Defined: 'AuthLayer' as a decoupled validation proxy compliant with RFC 7519 standards.</p>
+</div>
+</div>
+<!-- SUGGEST Card -->
+<div class="p-3 bg-neutral-dark/40 border-l-2 border-accent-amber flex gap-4 rounded-r-lg">
+<div class="flex flex-col items-center gap-1 shrink-0">
+<div class="w-6 h-6 rounded-full bg-slate-500" data-alt="Human participant avatar"></div>
+<span class="text-[7px] font-bold text-white/40 uppercase">Morgan</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[8px] font-black text-accent-amber uppercase">Suggest</span>
+<span class="text-[8px] text-white/20">09:18:40</span>
+</div>
+<p class="text-xs text-white/80 leading-relaxed">Suggest deferring the 'PermissionGranularity' lens to the next cycle to avoid consensus stalling.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Panel: Crystallization & Export -->
+<div class="col-span-4 space-y-6">
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-5 sticky top-6">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-xl">ac_unit</span>
+<h3 class="text-xs font-black uppercase tracking-widest text-primary">Crystallization Summary</h3>
+</div>
+<div class="space-y-4">
+<div class="p-3 bg-background-dark/80 border border-neutral-border rounded">
+<p class="text-[9px] font-bold text-white/40 uppercase mb-2">Artifact Name</p>
+<p class="text-xs font-bold text-white">unif_schema_v0.7.json</p>
+</div>
+<div class="p-3 bg-background-dark/80 border border-neutral-border rounded">
+<p class="text-[9px] font-bold text-white/40 uppercase mb-2">Definition Preview</p>
+<pre class="text-[9px] font-mono text-primary/80 overflow-x-hidden">{
+  "version": "0.7",
+  "id": "SID-0812",
+  "entities": ["Auth", "Data", "Log"],
+  "integrity": "verified"
+}</pre>
+</div>
+<div class="p-3 bg-background-dark/80 border border-neutral-border rounded">
+<p class="text-[9px] font-bold text-white/40 uppercase mb-2">Stance Alignment Outcome</p>
+<div class="space-y-1">
+<div class="flex justify-between text-[9px]">
+<span class="text-white/60">Architectural Consistency</span>
+<span class="text-primary">LOCKED</span>
+</div>
+<div class="flex justify-between text-[9px]">
+<span class="text-white/60">Logic Scalability</span>
+<span class="text-primary">LOCKED</span>
+</div>
+<div class="flex justify-between text-[9px]">
+<span class="text-white/60">Permission Depth</span>
+<span class="text-accent-amber">DEFERRED</span>
+</div>
+</div>
+</div>
+<button class="w-full py-2 bg-primary text-background-dark font-black text-[10px] uppercase tracking-widest rounded hover:scale-[1.02] transition-transform">
+                                        Push to Master Registry
+                                    </button>
+</div>
+</div>
+<div class="bg-neutral-dark/20 border border-neutral-border rounded-xl p-5">
+<h4 class="text-[9px] font-bold uppercase tracking-widest text-white/40 mb-3">Audit Meta-Data</h4>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-white/40 uppercase">Cognitive Load</span>
+<span class="font-mono">Low / Stable</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-white/40 uppercase">Conflict Count</span>
+<span class="font-mono">03 Resolved</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-white/40 uppercase">Validation Cycles</span>
+<span class="font-mono">1,024 Steps</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

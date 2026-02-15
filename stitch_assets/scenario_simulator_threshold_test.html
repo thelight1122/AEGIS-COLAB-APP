@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS Coherence Chamber - Scenario Simulator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                        "accent-amber": "#ffb300",
+                        "accent-critical": "#ff4d4d",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(16, 34, 32, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(19, 236, 218, 0.1);
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(19, 236, 218, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 2px;
+            background: #13ecda;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(19, 236, 218, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-200 min-h-screen overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="border-b border-primary/20 bg-background-dark/80 sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">deployed_code</span>
+</div>
+<div>
+<h1 class="text-white text-lg font-bold tracking-tight uppercase leading-none">AEGIS Coherence Chamber</h1>
+<p class="text-primary/60 text-[10px] font-mono tracking-widest uppercase">System Logic Validator</p>
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary text-sm font-medium border-b-2 border-primary pb-1" href="#">Simulator</a>
+<a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Thresholds</a>
+<a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Logs</a>
+<a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Settings</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex gap-2">
+<span class="px-3 py-1 bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold rounded">SIMULATION ENVIRONMENT</span>
+<span class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-bold rounded">UNIFIED DATA SCHEMA v0.7</span>
+</div>
+<div class="size-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">person</span>
+</div>
+</div>
+</header>
+<main class="max-w-[1600px] mx-auto p-6 grid grid-cols-12 gap-6 h-[calc(100vh-80px)]">
+<!-- Left Panel: Input Panel -->
+<aside class="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-y-auto pr-2">
+<div class="space-y-1">
+<h2 class="text-2xl font-black text-white tracking-tighter uppercase italic">Scenario Simulator</h2>
+<p class="text-slate-400 text-sm">Testing system logic and lens thresholds for IDS v0.7</p>
+</div>
+<!-- Signal Inputs -->
+<section class="glass-panel p-4 rounded-lg space-y-6">
+<div class="flex items-center gap-2 border-b border-primary/20 pb-2">
+<span class="material-symbols-outlined text-primary text-sm">sensors</span>
+<h3 class="text-xs font-bold text-primary uppercase tracking-wider">Signal Inputs</h3>
+</div>
+<!-- Slider 1 -->
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-mono">
+<span class="text-slate-300">Semantic Drift %</span>
+<span class="text-accent-critical font-bold">14.0%</span>
+</div>
+<div class="relative pt-2">
+<input class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary" max="30" min="0" type="range" value="14"/>
+<!-- Threshold marker -->
+<div class="absolute top-0 left-[40%] flex flex-col items-center">
+<div class="h-4 w-0.5 bg-accent-amber"></div>
+<span class="text-[8px] text-accent-amber mt-1 font-bold">LIMIT: 12%</span>
+</div>
+</div>
+</div>
+<!-- Divergence Count -->
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-mono">
+<span class="text-slate-300">Term Divergence Count</span>
+<span class="text-primary font-bold">42</span>
+</div>
+<input class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="42"/>
+</div>
+</section>
+<!-- Context Inputs -->
+<section class="glass-panel p-4 rounded-lg space-y-4">
+<div class="flex items-center gap-2 border-b border-primary/20 pb-2">
+<span class="material-symbols-outlined text-primary text-sm">settings_input_component</span>
+<h3 class="text-xs font-bold text-primary uppercase tracking-wider">Context Inputs</h3>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-900/50 p-3 border border-slate-800 rounded">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Session Entropy</p>
+<div class="flex items-center gap-2 text-primary font-mono text-sm">
+<span class="material-symbols-outlined text-sm">waves</span>
+<span>Level 04</span>
+</div>
+</div>
+<div class="bg-slate-900/50 p-3 border border-slate-800 rounded">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Lens Sync</p>
+<div class="flex items-center gap-2 text-primary font-mono text-sm">
+<span class="material-symbols-outlined text-sm">sync</span>
+<span>Locked</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Thresholds -->
+<section class="glass-panel p-4 rounded-lg bg-primary/5 border-primary/20">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-slate-400 text-sm">shield_with_heart</span>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Thresholds</h3>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-400 font-mono">Drift Sentinel (v0.7)</span>
+<span class="text-primary font-bold px-2 py-0.5 border border-primary/30 rounded bg-primary/10">12.0%</span>
+</div>
+</section>
+</aside>
+<!-- Center: Simulation Engine -->
+<section class="col-span-12 lg:col-span-6 flex flex-col gap-6">
+<div class="flex-1 glass-panel rounded-lg overflow-hidden relative flex flex-col">
+<!-- Visual Decoration -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+<div class="scanline"></div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<div class="size-3 rounded-full bg-accent-critical animate-pulse"></div>
+<h3 class="text-sm font-black text-white uppercase tracking-widest italic">Simulation Engine Active</h3>
+</div>
+<div class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Cycle: 0092348-A</div>
+</div>
+<!-- Surfacing Prediction Visual -->
+<div class="flex-1 flex flex-col items-center justify-center py-10">
+<div class="relative size-64 flex items-center justify-center">
+<!-- Circular Gauge SVG -->
+<svg class="absolute inset-0 size-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-slate-800" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-accent-critical" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-dasharray="283" stroke-dashoffset="140" stroke-width="4"></circle>
+</svg>
+<div class="text-center z-10">
+<span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Surfacing Level</span>
+<span class="block text-5xl font-black text-white tracking-tighter">CRITICAL</span>
+<span class="block text-xs font-mono text-accent-critical mt-2">BREACH DETECTED</span>
+</div>
+</div>
+</div>
+<!-- Alert Banner -->
+<div class="bg-accent-critical/20 border-l-4 border-accent-critical p-4 mb-6">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-accent-critical">warning</span>
+<div>
+<p class="text-sm font-bold text-white uppercase italic">Critical Threshold Breach: Drift Sentinel</p>
+<p class="text-xs text-slate-300 mt-1">System surfacing logic forced to immediate visibility due to high semantic volatility.</p>
+</div>
+</div>
+</div>
+<!-- Reasoning Trace -->
+<div class="bg-black/40 border border-slate-800 rounded p-4 font-mono text-[11px] leading-relaxed">
+<div class="flex items-center gap-2 text-slate-500 mb-2 border-b border-slate-800 pb-1">
+<span class="material-symbols-outlined text-xs">terminal</span>
+<span class="uppercase tracking-widest">Reasoning Trace</span>
+</div>
+<div class="space-y-1 text-slate-300">
+<p><span class="text-primary">[08:42:11]</span> Initializing signal comparison...</p>
+<p><span class="text-primary">[08:42:12]</span> Mapping input: <span class="text-white">Drift = 14.2%</span></p>
+<p><span class="text-primary">[08:42:12]</span> Validating against: <span class="text-white">Sentinel_v0.7 (12.0%)</span></p>
+<p><span class="text-accent-critical">[08:42:12] ALERT: Input drift (14.2%) &gt; Operational Threshold (12.0%)</span></p>
+<p><span class="text-primary">[08:42:13]</span> Strategy: <span class="text-accent-amber italic uppercase font-bold">Surfacing Advisory + IDS Card generation triggered</span></p>
+<p><span class="text-primary">[08:42:13]</span> Node #42 context analysis pending...</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Comparison Toggle / Footer -->
+<div class="glass-panel p-4 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Simulation Baseline:</span>
+<div class="flex bg-slate-900 border border-slate-800 p-1 rounded">
+<button class="px-4 py-1.5 text-[11px] font-bold rounded bg-primary text-background-dark uppercase">Base v0.7</button>
+<button class="px-4 py-1.5 text-[11px] font-bold rounded text-slate-400 hover:text-white uppercase transition-colors">Proposal v0.8</button>
+</div>
+</div>
+<button class="bg-primary hover:bg-primary/80 text-background-dark px-6 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all">
+<span>RUN SIMULATION</span>
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</section>
+<!-- Right Panel: Output Preview -->
+<aside class="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-y-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">visibility</span>
+<h3 class="text-xs font-bold text-primary uppercase tracking-wider">Generated Output Preview</h3>
+</div>
+<!-- IDS Card Preview -->
+<div class="bg-[#1a2e2c] border-2 border-accent-critical rounded-xl overflow-hidden shadow-2xl shadow-accent-critical/10">
+<div class="bg-accent-critical/10 border-b border-accent-critical/30 p-4">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-black text-accent-critical uppercase tracking-widest">IDS Card Generated</span>
+<span class="text-[10px] font-mono text-slate-400">#GEN-NODE-42</span>
+</div>
+<h4 class="text-lg font-bold text-white leading-tight">Narrative Divergence Detected</h4>
+<p class="text-slate-400 text-xs mt-1">High-priority coherence mismatch</p>
+</div>
+<div class="p-4 space-y-4">
+<div class="bg-black/30 p-3 border border-slate-700/50 rounded">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-2">Identify</p>
+<p class="text-sm text-slate-200 leading-relaxed italic">
+                            "Inconsistency detected in <span class="text-primary font-bold">Node #42</span>. The term <span class="text-accent-amber font-bold border-b border-accent-amber/50">"Immutable"</span> is being used inconsistently with the established core charter definition."
+                        </p>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-slate-900/50 p-2 border border-slate-800 rounded text-center">
+<p class="text-[9px] text-slate-500 uppercase mb-1">Origin</p>
+<p class="text-[11px] font-bold text-white">Stream: Delta-4</p>
+</div>
+<div class="bg-slate-900/50 p-2 border border-slate-800 rounded text-center">
+<p class="text-[9px] text-slate-500 uppercase mb-1">Confidence</p>
+<p class="text-[11px] font-bold text-primary">94.2%</p>
+</div>
+</div>
+<!-- Surfacing Indicator -->
+<div class="space-y-2">
+<p class="text-[10px] text-slate-500 uppercase font-bold">Surfacing Level</p>
+<div class="flex gap-1">
+<div class="h-2 flex-1 bg-slate-800 rounded-sm"></div>
+<div class="h-2 flex-1 bg-slate-800 rounded-sm"></div>
+<div class="h-2 flex-1 bg-accent-critical rounded-sm shadow-[0_0_8px_rgba(255,77,77,0.5)]"></div>
+</div>
+<div class="flex justify-between text-[8px] font-bold text-slate-500 uppercase px-1">
+<span>Ambient</span>
+<span>Advisory</span>
+<span class="text-accent-critical">Critical</span>
+</div>
+</div>
+<button class="w-full py-2 border border-primary/40 text-primary text-[10px] font-bold uppercase rounded hover:bg-primary/10 transition-colors">
+                        Inspect Node Architecture
+                    </button>
+</div>
+</div>
+<!-- Meta Data -->
+<div class="glass-panel p-4 rounded-lg space-y-3">
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-slate-500 uppercase font-bold">Last Run</span>
+<span class="text-slate-300 font-mono">JUST NOW</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-slate-500 uppercase font-bold">Latency</span>
+<span class="text-primary font-mono">12ms</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-slate-500 uppercase font-bold">Artifact Focus</span>
+<span class="text-slate-300 font-mono">UDS_V0.7.BIN</span>
+</div>
+</div>
+<div class="mt-auto pb-4">
+<div class="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+<span class="material-symbols-outlined text-primary text-lg">info</span>
+<p class="text-[10px] text-slate-400 leading-tight">
+                        Simulation results are cached and automatically recorded in the <span class="text-primary underline">v0.7 Baseline Logs</span>.
+                    </p>
+</div>
+</div>
+</aside>
+</main>
+<!-- Visual Artifacts -->
+<div class="fixed bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-20"></div>
+</body></html>

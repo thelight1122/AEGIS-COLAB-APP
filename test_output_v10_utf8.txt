@@ -1,0 +1,98 @@
+﻿[2m[WebServer] [22m
+[2m[WebServer] [22m> aegis-colab-app@0.0.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m467[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m[WebServer] [22m[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+
+Running 4 tests using 4 workers
+
+[2m[WebServer] [22m[2m6:12:07 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:07 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:07 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+  Γ£ô  1 [chromium] ΓÇ║ tests\governance.spec.ts:24:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (884ms)
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+  Γ£ô  2 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (1.2s)
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:12:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+  Γ£ÿ  3 [chromium] ΓÇ║ tests\governance.spec.ts:68:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (5.9s)
+  Γ£ÿ  4 [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (6.4s)
+
+
+  1) [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeDisabled[2m([22m[2m)[22m failed
+
+    Locator: getByRole('button', { name: /Lock Version/i })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeDisabled" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('button', { name: /Lock Version/i })[22m
+
+
+      58 |         // Verify Lock Version button is disabled initially
+      59 |         const lockButton = page.getByRole('button', { name: /Lock Version/i });
+    > 60 |         await expect(lockButton).toBeDisabled();
+         |                                  ^
+      61 |
+      62 |         // Defer a lens with rationale
+      63 |         await page.getByRole('button', { name: /Defer/i }).first().click();
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:60:34
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+
+  2) [chromium] ΓÇ║ tests\governance.spec.ts:68:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeDisabled[2m([22m[2m)[22m failed
+
+    Locator: getByRole('button', { name: /Lock Version/i })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeDisabled" with timeout 5000ms[22m
+    [2m  - waiting for getByRole('button', { name: /Lock Version/i })[22m
+
+
+      70 |
+      71 |         // Final check on convergence criteria state
+    > 72 |         await expect(page.getByRole('button', { name: /Lock Version/i })).toBeDisabled();
+         |                                                                           ^
+      73 |     });
+      74 | });
+      75 |
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:72:75
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-Governance-Inte-ea3f7-ailability-Logic-Assertions-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-Governance-Inte-ea3f7-ailability-Logic-Assertions-chromium\error-context.md
+
+  2 failed
+    [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+    [chromium] ΓÇ║ tests\governance.spec.ts:68:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions 
+  2 passed (10.3s)

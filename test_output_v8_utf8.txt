@@ -1,0 +1,57 @@
+﻿[2m[WebServer] [22m
+[2m[WebServer] [22m> aegis-colab-app@0.0.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m1401[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m[WebServer] [22m[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+
+Running 4 tests using 4 workers
+
+[2m[WebServer] [22m[2m6:08:42 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:42 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:42 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m[WebServer] [22m[2m6:08:43 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+  Γ£ô  4 [chromium] ΓÇ║ tests\governance.spec.ts:24:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (833ms)
+  Γ£ô  1 [chromium] ΓÇ║ tests\governance.spec.ts:68:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (1.2s)
+  Γ£ô  3 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (1.3s)
+[2m[WebServer] [22m[2m6:08:44 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+  Γ£ÿ  2 [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (30.1s)
+
+
+  1) [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /Save Changes/i })[22m
+
+
+      47 |
+      48 |         // Click Save (using the title)
+    > 49 |         await page.getByRole('button', { name: /Save Changes/i }).click();
+         |                                                                   ^
+      50 |
+      51 |         // Verify Peer Presence updates (Atlas and Critique should be relevant)
+      52 |         await expect(page.getByText('Atlas (AI)')).toBeVisible();
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:49:67
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+
+  1 failed
+    [chromium] ΓÇ║ tests\governance.spec.ts:33:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+  3 passed (35.2s)

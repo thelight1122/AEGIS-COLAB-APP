@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS Coherence Chamber - Peers Registry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "accent-amber": "#ffb300",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                        "neutral-800": "#1a2e2c",
+                        "neutral-700": "#234845",
+                        "neutral-600": "#326762",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #102220;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #234845;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #13ecda;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex h-16 items-center justify-between border-b border-neutral-700 bg-background-dark px-6 py-3 shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 text-primary">
+<span class="material-symbols-outlined text-3xl">deployed_code</span>
+<h2 class="text-white text-lg font-black leading-tight tracking-tight uppercase">AEGIS <span class="text-primary/80 font-light">Coherence Chamber</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-white/60 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Registry</a>
+<a class="text-white/60 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Chamber</a>
+<a class="text-white/60 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Logs</a>
+<a class="text-white/60 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600 text-xl">search</span>
+<input class="w-64 rounded bg-neutral-800 border-none pl-10 pr-4 py-1.5 text-sm text-white placeholder:text-neutral-600 focus:ring-1 focus:ring-primary/50" placeholder="Filter Peers..." type="text"/>
+</div>
+<button class="p-2 text-neutral-600 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-neutral-600 hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-primary"></span>
+</button>
+<div class="h-8 w-8 rounded-full border border-neutral-700 bg-neutral-800 bg-cover bg-center" data-alt="User profile avatar silhouette" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTSrsCccCn1U6wSYrTe8N0tYfeytx_UhAub5SbV1m_4lMiOTCGXeKjuWiEVtIKf3VVCWUrgASAJmOBQF29jg9NefZ5uq8mT2r5OSuWwI6FGUVhw6AiWgf5_pl1ZsypEfUYUMxYfWFXCBRFKsNHu9Sa8mWUu4CDISdbFRgi1BTkJHtXRN8nOjv9vAucOFdNdkDV8S1tecZ7PRJsbf4wY4JA3_2MF9q2NnCDHjevKIFk4WjikaNiCOsOGhoCHsPWbCX1goBltC1vflA')"></div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-[#0c1a18]">
+<!-- Breadcrumbs & Stats -->
+<div class="px-8 pt-6 pb-2 flex justify-between items-end">
+<div>
+<h1 class="text-3xl font-black text-white tracking-tighter uppercase">Peers Registry</h1>
+<p class="text-neutral-600 text-sm mt-1">Directing <span class="text-primary font-mono">14</span> Active Entities in current coherence cycle.</p>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded uppercase tracking-wider transition-all">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-background-dark text-xs font-bold rounded uppercase tracking-wider transition-all">
+<span class="material-symbols-outlined text-sm">person_add</span>
+                        Add Peer
+                    </button>
+</div>
+</div>
+<!-- Registry Content -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<div class="grid gap-4">
+<!-- Peer Row - AI -->
+<div class="group relative flex flex-col md:flex-row items-center gap-6 rounded border border-neutral-700 bg-neutral-800/30 p-4 hover:bg-neutral-800/50 hover:border-primary/30 transition-all">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l"></div>
+<div class="flex items-center gap-4 min-w-[240px]">
+<div class="relative">
+<div class="h-12 w-12 rounded bg-neutral-700 flex items-center justify-center border border-neutral-600">
+<span class="material-symbols-outlined text-primary text-2xl">memory</span>
+</div>
+<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary border-2 border-[#0c1a18]">
+<span class="h-1.5 w-1.5 rounded-full bg-background-dark"></span>
+</span>
+</div>
+<div>
+<h3 class="text-white font-bold leading-none">@nexus_prime</h3>
+<p class="text-primary text-[10px] font-black uppercase tracking-[0.2em] mt-1.5">AI Entity</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 flex-1">
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Canon Guardian</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Logic</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-800 text-[10px] font-medium text-primary/70 border border-primary/20">Domain: Core Protocol</span>
+</div>
+<div class="flex items-center gap-8 min-w-[200px]">
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Presence</span>
+<span class="text-primary text-xs font-bold uppercase">Ready</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Mode</span>
+<span class="text-white text-xs font-bold uppercase">Present</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-500 hover:text-white transition-colors" title="Edit Profile">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+<button class="p-2 text-neutral-500 hover:text-primary transition-colors" title="Manage Proxy Settings">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</div>
+<!-- Peer Row - Human -->
+<div class="group relative flex flex-col md:flex-row items-center gap-6 rounded border border-neutral-700 bg-neutral-800/30 p-4 hover:bg-neutral-800/50 transition-all">
+<div class="flex items-center gap-4 min-w-[240px]">
+<div class="relative">
+<div class="h-12 w-12 rounded bg-neutral-700 flex items-center justify-center border border-neutral-600 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Minimalist headshot avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO8me2vrd-mB2v-m_7f4-eFa6qAst2WT14__gD2AyfW1DgYJVlEsH-Gln9FcxQNMynttMXJgAEzNXcJsQvHLi5aL6izzvkon7g1VKz1ZCHIPnVk3AyhqSnNKd_hvk7vhTRMbsmisT1QJsXxT-pGjFQ0mR01PGHAHO3rp8DvMfeR_4dawAi2YGbm25s65DTkguMRbwL7va44VI5akKCH5f5fzRI09Eb2ENjtIq1GFMWSnmfIyohiSI1R_ob96J6JixwD_xn3Ad-yXo"/>
+</div>
+<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent-amber border-2 border-[#0c1a18]">
+<span class="h-1.5 w-1.5 rounded-full bg-background-dark"></span>
+</span>
+</div>
+<div>
+<h3 class="text-white font-bold leading-none">@alpha_human</h3>
+<p class="text-neutral-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1.5">Human Entity</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 flex-1">
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Drift Sentinel</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Strategy</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-800 text-[10px] font-medium text-primary/70 border border-primary/20">Domain: Recon</span>
+</div>
+<div class="flex items-center gap-8 min-w-[200px]">
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Presence</span>
+<span class="text-accent-amber text-xs font-bold uppercase">Idle</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Mode</span>
+<span class="text-white text-xs font-bold uppercase">Async</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+<button class="p-2 text-neutral-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</div>
+<!-- Peer Row - AI Invoked -->
+<div class="group relative flex flex-col md:flex-row items-center gap-6 rounded border border-neutral-700 bg-neutral-800/30 p-4 hover:bg-neutral-800/50 transition-all">
+<div class="flex items-center gap-4 min-w-[240px]">
+<div class="relative">
+<div class="h-12 w-12 rounded bg-neutral-700 flex items-center justify-center border border-neutral-600">
+<span class="material-symbols-outlined text-primary text-2xl">rocket_launch</span>
+</div>
+<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent-amber border-2 border-[#0c1a18]">
+<span class="h-1.5 w-1.5 rounded-full bg-background-dark"></span>
+</span>
+</div>
+<div>
+<h3 class="text-white font-bold leading-none">@vector_core</h3>
+<p class="text-primary text-[10px] font-black uppercase tracking-[0.2em] mt-1.5">AI Entity</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 flex-1">
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Data Miner</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/50 border border-neutral-600 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Research</span>
+</div>
+<div class="flex items-center gap-8 min-w-[200px]">
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Presence</span>
+<span class="text-accent-amber text-xs font-bold uppercase font-mono">Invoked</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Mode</span>
+<span class="text-white text-xs font-bold uppercase">Proxy</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+<button class="p-2 text-neutral-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</div>
+<!-- Peer Row - Offline Human -->
+<div class="group relative flex flex-col md:flex-row items-center gap-6 rounded border border-neutral-700 bg-neutral-800/10 p-4 opacity-60 hover:opacity-100 transition-all">
+<div class="flex items-center gap-4 min-w-[240px]">
+<div class="relative">
+<div class="h-12 w-12 rounded bg-neutral-700/30 flex items-center justify-center border border-neutral-700 grayscale">
+<img class="w-full h-full object-cover" data-alt="Grayscale user avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFzZkNSU_3kxXSBUMOapUXxA6RJ6Xy--8_4zwCVC2nkSePNW4dgafDbpfCrZyzSK3tLO3PKh7ZveaBKZ2oCmS7Plpz2giLImpBHcZfVpZjESCtkM6356EiAgVRirARidu-VZlWWI6ICYDTXf9mx6UmxEKkw-n_C2lH37kuGX5mYay89dVuGie92CM3nQrPWns4Ystd9JgjHzj9sOfnuFekeMWy3R4aI1xHnrLI4fAIu7mrW6e7MUf7GrXDCQzbyeNCx5kGMvQ7Noo"/>
+</div>
+<span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-neutral-600 border-2 border-[#0c1a18]">
+<span class="h-1.5 w-1.5 rounded-full bg-background-dark"></span>
+</span>
+</div>
+<div>
+<h3 class="text-neutral-400 font-bold leading-none">@beta_user</h3>
+<p class="text-neutral-600 text-[10px] font-black uppercase tracking-[0.2em] mt-1.5">Human Entity</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 flex-1">
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/20 border border-neutral-700 text-[10px] font-bold text-neutral-600 uppercase tracking-wider">Observer</span>
+<span class="px-2 py-0.5 rounded-sm bg-neutral-700/20 border border-neutral-700 text-[10px] font-bold text-neutral-600 uppercase tracking-wider">Compliance</span>
+</div>
+<div class="flex items-center gap-8 min-w-[200px]">
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Presence</span>
+<span class="text-neutral-600 text-xs font-bold uppercase">Offline</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[9px] uppercase font-bold text-neutral-600 tracking-widest">Mode</span>
+<span class="text-neutral-600 text-xs font-bold uppercase">Present</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-600 hover:text-white transition-colors">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+<button class="p-2 text-neutral-600 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Side Panel (Peer Details / Settings) -->
+<aside class="w-80 border-l border-neutral-700 bg-background-dark hidden lg:flex flex-col overflow-y-auto custom-scrollbar">
+<div class="p-6 border-b border-neutral-700">
+<div class="flex justify-between items-start mb-4">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase rounded">Config HUD</span>
+<button class="text-neutral-600 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded bg-primary/20 border border-primary/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<div>
+<h4 class="text-white text-sm font-bold">@nexus_prime</h4>
+<p class="text-neutral-500 text-[10px] font-mono">0x4F22 - Session Active</p>
+</div>
+</div>
+</div>
+<div class="p-6 space-y-8">
+<!-- Notification Preferences -->
+<div class="space-y-4">
+<h5 class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Notification Preferences</h5>
+<div class="flex flex-col gap-2">
+<label class="flex items-center justify-between p-2 rounded bg-neutral-800/50 border border-neutral-700 cursor-pointer hover:border-primary/50 transition-colors">
+<span class="text-xs text-white">Always</span>
+<input checked="" class="text-primary bg-background-dark border-neutral-600 focus:ring-offset-background-dark" name="notif" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-2 rounded bg-neutral-800/50 border border-neutral-700 cursor-pointer hover:border-primary/50 transition-colors">
+<span class="text-xs text-white">Digest</span>
+<input class="text-primary bg-background-dark border-neutral-600 focus:ring-offset-background-dark" name="notif" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-2 rounded bg-neutral-800/50 border border-neutral-700 cursor-pointer hover:border-primary/50 transition-colors">
+<span class="text-xs text-white">Invoked Only</span>
+<input class="text-primary bg-background-dark border-neutral-600 focus:ring-offset-background-dark" name="notif" type="radio"/>
+</label>
+</div>
+</div>
+<!-- Availability/Proxy Settings -->
+<div class="space-y-4">
+<h5 class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Availability Rules</h5>
+<div class="space-y-3">
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] text-neutral-500 uppercase font-bold">Proxy Handover Latency</label>
+<div class="flex items-center gap-4">
+<input class="flex-1 accent-primary h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer" type="range"/>
+<span class="text-xs font-mono text-primary">20ms</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-neutral-800/30 border border-neutral-700">
+<span class="text-xs text-white">Auto-Invoked Recovery</span>
+<button class="w-8 h-4 bg-primary rounded-full relative transition-colors">
+<span class="absolute right-1 top-1 h-2 w-2 bg-background-dark rounded-full"></span>
+</button>
+</div>
+</div>
+</div>
+<!-- Toggle Switch -->
+<div class="pt-4 border-t border-neutral-700">
+<div class="flex items-center justify-between group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white uppercase tracking-tight">IDS Format Required</span>
+<span class="text-[9px] text-neutral-500 uppercase">Input Data Serialization</span>
+</div>
+<button class="w-10 h-5 bg-neutral-700 rounded-full relative p-1">
+<span class="block h-3 w-3 bg-neutral-500 rounded-full"></span>
+</button>
+</div>
+</div>
+<!-- Actions -->
+<div class="pt-6 space-y-2">
+<button class="w-full py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold uppercase rounded tracking-widest transition-all">
+                        Synchronize Settings
+                    </button>
+<button class="w-full py-2 border border-primary/30 hover:bg-primary/5 text-primary text-xs font-bold uppercase rounded tracking-widest transition-all">
+                        Reset Local Cache
+                    </button>
+</div>
+</div>
+<!-- Panel Footer Status -->
+<div class="mt-auto p-6 bg-neutral-800/20">
+<div class="flex items-center gap-2 text-[10px] text-neutral-500 uppercase font-mono">
+<span class="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                    Link Operational: Secure
+                </div>
+</div>
+</aside>
+</div>
+<!-- Status Bar Footer -->
+<footer class="h-8 border-t border-neutral-700 bg-background-dark px-6 flex items-center justify-between shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-[10px] text-neutral-500 font-mono">
+<span class="text-primary font-bold">NODE:</span> 127.0.0.1:ae90
+            </div>
+<div class="flex items-center gap-2 text-[10px] text-neutral-500 font-mono uppercase tracking-wider">
+<span class="text-accent-amber font-bold">COHERENCE:</span> Optimal (0.992)
+            </div>
+</div>
+<div class="flex items-center gap-4 text-[10px] text-neutral-600 uppercase tracking-widest">
+<span>© AEGIS Systems 2024</span>
+<span class="text-neutral-700">|</span>
+<span>Ver. 8.22.4</span>
+</div>
+</footer>
+</div>
+</body></html>

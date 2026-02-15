@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AEGIS Coherence Chamber - Lenses Configuration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ecda",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#102220",
+                        "neutral-800": "#1a3331",
+                        "neutral-700": "#234845",
+                        "neutral-600": "#326762",
+                        "neutral-400": "#92c9c5",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #102220;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #234845;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-white font-display">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Top Nav Bar -->
+<header class="flex items-center justify-between border-b border-neutral-700 bg-background-dark px-8 py-3 z-10">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">shield_with_heart</span>
+</div>
+<h2 class="text-white text-lg font-black tracking-tighter uppercase">AEGIS <span class="text-primary/80 font-normal">Coherence Chamber</span></h2>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-neutral-400 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-xs font-bold uppercase tracking-widest border-b-2 border-primary pb-1" href="#">Lenses</a>
+<a class="text-neutral-400 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">Logs</a>
+<a class="text-neutral-400 hover:text-primary text-xs font-bold uppercase tracking-widest transition-colors" href="#">System</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-neutral-400 text-sm">search</span>
+<input class="bg-neutral-800 border-none rounded text-xs py-2 pl-9 pr-4 w-64 focus:ring-1 focus:ring-primary placeholder:text-neutral-600 uppercase tracking-wider" placeholder="SEARCH PROTOCOLS..." type="text"/>
+</div>
+<button class="p-2 hover:bg-neutral-700 rounded transition-colors text-neutral-400">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 hover:bg-neutral-700 rounded transition-colors text-neutral-400 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full border border-primary/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="User avatar placeholder with abstract geometric patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBAUqIdSpV8u4fG16CuGi_DNxeyaPTGVfgUZonxRZUBWgoVNl6oK2lJaqK8qWOu-uWP0AEO5YoyfsUXARzTJF5EhV7xAiYKcQpLjJQ_UD1swOot9yt8Yqxt5Lvd26HjIFJxUF066G--W7jyCsCqMneyZ9I3j0rzTAjc7Nl6xoWBpSdH59D1lwNvp2rRPodkXRkpn7Ck9UiZqqAl5bVx5oGNQyMscKn4WvCiJxethUgSGHwRZ1pgYx9qayHOYF416gi3KORgGvORY8"/>
+</div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<!-- Sidebar: Lens List -->
+<aside class="w-72 border-r border-neutral-700 bg-background-dark/50 flex flex-col">
+<div class="p-6 border-b border-neutral-700">
+<h3 class="text-neutral-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Active Perspectives</h3>
+<div class="space-y-2">
+<!-- Sidebar Item Active -->
+<div class="flex items-center justify-between p-3 rounded bg-primary/10 border-l-2 border-primary group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-lg">radar</span>
+<span class="text-sm font-bold text-white tracking-tight">Drift Sentinel</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</div>
+<!-- Sidebar Items -->
+<div class="flex items-center justify-between p-3 rounded hover:bg-neutral-800 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-neutral-600 group-hover:text-primary transition-colors text-lg">security</span>
+<span class="text-sm font-medium text-neutral-400 group-hover:text-white tracking-tight">Canon Guardian</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded hover:bg-neutral-800 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-neutral-600 group-hover:text-primary transition-colors text-lg">functions</span>
+<span class="text-sm font-medium text-neutral-400 group-hover:text-white tracking-tight">Logic Integrity</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 rounded hover:bg-neutral-800 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-neutral-600 group-hover:text-primary transition-colors text-lg">schedule</span>
+<span class="text-sm font-medium text-neutral-400 group-hover:text-white tracking-tight">Temporal Lens</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto p-4">
+<button class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 text-white text-[10px] font-black uppercase tracking-widest rounded flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-sm">add</span> Add New Lens
+                </button>
+</div>
+</aside>
+<!-- Main Workspace -->
+<section class="flex-1 flex flex-col bg-[#0c1a19] overflow-y-auto custom-scrollbar">
+<!-- Workspace Header -->
+<div class="px-10 py-8 border-b border-neutral-700 flex justify-between items-end">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="text-primary text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border border-primary/30 rounded-sm">Operational</span>
+<span class="text-neutral-600 text-[10px] font-bold uppercase tracking-widest">ID: SENTINEL-04-A</span>
+</div>
+<h1 class="text-4xl font-black tracking-tight text-white mb-2 uppercase">Drift Sentinel</h1>
+<p class="text-neutral-400 max-w-xl text-sm leading-relaxed">Continuous monitoring of narrative divergence. Automatically intervenes when participant discourse strays beyond the established semantic boundaries of the core charter.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 text-white text-xs font-bold uppercase tracking-widest rounded transition-all">
+                        Discard
+                    </button>
+<button class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-background-dark text-xs font-black uppercase tracking-widest rounded transition-all shadow-[0_0_15px_rgba(19,236,218,0.3)]">
+                        Validate &amp; Apply
+                    </button>
+</div>
+</div>
+<!-- Configuration Grid -->
+<div class="p-10 grid grid-cols-12 gap-8">
+<!-- Left Column -->
+<div class="col-span-7 space-y-8">
+<!-- Section: Identity & Domain -->
+<div class="bg-neutral-800/30 border border-neutral-700 p-6 rounded-lg">
+<h4 class="text-primary text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">badge</span> 01. Charter Identity
+                        </h4>
+<div class="space-y-5">
+<div>
+<label class="block text-neutral-400 text-[10px] font-bold uppercase mb-2 tracking-wider">Charter Name</label>
+<input class="w-full bg-neutral-800/50 border border-neutral-700 rounded p-3 text-sm focus:border-primary focus:ring-0 text-white font-medium" type="text" value="Drift Sentinel"/>
+</div>
+<div>
+<label class="block text-neutral-400 text-[10px] font-bold uppercase mb-2 tracking-wider">Domain Coverage</label>
+<div class="flex flex-wrap gap-2 p-2 bg-neutral-800/50 border border-neutral-700 rounded min-h-[46px]">
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase border border-primary/30">
+                                        Semantic Drift <span class="material-symbols-outlined text-xs cursor-pointer">close</span>
+</span>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase border border-primary/30">
+                                        Core Lore <span class="material-symbols-outlined text-xs cursor-pointer">close</span>
+</span>
+<span class="flex items-center gap-1.5 px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase border border-primary/30">
+                                        Logical Flow <span class="material-symbols-outlined text-xs cursor-pointer">close</span>
+</span>
+<input class="bg-transparent border-none text-[10px] p-1 focus:ring-0 placeholder:text-neutral-600 uppercase font-black w-24" placeholder="+ ADD TAG" type="text"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Invocation Logic -->
+<div class="bg-neutral-800/30 border border-neutral-700 p-6 rounded-lg">
+<h4 class="text-primary text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">bolt</span> 02. Invocation Logic
+                        </h4>
+<div class="grid grid-cols-3 gap-4 mb-6">
+<label class="cursor-pointer">
+<input class="peer hidden" name="trigger" type="radio"/>
+<div class="p-4 border border-neutral-700 rounded bg-neutral-800/20 text-center peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+<span class="material-symbols-outlined block mb-2 text-neutral-600 peer-checked:text-primary">back_hand</span>
+<span class="text-[10px] font-black uppercase tracking-tighter text-neutral-400 peer-checked:text-white">Manual</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer hidden" name="trigger" type="radio"/>
+<div class="p-4 border border-neutral-700 rounded bg-neutral-800/20 text-center peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+<span class="material-symbols-outlined block mb-2 text-primary">auto_mode</span>
+<span class="text-[10px] font-black uppercase tracking-tighter text-white">Match Auto</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer hidden" name="trigger" type="radio"/>
+<div class="p-4 border border-neutral-700 rounded bg-neutral-800/20 text-center peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+<span class="material-symbols-outlined block mb-2 text-neutral-600">monitoring</span>
+<span class="text-[10px] font-black uppercase tracking-tighter text-neutral-400 peer-checked:text-white">Threshold</span>
+</div>
+</label>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Intervention Threshold (Drift %)</span>
+<span class="text-primary font-black text-sm">15%</span>
+</div>
+<input class="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="15"/>
+<p class="text-[10px] text-neutral-600 italic">Lens activates automatically when coherence drops below 85%.</p>
+</div>
+</div>
+<!-- Section: Required Fields Matrix -->
+<div class="bg-neutral-800/30 border border-neutral-700 p-6 rounded-lg">
+<h4 class="text-primary text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">fact_check</span> 03. Required Fields Matrix
+                        </h4>
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-neutral-700">
+<th class="pb-3 text-[10px] font-black text-neutral-600 uppercase">Parameter</th>
+<th class="pb-3 text-center text-[10px] font-black text-neutral-600 uppercase">Identify</th>
+<th class="pb-3 text-center text-[10px] font-black text-neutral-600 uppercase">Define</th>
+<th class="pb-3 text-center text-[10px] font-black text-neutral-600 uppercase">Suggest</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-neutral-700/50">
+<tr>
+<td class="py-4 text-xs font-bold text-white uppercase tracking-tighter">Narrative Point</td>
+<td class="py-4 text-center"><input checked="" class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input checked="" class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+<tr>
+<td class="py-4 text-xs font-bold text-white uppercase tracking-tighter">Lore Conflict</td>
+<td class="py-4 text-center"><input checked="" class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input checked="" class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+<tr>
+<td class="py-4 text-xs font-bold text-white uppercase tracking-tighter">Resolution Path</td>
+<td class="py-4 text-center"><input class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="py-4 text-center"><input checked="" class="rounded border-neutral-600 bg-neutral-800 text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right Column -->
+<div class="col-span-5 space-y-8">
+<!-- Section: Bounded Output Rules -->
+<div class="bg-neutral-800/30 border border-neutral-700 p-6 rounded-lg">
+<h4 class="text-primary text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">border_inner</span> 04. Output Boundaries
+                        </h4>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white uppercase tracking-wider">Max Cards / Minute</span>
+<span class="text-[10px] text-neutral-500 uppercase">Volume regulation</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center bg-neutral-800 rounded border border-neutral-700 hover:text-primary transition-colors">-</button>
+<input class="w-12 bg-transparent border-none text-center font-black text-primary focus:ring-0" type="text" value="3"/>
+<button class="w-8 h-8 flex items-center justify-center bg-neutral-800 rounded border border-neutral-700 hover:text-primary transition-colors">+</button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white uppercase tracking-wider">Max Words / Card</span>
+<span class="text-[10px] text-neutral-500 uppercase">Conciseness limit</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center bg-neutral-800 rounded border border-neutral-700 hover:text-primary transition-colors">-</button>
+<input class="w-12 bg-transparent border-none text-center font-black text-primary focus:ring-0" type="text" value="150"/>
+<button class="w-8 h-8 flex items-center justify-center bg-neutral-800 rounded border border-neutral-700 hover:text-primary transition-colors">+</button>
+</div>
+</div>
+<hr class="border-neutral-700"/>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white uppercase tracking-wider">'Why I’m speaking'</span>
+<span class="text-[10px] text-neutral-500 uppercase">Mandatory justification</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Section: Ethos & Constraints -->
+<div class="bg-neutral-800/30 border border-neutral-700 p-6 rounded-lg">
+<h4 class="text-primary text-[11px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">psychology</span> 05. Ethos &amp; Tone
+                        </h4>
+<div class="space-y-4">
+<div>
+<label class="block text-neutral-400 text-[10px] font-bold uppercase mb-2 tracking-wider">Tone Constraint Profile</label>
+<select class="w-full bg-neutral-800/50 border border-neutral-700 rounded p-3 text-sm focus:border-primary focus:ring-0 text-white font-medium uppercase tracking-tighter">
+<option>Canon-Aligned (Strict)</option>
+<option>Analytical-Neutral</option>
+<option>Non-Force Advisory</option>
+<option>Historical-Passive</option>
+</select>
+</div>
+<div class="p-4 bg-background-dark/50 border-l-2 border-primary/50 rounded-r">
+<p class="text-[11px] text-neutral-400 leading-relaxed uppercase tracking-tighter">
+                                    "The Sentinel must refrain from direct commands. Use observation-based reporting. Focus on delta measurements rather than participant intent."
+                                </p>
+</div>
+</div>
+</div>
+<!-- Section: Quick Stats (Visual Accent) -->
+<div class="border border-neutral-700 p-6 rounded-lg bg-gradient-to-br from-neutral-800/20 to-transparent">
+<h4 class="text-neutral-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4">Intervention Metrics (L-24H)</h4>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<span class="block text-[22px] font-black text-white">42</span>
+<span class="block text-[8px] text-neutral-500 uppercase font-bold">Total Triggers</span>
+</div>
+<div>
+<span class="block text-[22px] font-black text-primary">98.2%</span>
+<span class="block text-[8px] text-neutral-500 uppercase font-bold">Accuracy Score</span>
+</div>
+</div>
+<div class="mt-4 h-1 w-full bg-neutral-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%] shadow-[0_0_8px_rgba(19,236,218,0.5)]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- System Status Footer Bar -->
+<footer class="bg-background-dark border-t border-neutral-700 py-1.5 px-8 flex justify-between items-center text-[10px] font-bold text-neutral-600 uppercase tracking-widest">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+                CORE COHERENCE: 94.2%
+            </div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+                LENS SYNC: ACTIVE
+            </div>
+</div>
+<div class="flex gap-4">
+<span>AEGIS PROTOCOL V.4.0.12</span>
+<span class="text-neutral-400">SESSION: 0X9A2C...F</span>
+</div>
+</footer>
+</div>
+</body></html>
