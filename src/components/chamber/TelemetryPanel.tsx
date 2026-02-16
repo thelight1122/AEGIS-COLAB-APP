@@ -10,22 +10,21 @@ interface TelemetryPanelProps {
     peers: Peer[];
     onInvokeLens: (lensName: string) => void;
     onDeferLens: (lensName: string, rationale?: string) => void;
+    onAcknowledge: (peerId: string) => void;
     onLockVersion: () => void;
 }
 
-export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, onLockVersion }: TelemetryPanelProps) {
-    const { inclusionScore, drift, lenses } = telemetry;
+export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, onAcknowledge, onLockVersion }: TelemetryPanelProps) {
+    const { inclusionScore, drift, lenses, lockAvailable } = telemetry;
     const [deferringLens, setDeferringLens] = useState<string | null>(null);
     const [rationale, setRationale] = useState('');
-
-    const allAcknowledged = peers.length > 0 && peers.every((p) => p.acknowledged);
-    const noMissingLenses = !lenses.some((l) => l.status === 'missing');
-    const inclusionMet = inclusionScore >= LOCK_INCLUSION_THRESHOLD;
-    const lockAvailable = allAcknowledged && noMissingLenses && inclusionMet;
 
     const activeLenses = lenses.filter((l) => l.status === 'active');
     const missingLenses = lenses.filter((l) => l.status === 'missing');
     const deferredLenses = lenses.filter((l) => l.status === 'deferred');
+
+    const allAcknowledged = peers.length > 0 && peers.every((p) => p.acknowledged);
+    const inclusionMet = inclusionScore >= LOCK_INCLUSION_THRESHOLD;
 
     const handleDeferSubmit = (lensName: string) => {
         onDeferLens(lensName, rationale);
@@ -52,8 +51,8 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div
-                        className={cn("h-full transition-all duration-500", inclusionMet ? "bg-green-500" : "bg-yellow-500")}
-                        style={{ width: `${inclusionScore}%` }}
+                        className={cn("h-full transition-all duration-500 w-[var(--pw)]", inclusionMet ? "bg-green-500" : "bg-yellow-500")}
+                        style={{ '--pw': `${inclusionScore}%` } as React.CSSProperties}
                     />
                 </div>
                 {!inclusionMet && (
@@ -71,8 +70,8 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div
-                        className={cn("h-full transition-all duration-500", drift < 10 ? "bg-green-500" : "bg-red-500")}
-                        style={{ width: `${drift}%` }}
+                        className={cn("h-full transition-all duration-500 w-[var(--pw)]", drift < 10 ? "bg-green-500" : "bg-red-500")}
+                        style={{ '--pw': `${drift}%` } as React.CSSProperties}
                     />
                 </div>
             </div>
@@ -105,10 +104,13 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                     </div>
                                 </div>
                             </div>
-                            <span className={cn(
-                                "text-[10px] font-medium",
-                                peer.acknowledged ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                            )}>
+                            <span
+                                className={cn(
+                                    "text-[10px] font-medium cursor-pointer hover:text-primary",
+                                    peer.acknowledged ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                                )}
+                                onClick={() => !peer.acknowledged && onAcknowledge(peer.id)}
+                            >
                                 {peer.acknowledged ? '✓' : '...'}
                             </span>
                         </div>
@@ -148,7 +150,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                         {missingLenses.map((lens) => (
                             <div key={lens.name} className="flex flex-col gap-2 p-2 rounded-md bg-destructive/5 border border-destructive/20 transition-all">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs text-destructive font-medium">⚠ {lens.name}</span>
+                                    <span className="text-xs text-destructive font-medium">!!! {lens.name}</span>
                                     <div className="flex gap-1">
                                         <Button
                                             variant="ghost"
@@ -192,23 +194,23 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
 
             {/* Lock Button */}
             <div className="pt-3 border-t border-border mt-auto">
-                <button
-                    className={cn(
-                        "w-full py-2.5 px-4 rounded-md flex items-center justify-center gap-2 font-medium transition-all text-sm",
-                        lockAvailable
-                            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-                            : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                    )}
-                    disabled={!lockAvailable}
-                    onClick={onLockVersion}
-                >
-                    <Lock className="w-4 h-4" />
-                    {lockAvailable ? "Lock Version" : "Convergence Pending"}
-                </button>
-                {!lockAvailable && (
-                    <div className="mt-2 space-y-0.5 text-[10px] text-muted-foreground">
+                {lockAvailable ? (
+                    <button
+                        className="w-full py-2.5 px-4 rounded-md flex items-center justify-center gap-2 font-medium transition-all text-sm bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm animate-in fade-in zoom-in duration-300"
+                        onClick={onLockVersion}
+                        id="lock-version-button"
+                    >
+                        <Lock className="w-4 h-4" />
+                        Lock Version
+                    </button>
+                ) : (
+                    <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                        <div className="flex items-center gap-2 mb-2 font-semibold uppercase tracking-tighter opacity-70">
+                            <Activity className="w-3 h-3" />
+                            Convergence Pending
+                        </div>
                         {!allAcknowledged && <p>• Waiting for peer acknowledgments</p>}
-                        {!noMissingLenses && <p>• Missing lens coverage</p>}
+                        {missingLenses.length > 0 && <p>• Missing lens coverage ({missingLenses.length})</p>}
                         {!inclusionMet && <p>• Inclusion below {LOCK_INCLUSION_THRESHOLD}%</p>}
                     </div>
                 )}

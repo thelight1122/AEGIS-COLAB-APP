@@ -1,14 +1,40 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { cn } from '../../lib/utils';
 import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
 import { Tag, Edit2, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
-import { MOCK_PEERS, MOCK_TELEMETRY, type Peer, type TelemetryData } from '../../types';
+import { MOCK_PEERS, MOCK_TELEMETRY, type TelemetryData } from '../../types';
 import { IDSStream } from './IDSStream';
+import { computeInclusionState, canLock } from '../../core/governance/inclusionState';
+import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
+
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+    loadSessions,
+    saveSessions,
+    touchSessionActivity,
+    closeSession
+} from '../../core/sessions/sessionStore';
+import type { Session as LiveSession } from '../../core/sessions/types';
 
 export function ChamberLayout() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [sessions] = useState<LiveSession[]>(() => loadSessions());
+
+    // Find active session from state or fallback to first active
+    const sessionId = location.state?.sessionId;
+    const currentSession = useMemo(() => {
+        if (sessionId) return sessions.find(s => s.id === sessionId);
+        // Fallback for refresh: find any active session
+        return sessions.find(s => s.status === 'Active');
+    }, [sessions, sessionId]);
+
+    const artifactId = currentSession?.artifactId || 'current-artifact';
+
     const {
         focusNodeId,
         setNodes,
@@ -19,82 +45,180 @@ export function ChamberLayout() {
         setFocusNode
     } = useIDS();
 
-    // Inclusion State (BM-05)
-    const [peers, setPeers] = useState<Peer[]>(MOCK_PEERS);
+    // Unified Governance Event Stream (Concurrency Model v0.1)
+    const [governingEvents, setGoverningEvents] = useState<GovernanceEvent[]>(
+        currentSession?.eventLog || []
+    );
+
+    // Sync events to session storage
+    useEffect(() => {
+        if (!currentSession) return;
+        const allSessions = loadSessions();
+        const nextSessions = allSessions.map(s =>
+            s.id === currentSession.id ? { ...s, eventLog: governingEvents, lastActiveAt: Date.now() } : s
+        );
+        saveSessions(nextSessions);
+    }, [governingEvents, currentSession]);
+
+    // Heartbeat activity
+    useEffect(() => {
+        if (!currentSession) return;
+        const interval = setInterval(() => {
+            const allSessions = loadSessions();
+            const nextSessions = touchSessionActivity(allSessions, currentSession.id);
+            saveSessions(nextSessions);
+        }, 10000); // 10s heartbeat
+        return () => clearInterval(interval);
+    }, [currentSession]);
+
+    // Artifact Metadata
     const [artifactMetadata, setArtifactMetadata] = useState({
-        title: 'Operational Layer — Prism Refract Behavior',
-        domains: ['Operational Layer', 'Canon Integrity']
+        title: currentSession?.artifactId === 'v4' ? 'Operational Layer — Prism Refract Behavior' : `Artifact ${currentSession?.artifactId || 'Draft'}`,
+        domains: currentSession?.artifactId === 'v4' ? ['Engineering', 'Product', 'Risks'] : ['General']
     });
     const [isEditingMetadata, setIsEditingMetadata] = useState(false);
     const [tempMetadata, setTempMetadata] = useState(artifactMetadata);
 
-    // Derived State: Domains & Intersections (GI-001)
-    const relevantPeers = useMemo(() => {
-        return peers.filter(p => p.domains.some(d => artifactMetadata.domains.includes(d)));
-    }, [peers, artifactMetadata.domains]);
+    const isLocked = useMemo(() => {
+        return governingEvents.some(e => e.type === 'LOCK_REQUEST');
+    }, [governingEvents]);
 
-    const activeLenses = useMemo(() => {
-        // In a real app, we'd fetch actual Lens definitions.
-        // For now, we derive status from the artifact domains.
-        return MOCK_TELEMETRY.lenses.filter(l =>
-            l.domains.some(d => artifactMetadata.domains.includes(d))
-        );
-    }, [artifactMetadata.domains]);
-
-    const [lensStatuses, setLensStatuses] = useState<Record<string, 'active' | 'missing' | 'deferred'>>({});
-
-    // Telemetry Data (Pure Derivation)
+    // Telemetry Data using Formal State Machine (GI-001)
     const telemetry = useMemo((): TelemetryData => {
-        const ackCount = relevantPeers.filter(p => p.acknowledged).length;
-        const total = relevantPeers.length || 1;
-        const inclusionScore = Math.round((ackCount / total) * 100);
+        const governArtifact: GovernanceArtifact = {
+            id: artifactId,
+            domainTags: artifactMetadata.domains,
+            status: "Active"
+        };
 
-        const lenses = activeLenses.map(al => ({
-            ...al,
-            status: lensStatuses[al.name] || al.status
+        const governPeers: GovernancePeer[] = MOCK_PEERS.map(p => ({
+            id: p.id,
+            type: p.type,
+            declaredDomains: p.domains,
+            lensIds: []
         }));
 
-        const coveredCount = lenses.filter(l => l.status === 'active' || l.status === 'deferred').length;
-        const totalLenses = lenses.length || 1;
-        const lockAvailable = (inclusionScore >= 80) && (coveredCount === totalLenses);
+        const governLenses: GovernanceLens[] = MOCK_TELEMETRY.lenses.map(l => ({
+            id: l.name,
+            domains: l.domains,
+            autoReview: false
+        }));
+
+        const inclusion: GovernanceInclusionState = computeInclusionState(governArtifact, governPeers, governLenses, governingEvents);
 
         return {
-            inclusionScore,
-            drift: 12, // Standard drift
+            inclusionScore: Math.round(inclusion.awarenessPercent * 100),
+            drift: 12,
             convergence: 45,
-            lenses,
-            lockAvailable,
-            activeDomains: artifactMetadata.domains
+            lenses: inclusion.intersectingLenses.map(id => {
+                const gl = governLenses.find(l => l.id === id)!;
+                const deferred = inclusion.deferredLenses.find(d => d.lensId === id);
+                return {
+                    name: id,
+                    status: inclusion.representedLenses.includes(id) ? 'active' : (deferred ? 'deferred' : 'missing'),
+                    domains: gl.domains,
+                    deferralRationale: deferred?.rationale
+                };
+            }),
+            lockAvailable: inclusion.lockAvailable,
+            activeDomains: artifactMetadata.domains,
+            inclusion
         };
-    }, [relevantPeers, artifactMetadata.domains, activeLenses, lensStatuses]);
+    }, [artifactMetadata.domains, governingEvents, artifactId]);
 
-    // --- Canvas callbacks ---
+    const currentPeers = useMemo(() => {
+        const acks = new Set(governingEvents.filter(e => e.type === 'AWARENESS_ACK').map(e => {
+            if (e.type === 'AWARENESS_ACK') return e.peerId;
+            return null;
+        }));
+        return MOCK_PEERS.map(p => ({
+            ...p,
+            acknowledged: acks.has(p.id)
+        }));
+    }, [governingEvents]);
+
     const handleNodesReady = useCallback((nodes: { id: string; label: string; type: string }[]) => {
         setNodes(nodes);
     }, [setNodes]);
 
-    // --- IDS callbacks replaced by Context ---
-
-    // --- Inclusion callbacks ---
     const handleAcknowledge = useCallback((peerId: string) => {
-        setPeers((prev) =>
-            prev.map((p) =>
-                p.id === peerId ? { ...p, acknowledged: true } : p
-            )
-        );
+        setGoverningEvents(prev => [
+            ...prev,
+            { type: 'AWARENESS_ACK', peerId, timestamp: Date.now() }
+        ]);
     }, []);
 
-    const handleInvokeLens = useCallback((lensName: string) => {
-        setLensStatuses(prev => ({ ...prev, [lensName]: 'active' }));
+    const handleInvokeLens = useCallback((lensId: string) => {
+        setGoverningEvents(prev => [
+            ...prev,
+            { type: 'PROXY_REVIEW', lensId, timestamp: Date.now() }
+        ]);
     }, []);
 
-    const handleDeferLens = useCallback((lensName: string) => {
-        setLensStatuses(prev => ({ ...prev, [lensName]: 'deferred' }));
+    const handleDeferLens = useCallback((lensId: string, rationale?: string) => {
+        setGoverningEvents(prev => [
+            ...prev,
+            { type: 'DEFER_LENS', lensId, rationale: rationale || 'No rationale provided', timestamp: Date.now() }
+        ]);
     }, []);
+
+    const handleCloseSession = useCallback(() => {
+        if (!currentSession) return;
+        const allSessions = loadSessions();
+        const nextSessions = closeSession(allSessions, currentSession.id);
+        saveSessions(nextSessions);
+        navigate('/artifacts');
+    }, [currentSession, navigate]);
 
     const handleLockVersion = useCallback(() => {
-        alert(`🔒 Version Locked: "${artifactMetadata.title}"\nCoherence state has been captured with ${telemetry.inclusionScore}% inclusion.`);
-    }, [artifactMetadata.title, telemetry.inclusionScore]);
+        if (isLocked) return;
+
+        const governArtifact: GovernanceArtifact = {
+            id: artifactId,
+            domainTags: artifactMetadata.domains,
+            status: "Active"
+        };
+        const governPeers: GovernancePeer[] = MOCK_PEERS.map(p => ({
+            id: p.id,
+            type: p.type,
+            declaredDomains: p.domains,
+            lensIds: []
+        }));
+        const governLenses: GovernanceLens[] = MOCK_TELEMETRY.lenses.map(l => ({
+            id: l.name,
+            domains: l.domains,
+            autoReview: false
+        }));
+
+        const { ok, state } = canLock(governArtifact, governPeers, governLenses, governingEvents);
+
+        if (!ok) {
+            alert(`Lock denied. Reasons:\n- ${state.reasons.join('\n- ')}`);
+            return;
+        }
+
+        const participatingPeers = currentPeers.filter(p => p.acknowledged).map(p => p.name);
+        const representedLenses = telemetry.lenses.filter(l => l.status === 'active').map(l => l.name);
+        const deferredLenses = telemetry.lenses.filter(l => l.status === 'deferred').map(l => `${l.name} (${l.deferralRationale})`);
+
+        const ledgerSnapshot = [
+            `🔒 Version Locked: "${artifactMetadata.title}"`,
+            `Score: ${telemetry.inclusionScore}%`,
+            `Notified Peers: ${currentPeers.map(p => p.name).join(', ')}`,
+            `Participating Peers: ${participatingPeers.join(', ')}`,
+            `Lenses Represented: ${representedLenses.join(', ')}`,
+            `Lenses Deferred: ${deferredLenses.join(', ')}`,
+            `Unresolved Tensions: 0`,
+            `Closure Rationale: Coherence criteria satisfied.`
+        ].join('\n');
+
+        alert(ledgerSnapshot);
+
+        setGoverningEvents(prev => [
+            ...prev,
+            { type: 'LOCK_REQUEST', timestamp: Date.now() }
+        ]);
+    }, [artifactMetadata.title, artifactMetadata.domains, currentPeers, telemetry, governingEvents, artifactId, isLocked]);
 
     const saveMetadata = () => {
         setArtifactMetadata(tempMetadata);
@@ -103,20 +227,20 @@ export function ChamberLayout() {
 
     return (
         <div className="flex flex-col h-full bg-background overflow-hidden">
-            {/* Governance Header (GI-001) */}
+            {/* Governance Header */}
             <div className="h-14 border-b border-border bg-card/50 flex items-center justify-between px-6 z-30 backdrop-blur-sm">
                 <div className="flex items-center gap-4 flex-1">
                     {isEditingMetadata ? (
                         <div className="flex items-center gap-2 flex-1 max-w-2xl">
                             <input
-                                className="bg-muted border border-border rounded px-3 py-1 text-sm flex-1 font-semibold"
+                                className="bg-muted border border-border rounded px-3 py-1 text-sm flex-1 font-semibold text-foreground"
                                 value={tempMetadata.title}
                                 aria-label="Artifact Title"
                                 placeholder="Artifact Title"
                                 onChange={(e) => setTempMetadata(prev => ({ ...prev, title: e.target.value }))}
                             />
                             <input
-                                className="bg-muted border border-border rounded px-3 py-1 text-xs w-64"
+                                className="bg-muted border border-border rounded px-3 py-1 text-xs w-64 text-foreground"
                                 value={tempMetadata.domains.join(', ')}
                                 aria-label="Target Domains"
                                 onChange={(e) => setTempMetadata(prev => ({ ...prev, domains: e.target.value.split(',').map(d => d.trim()).filter(Boolean) }))}
@@ -152,24 +276,30 @@ export function ChamberLayout() {
                     )}
                 </div>
                 <div className="flex items-center gap-3">
+                    {currentSession && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 border-red-500/30 hover:bg-red-500/10 h-8 font-semibold"
+                            onClick={handleCloseSession}
+                        >
+                            Close Session
+                        </Button>
+                    )}
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                         Governance Integrity v1.0
                     </div>
                 </div>
             </div>
 
-            {/* Main Content Area: Left, Center, Right */}
             <div className="flex-1 flex overflow-hidden min-h-0">
-
-                {/* Left Rail: Peer Presence */}
-                <div className="w-64 flex-shrink-0 z-10 shadow-xl shadow-black/5">
+                <div className={cn("w-64 flex-shrink-0 z-10 shadow-xl shadow-black/5", isLocked && "opacity-60 pointer-events-none")}>
                     <PeerPresence
-                        peers={relevantPeers}
+                        peers={currentPeers.filter(p => p.domains.some(d => artifactMetadata.domains.includes(d)))}
                         onAcknowledge={handleAcknowledge}
                     />
                 </div>
 
-                {/* Center: Whiteboard */}
                 <div className="flex-1 relative min-w-0 z-0">
                     <WhiteboardArea
                         focusNodeId={focusNodeId}
@@ -177,19 +307,18 @@ export function ChamberLayout() {
                     />
                 </div>
 
-                {/* Right Rail: Telemetry */}
-                <div className="w-72 flex-shrink-0 z-10 shadow-xl shadow-black/5 border-l border-border bg-card">
+                <div className={cn("w-72 flex-shrink-0 z-10 shadow-xl shadow-black/5 border-l border-border bg-card", isLocked && "opacity-60 pointer-events-none")}>
                     <TelemetryPanel
                         telemetry={telemetry}
-                        peers={peers}
+                        peers={currentPeers}
                         onInvokeLens={handleInvokeLens}
                         onDeferLens={handleDeferLens}
+                        onAcknowledge={handleAcknowledge}
                         onLockVersion={handleLockVersion}
                     />
                 </div>
             </div>
 
-            {/* IDS Input Rail */}
             <div className="h-44 border-t border-border bg-card flex-shrink-0">
                 <IDSStream
                     cards={[]}

@@ -1,3 +1,5 @@
+import { type InclusionState } from '../core/governance/types';
+
 export interface Peer {
     id: string;
     name: string;
@@ -40,6 +42,7 @@ export interface TelemetryData {
     lenses: LensStatus[];
     lockAvailable: boolean;
     activeDomains: string[];
+    inclusion?: InclusionState; // Pass formal state through for advanced UI logic
 }
 
 // Lock threshold constants
@@ -134,7 +137,7 @@ export const MOCK_CONSIDERATIONS: ConsiderationEntry[] = [
 
 // --- Session History Types ---
 
-export interface Session {
+export interface HistoricalSession {
     id: string;
     name: string;
     date: string;
@@ -151,7 +154,7 @@ export interface Session {
     };
 }
 
-export const MOCK_SESSIONS: Session[] = [
+export const MOCK_SESSIONS: HistoricalSession[] = [
     {
         id: 's1',
         name: 'RAG Architecture Sync',

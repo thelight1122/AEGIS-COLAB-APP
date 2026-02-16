@@ -1,0 +1,100 @@
+﻿
+Running 3 tests using 3 workers
+
+  Γ£ÿ  2 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:54:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale (6.4s)
+  Γ£ÿ  1 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:85:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity (6.7s)
+  Γ£ÿ  3 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:15:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button (6.8s)
+
+
+  1) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:15:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('#lock-version-button')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('#lock-version-button')[22m
+
+
+      49 |
+      50 |         // 6. Lock button appears
+    > 51 |         await expect(lockButton).toBeVisible();
+         |                                  ^
+      52 |     });
+      53 |
+      54 |     test('BM-QA-01: Deferral Requires Rationale', async ({ page }) => {
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:51:34
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-39c40-lity-Gating-for-Lock-Button-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-integrity-Gover-39c40-lity-Gating-for-Lock-Button-chromium\error-context.md
+
+  2) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:54:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('div.w-72.flex-shrink-0').locator('div.p-2').filter({ hasText: 'ΓÜá Product' }).locator('span.line-through')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('div.w-72.flex-shrink-0').locator('div.p-2').filter({ hasText: 'ΓÜá Product' }).locator('span.line-through')[22m
+
+
+      80 |
+      81 |         // Verify it's now deferred
+    > 82 |         await expect(specificLens.locator('span.line-through')).toBeVisible();
+         |                                                                 ^
+      83 |     });
+      84 |
+      85 |     test('BM-QA-01: Ledger Snapshot Integrity', async ({ page }) => {
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:82:65
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-9adf7-Deferral-Requires-Rationale-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-integrity-Gover-9adf7-Deferral-Requires-Rationale-chromium\error-context.md
+
+  3) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:85:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('#lock-version-button')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('#lock-version-button')[22m
+
+
+      108 |
+      109 |         const lockButton = page.locator('#lock-version-button');
+    > 110 |         await expect(lockButton).toBeVisible();
+          |                                  ^
+      111 |
+      112 |         // Verify alert contents
+      113 |         page.once('dialog', async dialog => {
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:110:34
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-03137-1-Ledger-Snapshot-Integrity-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\governance-integrity-Gover-03137-1-Ledger-Snapshot-Integrity-chromium\error-context.md
+
+  3 failed
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:15:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button 
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:54:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale 
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:85:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity 
+

@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import {
     Archive, Lock, FileEdit, Clock, ChevronRight,
     CheckCircle2, XCircle, CircleDot,
-    ThumbsUp, ThumbsDown, MinusCircle
+    ThumbsUp, ThumbsDown, MinusCircle, PlayCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import {
     MOCK_VERSIONS, MOCK_PROPOSALS, MOCK_CONSIDERATIONS, MOCK_PEERS,
 } from '../types';
+import { Button } from '../components/ui/button';
 
 const statusConfig = {
     locked: { color: 'text-green-500 bg-green-500/10 border-green-500/30', icon: Lock, label: 'Locked' },
@@ -27,9 +28,33 @@ const verdictConfig = {
     abstain: { color: 'text-muted-foreground', icon: MinusCircle, bg: 'bg-muted/50' },
 };
 
+import { useNavigate } from 'react-router-dom';
+import {
+    loadSessions,
+    saveSessions,
+    createSession,
+    startSession,
+    getActiveSessionForArtifact
+} from '../core/sessions/sessionStore';
+import type { Session as LiveSession } from '../core/sessions/types';
+
 export default function Artifacts() {
+    const navigate = useNavigate();
+    const [sessions, setSessions] = useState<LiveSession[]>(() => loadSessions());
     const [selectedVersionId, setSelectedVersionId] = useState<string>(MOCK_VERSIONS[MOCK_VERSIONS.length - 2]?.id || MOCK_VERSIONS[0].id);
     const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+
+    const handleStartSession = (artifactId: string) => {
+        const { sessions: nextSessions, session: draft } = createSession(sessions, artifactId);
+        const { sessions: finalSessions, session: active } = startSession(nextSessions, draft.id);
+        saveSessions(finalSessions);
+        setSessions(finalSessions);
+        navigate('/', { state: { sessionId: active.id } });
+    };
+
+    const handleJoinSession = (sessionId: string) => {
+        navigate('/', { state: { sessionId } });
+    };
 
     const selectedVersion = useMemo(
         () => MOCK_VERSIONS.find((v) => v.id === selectedVersionId)!,
@@ -123,11 +148,39 @@ export default function Artifacts() {
                         ))}
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Inclusion Score</div>
-                    <div className={cn("text-lg font-bold", selectedVersion.inclusionScore >= 80 ? "text-green-500" : "text-yellow-500")}>
-                        {selectedVersion.inclusionScore}%
+                <div className="text-right flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end">
+                        <div className="text-xs text-muted-foreground">Inclusion Score</div>
+                        <div className={cn("text-lg font-bold", selectedVersion.inclusionScore >= 80 ? "text-green-500" : "text-yellow-500")}>
+                            {selectedVersion.inclusionScore}%
+                        </div>
                     </div>
+                    {(() => {
+                        const activeSession = getActiveSessionForArtifact(sessions, selectedVersion.id);
+                        if (activeSession) {
+                            return (
+                                <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                                    onClick={() => handleJoinSession(activeSession.id)}
+                                >
+                                    <PlayCircle className="w-4 h-4" />
+                                    Join Active Session
+                                </Button>
+                            );
+                        }
+                        return (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => handleStartSession(selectedVersion.id)}
+                            >
+                                <PlayCircle className="w-4 h-4" />
+                                Start Session
+                            </Button>
+                        );
+                    })()}
                 </div>
             </div>
 

@@ -1,0 +1,11 @@
+.meter-bar {
+  width: var(--pw, 0%);
+}
+
+.inclusion-score-bar {
+  /* Specific styles if needed, but Tailwind classes handle most */
+}
+
+.drift-signal-bar {
+  /* Specific styles if needed */
+}
