@@ -8,8 +8,9 @@
     "build": "tsc && vite build",
     "lint": "eslint .",
     "test:unit": "vitest run src/core/sessions/sessionStore.test.ts",
-    "test:governance": "playwright test tests/governance-integrity.spec.ts",
-    "test:sessions": "playwright test tests/session-stabilization.spec.ts",
+    "test:governance": "playwright test tests/governance-integrity.spec.ts --output=test-results/playwright/governance",
+    "test:sessions": "playwright test tests/session-stabilization.spec.ts --output=test-results/playwright/sessions",
+    "test:report": "playwright show-report --port=0",
     "test:all": "run-s test:unit test:governance test:sessions",
     "preview": "vite preview"
   },

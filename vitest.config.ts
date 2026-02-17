@@ -9,18 +9,20 @@ export default mergeConfig(
             environment: 'node',
             include: ['src/**/*.test.ts'],
 
-            // Reporters
+            // Keep console output normal, also emit JUnit
             reporters: ['default', 'junit'],
-
-            // Structured output location
             outputFile: {
-                junit: './test-results/junit.xml',
+                junit: './test-results/vitest/junit.xml',
             },
 
-            // Optional: coverage output (safe to keep even if not used yet)
+            // Coverage artifacts go in a tool-owned subfolder
             coverage: {
                 reporter: ['text', 'html'],
-                reportsDirectory: './test-results/coverage',
+                reportsDirectory: './test-results/vitest/coverage',
+
+                // Optional: if you want to prevent wiping coverage outputs
+                // (I usually keep this true, but here's the lever)
+                // clean: false,
             },
         },
     })
