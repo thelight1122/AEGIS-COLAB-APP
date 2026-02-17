@@ -1,7 +1,0 @@
-﻿
-Running 2 tests using 2 workers
-
-  Γ£ô  1 [chromium] ΓÇ║ tests\ids_stream.spec.ts:40:5 ΓÇ║ Shadow Stream Verification ΓÇ║ Shadow Stream vertical layout (578ms)
-  Γ£ô  2 [chromium] ΓÇ║ tests\ids_stream.spec.ts:4:5 ΓÇ║ Shadow Stream Verification ΓÇ║ Shadow Stream presence in sidebar and clearing functionality (793ms)
-
-  2 passed (2.1s)

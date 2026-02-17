@@ -1,0 +1,32 @@
+{
+  "event": "TEST_ORCHESTRATION_UPDATE",
+  "id": "SSSP-TEST-ALL-001",
+  "timestamp": "AUTO_GENERATE_ISO",
+  "actor": "BM",
+  "scope": "AEGIS CoLab App",
+  "change": {
+    "description": "Replaced shell-dependent && chaining in test:all with npm-run-all (run-s) for deterministic, cross-platform execution.",
+    "files_modified": [
+      "./package.json",
+      "./package-lock.json"
+    ],
+    "dependency_added": {
+      "name": "npm-run-all",
+      "type": "devDependency"
+    },
+    "script_before": "npm run test:unit && npm run test:governance && npm run test:sessions",
+    "script_after": "run-s test:unit test:governance test:sessions"
+  },
+  "reason": "Eliminate shell semantic drift (PowerShell 5.1 incompatibility) and enforce deterministic, fail-fast orchestration governed by repository configuration.",
+  "verification": {
+    "environment": "Windows PowerShell 5.1",
+    "test_all": "PASS",
+    "test_unit": "PASS",
+    "test_governance": "PASS",
+    "test_sessions": "PASS",
+    "fail_fast": "run-s enforces sequential stop-on-failure"
+  },
+  "integrity_assertion": "Test execution order is deterministic and shell-agnostic."
+}
+
+$entry

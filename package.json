@@ -10,7 +10,7 @@
     "test:unit": "vitest run src/core/sessions/sessionStore.test.ts",
     "test:governance": "playwright test tests/governance-integrity.spec.ts",
     "test:sessions": "playwright test tests/session-stabilization.spec.ts",
-    "test:all": "npm run test:unit && npm run test:governance && npm run test:sessions",
+    "test:all": "run-s test:unit test:governance test:sessions",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -37,6 +37,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "npm-run-all": "^4.1.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
