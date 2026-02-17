@@ -1,4 +1,3 @@
-import { saveSessions } from '../sessions/sessionStore';
 import { PEER_STORAGE_KEY } from '../../lib/peerStore';
 
 /**
@@ -16,6 +15,7 @@ export const e2eHarness = {
         localStorage.removeItem('aegis-peers-registry');
         localStorage.removeItem('aegis_events_current-artifact');
         localStorage.removeItem('aegis_metadata_current-artifact');
+        localStorage.removeItem('aegis_ops_current-artifact');
         console.log('[E2E] App state reset performed.');
     },
 
@@ -37,6 +37,7 @@ export const e2eHarness = {
 
         localStorage.setItem("aegis.sessions.v0", JSON.stringify([]));
         localStorage.setItem("aegis_events_current-artifact", JSON.stringify([]));
+        localStorage.setItem("aegis_ops_current-artifact", JSON.stringify([]));
 
         console.log('[E2E] Scenario "Lockable-After-Actions" seeded (Product lens required).');
     },
