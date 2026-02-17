@@ -47,7 +47,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                     <span className={cn(
                         "font-medium",
                         inclusionMet ? "text-green-500" : "text-yellow-500"
-                    )}>{inclusionScore}%</span>
+                    )} data-testid="awareness-percent">{inclusionScore}%</span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div
@@ -126,19 +126,26 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
             {/* Lens Coverage */}
             <div className="space-y-2">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
-                    <PieChart className="w-3.5 h-3.5" />
+                    < PieChart className="w-3.5 h-3.5" />
                     Lens Coverage
                 </h4>
 
-                {/* Active */}
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5" data-testid="active-lenses">
                     {activeLenses.map((lens) => (
-                        <span key={lens.name} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
+                        <span
+                            key={lens.name}
+                            className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
+                            data-testid={`lens-active-${lens.name}`}
+                        >
                             {lens.name}
                         </span>
                     ))}
                     {deferredLenses.map((lens) => (
-                        <span key={lens.name} className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full border border-border line-through">
+                        <span
+                            key={lens.name}
+                            className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full border border-border line-through"
+                            data-testid={`lens-deferred-${lens.name}`}
+                        >
                             {lens.name}
                         </span>
                     ))}
@@ -146,9 +153,9 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
 
                 {/* Missing — with actions */}
                 {missingLenses.length > 0 && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5" data-testid="missing-lenses">
                         {missingLenses.map((lens) => (
-                            <div key={lens.name} className="flex flex-col gap-2 p-2 rounded-md bg-destructive/5 border border-destructive/20 transition-all">
+                            <div key={lens.name} className="flex flex-col gap-2 p-2 rounded-md bg-destructive/5 border border-destructive/20 transition-all" data-testid={`missing-lens-${lens.name}`}>
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs text-destructive font-medium">!!! {lens.name}</span>
                                     <div className="flex gap-1">
@@ -157,6 +164,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                             size="sm"
                                             className="h-5 px-1.5 text-[10px] gap-1 text-primary hover:text-primary"
                                             onClick={() => onInvokeLens(lens.name)}
+                                            data-testid={`invoke-lens-${lens.name}`}
                                         >
                                             <Zap className="w-3 h-3" />
                                             Invoke
@@ -166,6 +174,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                             size="sm"
                                             className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground"
                                             onClick={() => setDeferringLens(lens.name)}
+                                            data-testid={`defer-lens-${lens.name}`}
                                         >
                                             <MinusCircle className="w-3 h-3" />
                                             Defer
@@ -179,10 +188,11 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                             placeholder="Reason for deferral (optional)..."
                                             value={rationale}
                                             onChange={(e) => setRationale(e.target.value)}
+                                            data-testid="defer-rationale"
                                         />
                                         <div className="flex justify-end gap-1">
                                             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setDeferringLens(null)}>Cancel</Button>
-                                            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name)}>Save</Button>
+                                            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name)} data-testid="confirm-defer">Save</Button>
                                         </div>
                                     </div>
                                 )}
@@ -199,6 +209,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                         className="w-full py-2.5 px-4 rounded-md flex items-center justify-center gap-2 font-medium transition-all text-sm bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm animate-in fade-in zoom-in duration-300"
                         onClick={onLockVersion}
                         id="lock-version-button"
+                        data-testid="lock-button"
                     >
                         <Lock className="w-4 h-4" />
                         Lock Version

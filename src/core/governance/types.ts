@@ -13,8 +13,7 @@ export type PeerType = "human" | "ai";
 export type Peer = {
     id: string;
     type: PeerType;
-    declaredDomains: string[];
-    lensIds: string[];
+    domains: string[];
 };
 
 export type Lens = {

@@ -34,9 +34,13 @@ jobs:
 
             - name: Governance gate
               run: npm run test:governance
+              env:
+                  VITE_E2E: 1
 
             - name: Session stabilization gate
               run: npm run test:sessions
+              env:
+                  VITE_E2E: 1
 
             # Optional: upload Playwright report if tests fail or always (choose one)
             - name: Upload Playwright Report

@@ -7,116 +7,109 @@ import { test, expect } from '@playwright/test';
 test.describe('Governance Integrity Validation', () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('http://localhost:5173/');
-        await page.evaluate(() => localStorage.clear());
+        await page.goto('http://localhost:5173/?e2e=1');
+        // Use the E2E harness for deterministic seeding
+        await page.evaluate(() => {
+            if (window.__AEGIS_E2E__) {
+                window.__AEGIS_E2E__.resetAppState();
+                window.__AEGIS_E2E__.seedScenarioLockableAfterActions();
+            }
+        });
         await page.reload();
     });
 
     test('BM-QA-01: Strict Visibility Gating for Lock Button', async ({ page }) => {
-        // 1. Initial State
-        const lockButton = page.locator('#lock-version-button');
+        // 1. Initial State: Lock button should not be present
+        const lockButton = page.getByTestId('lock-button');
         await expect(lockButton).not.toBeAttached();
 
-        // 2. Narrow domains
-        await page.locator('button[title*="Edit Metadata"]').click();
+        // 2. Narrow domains to 'Product' to isolate Sarah
+        await page.getByTestId('edit-metadata').click();
         const domainInput = page.locator('input[aria-label="Target Domains"]');
         await domainInput.fill('Product');
         await page.locator('button[title*="Save Metadata"]').click();
 
         // Wait for the UI to reflect the intersection
-        const lensesList = page.locator('div.space-y-2').filter({ hasText: 'Lens Coverage' });
-        await expect(lensesList.getByText('Product')).toBeVisible({ timeout: 10000 });
+        const awarenessPercent = page.getByTestId('awareness-percent');
+        await expect(awarenessPercent).toBeVisible({ timeout: 10000 });
 
-        // 3. Acknowledge necessary peer (Sarah for Product)
-        // Peer Acknowledgment header
-        const peersList = page.locator('div.space-y-2').filter({ hasText: 'Peer Acknowledgment' });
-        // Actually Sarah has '✓' or '...' button.
-        // Let's just click all dots in the peer section.
-        const ackButtons = peersList.locator('span.cursor-pointer').filter({ hasText: '...' });
-
-        while (await ackButtons.count() > 0) {
-            await ackButtons.first().click();
-            await page.waitForTimeout(500);
-        }
+        // 3. Acknowledge necessary peer (Sarah for Product - p3)
+        const sarahAck = page.getByTestId('peer-ack-p3');
+        await expect(sarahAck).toBeVisible();
+        await sarahAck.click();
 
         // 4. Button should still be missing (missing lenses)
         await expect(lockButton).not.toBeAttached();
 
-        // 5. Invoke missing lenses (Product)
-        const invokeButtons = lensesList.locator('button:has-text("Invoke")');
-        while (await invokeButtons.count() > 0) {
-            await invokeButtons.first().click();
-            await page.waitForTimeout(500);
-        }
+        // 5. Invoke missing lenses
+        const productInvoke = page.getByTestId('invoke-lens-Product');
+        await expect(productInvoke).toBeVisible();
+        await productInvoke.click();
 
-        // 6. Lock button appears
+        // 6. Lock button appears after criteria are met
         await expect(lockButton).toBeVisible({ timeout: 15000 });
     });
 
     test('BM-QA-01: Deferral Requires Rationale', async ({ page }) => {
-        const lensesList = page.locator('div.space-y-2').filter({ hasText: 'Lens Coverage' });
+        // 1. Initial State: Product lens should be missing (guaranteed by e2eHarness seed)
+        await expect(page.getByTestId('missing-lens-Product')).toBeVisible();
+        await expect(page.getByTestId('lock-button')).not.toBeAttached();
 
-        // Find a lens with !!! (missing)
-        const lensContainer = lensesList.locator('div.bg-destructive\\/5').first();
-        await expect(lensContainer).toBeVisible();
+        // 2. Sarah (Product peer) must acknowledge awareness for lock to be possible
+        const ackButton = page.getByTestId('peer-ack-p3');
+        await expect(ackButton).toBeVisible();
+        await ackButton.click();
+        await expect(ackButton).not.toBeVisible();
 
-        const lensNameWithIcon = await lensContainer.locator('span.font-medium').innerText();
-        // It might be "!!! Product" or something else
-        const lensName = lensNameWithIcon.replace('!!! ', '').replace('⚠ ', '').trim();
+        // 3. Trigger deferral dialog
+        const deferButton = page.getByTestId('defer-lens-Product');
+        await expect(deferButton).toBeVisible();
+        await deferButton.click();
 
-        await lensContainer.locator('button:has-text("Defer")').click();
+        const textarea = page.getByTestId('defer-rationale');
+        const saveButton = page.getByTestId('confirm-defer');
 
-        const textarea = page.locator('textarea[placeholder*="Reason for deferral"]');
-        const saveButton = page.locator('button:has-text("Save")');
-
-        // 1. Empty rationale (whitespace)
+        // 3. Invalid: Empty rationale (whitespace)
         await textarea.fill('   ');
         await saveButton.click();
-        await page.waitForTimeout(1000);
 
-        // Should still be missing, NOT line-through
-        const specificLens = lensesList.locator('div.bg-destructive\\/5').filter({ hasText: lensName });
-        await expect(specificLens.locator('span.line-through')).not.toBeVisible();
+        // Assert: Product lens remains in missing list, NOT deferred
+        await expect(page.getByTestId('missing-lens-Product')).toBeVisible();
+        await expect(page.getByTestId('lock-button')).not.toBeAttached();
 
-        // 2. Valid rationale
-        await specificLens.locator('button:has-text("Defer")').click();
+        // 4. Valid: Provide rationale
+        await deferButton.click();
         await textarea.fill('Mandatory deferred for logic verification');
         await saveButton.click();
 
-        // Verify it's now deferred
-        // Wait, line-through is on a span within lensesList
-        await expect(lensesList.getByText(lensName)).toHaveClass(/line-through/, { timeout: 10000 });
+        // Assert: Product lens moved to active-lenses/deferred state
+        await expect(page.getByTestId('missing-lens-Product')).not.toBeVisible();
+        await expect(page.getByTestId('lens-deferred-Product')).toBeVisible({ timeout: 10000 });
+
+        // Assert: Lock button becomes attached
+        await expect(page.getByTestId('lock-button')).toBeVisible({ timeout: 15000 });
     });
 
     test('BM-QA-01: Ledger Snapshot Integrity', async ({ page }) => {
-        const peersList = page.locator('div.space-y-2').filter({ hasText: 'Peer Acknowledgment' });
-        const lensesList = page.locator('div.space-y-2').filter({ hasText: 'Lens Coverage' });
-
-        // Fast convergence
-        await page.locator('button[title*="Edit Metadata"]').click();
+        // Setup Engineering domain
+        await page.getByTestId('edit-metadata').click();
         await page.locator('input[aria-label="Target Domains"]').fill('Engineering');
         await page.locator('button[title*="Save Metadata"]').click();
-        await page.waitForTimeout(1000);
 
-        const peerAckButtons = peersList.locator('span.cursor-pointer').filter({ hasText: '...' });
-        while (await peerAckButtons.count() > 0) {
-            await peerAckButtons.first().click();
-            await page.waitForTimeout(500);
-        }
+        // Acknowledge User (p1)
+        const userAck = page.getByTestId('peer-ack-p1');
+        await userAck.click();
 
-        const invokeButtons = lensesList.locator('button:has-text("Invoke")');
-        while (await invokeButtons.count() > 0) {
-            await invokeButtons.first().click();
-            await page.waitForTimeout(500);
-        }
+        // Invoke Engineering lens
+        const engInvoke = page.getByTestId('invoke-lens-Engineering');
+        await engInvoke.click();
 
-        const lockButton = page.locator('#lock-version-button');
+        const lockButton = page.getByTestId('lock-button');
         await expect(lockButton).toBeVisible({ timeout: 10000 });
 
         // Verify alert contents
         page.once('dialog', async dialog => {
             const msg = dialog.message();
-            console.log(`Ledger Snapshot:\n${msg}`);
             expect(msg).toContain('🔒 Version Locked');
             expect(msg).toContain('Score: 100%');
             expect(msg).toContain('Participating Peers:');

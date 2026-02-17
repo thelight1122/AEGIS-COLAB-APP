@@ -163,6 +163,7 @@ export default function Artifacts() {
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700 text-white gap-2"
                                     onClick={() => handleJoinSession(activeSession.id)}
+                                    data-testid="session-join"
                                 >
                                     <PlayCircle className="w-4 h-4" />
                                     Join Active Session
@@ -175,6 +176,7 @@ export default function Artifacts() {
                                 variant="outline"
                                 className="gap-2"
                                 onClick={() => handleStartSession(selectedVersion.id)}
+                                data-testid="session-start"
                             >
                                 <PlayCircle className="w-4 h-4" />
                                 Start Session

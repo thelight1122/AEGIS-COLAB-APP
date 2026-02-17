@@ -6,12 +6,13 @@ import { WhiteboardArea } from './WhiteboardArea';
 import { Tag, Edit2, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
-import { MOCK_PEERS, MOCK_TELEMETRY, type TelemetryData } from '../../types';
+import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
+import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
 import { IDSStream } from './IDSStream';
 import { computeInclusionState, canLock } from '../../core/governance/inclusionState';
-import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { isE2E } from '../../lib/e2e';
 import {
     loadSessions,
     saveSessions,
@@ -19,8 +20,18 @@ import {
     closeSession
 } from '../../core/sessions/sessionStore';
 import type { Session as LiveSession } from '../../core/sessions/types';
+import { loadPeers } from '../../lib/peerStore';
 
-export function ChamberLayout() {
+const LOG_STORAGE_KEY = 'aegis_events_current-artifact';
+const METADATA_KEY = 'aegis_metadata_current-artifact';
+
+const defaultMetadata = {
+    id: 'current-artifact',
+    label: 'Main Logic Protocol',
+    domainTags: ['Product', 'Engineering'], // Intersection with multiple peers, ensuring un-acked state if no seeds
+};
+
+export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const [sessions] = useState<LiveSession[]>(() => loadSessions());
@@ -72,10 +83,34 @@ export function ChamberLayout() {
     }, [currentSession]);
 
     // Artifact Metadata
-    const [artifactMetadata, setArtifactMetadata] = useState({
-        title: currentSession?.artifactId === 'v4' ? 'Operational Layer — Prism Refract Behavior' : `Artifact ${currentSession?.artifactId || 'Draft'}`,
-        domains: currentSession?.artifactId === 'v4' ? ['Engineering', 'Product', 'Risks'] : ['General']
+    const [artifactMetadata, setArtifactMetadata] = useState(() => {
+        const stored = localStorage.getItem(METADATA_KEY);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                return {
+                    title: parsed.label || parsed.title,
+                    domains: parsed.domainTags || parsed.domains || []
+                };
+            } catch (e) { console.error('Failed to parse metadata', e); }
+        }
+
+        if (currentSession?.artifactId === 'v4') {
+            return {
+                title: 'Operational Layer — Prism Refract Behavior',
+                domains: ['Engineering', 'Product', 'Risks']
+            };
+        }
+
+        return {
+            title: defaultMetadata.label,
+            domains: defaultMetadata.domainTags
+        };
     });
+
+    // Load peers from registry
+    const registryPeers = useMemo(() => loadPeers(), []);
+
     const [isEditingMetadata, setIsEditingMetadata] = useState(false);
     const [tempMetadata, setTempMetadata] = useState(artifactMetadata);
 
@@ -91,7 +126,7 @@ export function ChamberLayout() {
             status: "Active"
         };
 
-        const governPeers: GovernancePeer[] = MOCK_PEERS.map(p => ({
+        const governPeers: GovernancePeer[] = registryPeers.map(p => ({
             id: p.id,
             type: p.type,
             declaredDomains: p.domains,
@@ -124,18 +159,18 @@ export function ChamberLayout() {
             activeDomains: artifactMetadata.domains,
             inclusion
         };
-    }, [artifactMetadata.domains, governingEvents, artifactId]);
+    }, [artifactMetadata.domains, governingEvents, artifactId, registryPeers]);
 
     const currentPeers = useMemo(() => {
         const acks = new Set(governingEvents.filter(e => e.type === 'AWARENESS_ACK').map(e => {
             if (e.type === 'AWARENESS_ACK') return e.peerId;
             return null;
         }));
-        return MOCK_PEERS.map(p => ({
+        return registryPeers.map(p => ({
             ...p,
             acknowledged: acks.has(p.id)
         }));
-    }, [governingEvents]);
+    }, [governingEvents, registryPeers]);
 
     const handleNodesReady = useCallback((nodes: { id: string; label: string; type: string }[]) => {
         setNodes(nodes);
@@ -178,7 +213,7 @@ export function ChamberLayout() {
             domainTags: artifactMetadata.domains,
             status: "Active"
         };
-        const governPeers: GovernancePeer[] = MOCK_PEERS.map(p => ({
+        const governPeers: GovernancePeer[] = registryPeers.map(p => ({
             id: p.id,
             type: p.type,
             declaredDomains: p.domains,
@@ -218,7 +253,7 @@ export function ChamberLayout() {
             ...prev,
             { type: 'LOCK_REQUEST', timestamp: Date.now() }
         ]);
-    }, [artifactMetadata.title, artifactMetadata.domains, currentPeers, telemetry, governingEvents, artifactId, isLocked]);
+    }, [artifactMetadata.title, artifactMetadata.domains, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers]);
 
     const saveMetadata = () => {
         setArtifactMetadata(tempMetadata);
@@ -259,6 +294,7 @@ export function ChamberLayout() {
                                         onClick={() => { setTempMetadata(artifactMetadata); setIsEditingMetadata(true); }}
                                         className="text-muted-foreground hover:text-primary"
                                         title="Edit Metadata"
+                                        data-testid="edit-metadata"
                                     >
                                         <Edit2 className="w-3 h-3" />
                                     </button>
@@ -285,6 +321,11 @@ export function ChamberLayout() {
                         >
                             Close Session
                         </Button>
+                    )}
+                    {isE2E() && (
+                        <div className="px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold rounded uppercase tracking-tight">
+                            E2E Mode
+                        </div>
                     )}
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                         Governance Integrity v1.0
@@ -335,3 +376,6 @@ export function ChamberLayout() {
         </div>
     );
 }
+
+// Export for use in other components if needed
+export { LOG_STORAGE_KEY, METADATA_KEY };

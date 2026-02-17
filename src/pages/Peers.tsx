@@ -4,23 +4,10 @@ import {
     User, Bot, Search, X, Save
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { type Peer, MOCK_PEERS } from '../types';
+import { type Peer } from '../types';
 import { Button } from '../components/ui/button';
 import { Dialog } from '../components/ui/dialog';
-
-const STORAGE_KEY = 'aegis-peers-registry';
-
-function loadPeers(): Peer[] {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored);
-    } catch { /* ignore */ }
-    return MOCK_PEERS.map((p) => ({ ...p }));
-}
-
-function savePeers(peers: Peer[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(peers));
-}
+import { loadPeers, savePeers } from '../lib/peerStore';
 
 const emptyPeer: Omit<Peer, 'id'> = {
     name: '',
@@ -32,7 +19,7 @@ const emptyPeer: Omit<Peer, 'id'> = {
 };
 
 export default function Peers() {
-    const [peers, setPeers] = useState<Peer[]>(loadPeers);
+    const [peers, setPeers] = useState<Peer[]>(() => loadPeers());
     const [searchTerm, setSearchTerm] = useState('');
     const [editingPeer, setEditingPeer] = useState<Peer | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);

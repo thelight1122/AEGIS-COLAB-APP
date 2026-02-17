@@ -1,0 +1,53 @@
+﻿
+Running 5 tests using 5 workers
+
+[1A[2K[1/5] [chromium] ΓÇ║ tests\governance-integrity.spec.ts:24:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button
+[1A[2K[2/5] [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session
+[1A[2K[3/5] [chromium] ΓÇ║ tests\governance-integrity.spec.ts:100:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity
+[1A[2K[4/5] [chromium] ΓÇ║ tests\governance-integrity.spec.ts:65:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale
+[1A[2K[5/5] [chromium] ΓÇ║ tests\session-stabilization.spec.ts:31:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-02: Join Active Session
+[1A[2K[chromium] ΓÇ║ tests\governance-integrity.spec.ts:100:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity
+Ledger Snapshot:
+≡ƒöÆ Version Locked: "Main Logic Protocol"
+Score: 100%
+Notified Peers: User, Sarah
+Participating Peers: User, Sarah
+Lenses Represented: Engineering
+Lenses Deferred: 
+Unresolved Tensions: 0
+Closure Rationale: Coherence criteria satisfied.
+
+[1A[2K  1) [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session 
+
+    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: [32m/.*chamber/[39m
+    Received string:  [31m"http://localhost:5173/"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
+    [2m    8 ├ù unexpected value "http://localhost:5173/"[22m
+
+
+      18 |
+      19 |         // 3. Verify redirection to Chamber
+    > 20 |         await expect(page).toHaveURL(/.*chamber/);
+         |                            ^
+      21 |         await expect(page.getByText('Governance Integrity v1.0')).toBeVisible();
+      22 |
+      23 |         // 4. Reload page
+        at E:\AEGIS-COLAB-APP\tests\session-stabilization.spec.ts:20:28
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\session-stabilization-Sess-8fc62-01-Start-and-Resume-Session-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\session-stabilization-Sess-8fc62-01-Start-and-Resume-Session-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session 
+  4 passed (8.3s)
+
+[36m  Serving HTML report at http://localhost:62650. Press Ctrl+C to quit.[39m

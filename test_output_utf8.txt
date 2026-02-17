@@ -1,84 +1,136 @@
 ﻿
-Running 4 tests using 4 workers
+Running 5 tests using 5 workers
 
-  Γ£ô  2 [chromium] ΓÇ║ tests\governance.spec.ts:74:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (481ms)
-  Γ£ÿ  3 [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (5.6s)
-  Γ£ÿ  4 [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (5.7s)
-  Γ£ÿ  1 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (30.0s)
+  Γ£ÿ  1 [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session (5.7s)
+  Γ£ÿ  2 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:65:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale (5.6s)
+  Γ£ÿ  3 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:100:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity (30.1s)
+  Γ£ÿ  5 [chromium] ΓÇ║ tests\session-stabilization.spec.ts:31:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-02: Join Active Session (30.1s)
+  Γ£ÿ  4 [chromium] ΓÇ║ tests\governance-integrity.spec.ts:24:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button (30.1s)
 
 
-  1) [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence 
+  1) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:24:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button 
 
     [31mTest timeout of 30000ms exceeded.[39m
 
-    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Error: locator.click: Test timeout of 30000ms exceeded.
     Call log:
-    [2m  - waiting for locator('input[placeholder="Name"]')[22m
+    [2m  - waiting for locator('button[title*="Edit Metadata"]')[22m
 
 
-      12 |         // Add a new peer with domains
-      13 |         await page.getByRole('button', { name: /Add Peer/i }).click();
-    > 14 |         await page.locator('input[placeholder="Name"]').fill('QA Specialist');
-         |                                                         ^
-      15 |         await page.locator('input[placeholder="Role"]').fill('Verification');
-      16 |         await page.locator('input[placeholder*="Domain Tags"]').fill('QA, Testing, Governance');
-      17 |         await page.getByRole('button', { name: "Add Peer" }).click();
-        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:14:57
+      28 |
+      29 |         // 2. Narrow domains
+    > 30 |         await page.locator('button[title*="Edit Metadata"]').click();
+         |                                                              ^
+      31 |         const domainInput = page.locator('input[aria-label="Target Domains"]');
+      32 |         await domainInput.fill('Product');
+      33 |         await page.locator('button[title*="Save Metadata"]').click();
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:30:62
 
-    Error Context: test-results\governance-Governance-Inte-4233a-gement-Registry-Persistence-chromium\error-context.md
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-39c40-lity-Gating-for-Lock-Button-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  2) [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping 
+  2) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:65:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale 
 
     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
 
-    Locator: getByText('Product', { exact: true }).nth(1)
+    Locator: locator('div.space-y-2').filter({ hasText: 'Lens Coverage' }).locator('div.bg-destructive\\/5').first()
     Expected: visible
     Timeout: 5000ms
     Error: element(s) not found
 
     Call log:
     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
-    [2m  - waiting for getByText('Product', { exact: true }).nth(1)[22m
+    [2m  - waiting for locator('div.space-y-2').filter({ hasText: 'Lens Coverage' }).locator('div.bg-destructive\\/5').first()[22m
 
 
-      29 |         await expect(page.getByText('Product').first()).toBeVisible();
-      30 |         // Since we updated mock data, Product should have 'Product' domain
-    > 31 |         await expect(page.getByText('Product', { exact: true }).nth(1)).toBeVisible();
-         |                                                                         ^
-      32 |     });
-      33 |
-      34 |     test('GI-010/021/030: Chamber Domain Intersection & Lock Gating', async ({ page }) => {
-        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:31:73
+      68 |         // Find a lens with !!! (missing)
+      69 |         const lensContainer = lensesList.locator('div.bg-destructive\\/5').first();
+    > 70 |         await expect(lensContainer).toBeVisible();
+         |                                     ^
+      71 |
+      72 |         const lensNameWithIcon = await lensContainer.locator('span.font-medium').innerText();
+      73 |         // It might be "!!! Product" or something else
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:70:37
 
-    Error Context: test-results\governance-Governance-Inte-06fea--GI-020-Lens-Domain-Mapping-chromium\error-context.md
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-9adf7-Deferral-Requires-Rationale-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  3) [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+  3) [chromium] ΓÇ║ tests\governance-integrity.spec.ts:100:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button[title*="Edit Metadata"]')[22m
+
+
+      103 |
+      104 |         // Fast convergence
+    > 105 |         await page.locator('button[title*="Edit Metadata"]').click();
+          |                                                              ^
+      106 |         await page.locator('input[aria-label="Target Domains"]').fill('Engineering');
+      107 |         await page.locator('button[title*="Save Metadata"]').click();
+      108 |         await page.waitForTimeout(1000);
+        at E:\AEGIS-COLAB-APP\tests\governance-integrity.spec.ts:105:62
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\governance-integrity-Gover-03137-1-Ledger-Snapshot-Integrity-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  4) [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session 
 
     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
 
-    Locator: getByText(/Design/i)
+    Locator: getByText('Artifacts Archive')
     Expected: visible
     Timeout: 5000ms
     Error: element(s) not found
 
     Call log:
     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
-    [2m  - waiting for getByText(/Design/i)[22m
+    [2m  - waiting for getByText('Artifacts Archive')[22m
 
 
-      36 |
-      37 |         // Verify initial state
-    > 38 |         await expect(page.getByText(/Design/i)).toBeVisible(); // Default active domain from mock metadata
-         |                                                 ^
-      39 |
-      40 |         // Edit artifact metadata to add a domain
-      41 |         await page.getByRole('button', { name: /Edit Metadata/i }).click();
-        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:38:49
+      11 |     test('BM-SESSION-QA-01: Start and Resume Session', async ({ page }) => {
+      12 |         // 1. Navigate to Artifacts
+    > 13 |         await expect(page.getByText('Artifacts Archive')).toBeVisible();
+         |                                                           ^
+      14 |
+      15 |         // 2. Start a new session
+      16 |         const startButton = page.locator('button:has-text("Start Session")').first();
+        at E:\AEGIS-COLAB-APP\tests\session-stabilization.spec.ts:13:59
 
-    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\session-stabilization-Sess-8fc62-01-Start-and-Resume-Session-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  3 failed
-    [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence 
-    [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping 
-    [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
-  1 passed (31.4s)
+  5) [chromium] ΓÇ║ tests\session-stabilization.spec.ts:31:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-02: Join Active Session 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Start Session")').first()[22m
+
+
+      31 |     test('BM-SESSION-QA-02: Join Active Session', async ({ page, context }) => {
+      32 |         // 1. Start session in first tab
+    > 33 |         await page.locator('button:has-text("Start Session")').first().click();
+         |                                                                        ^
+      34 |         const sessionId = await page.evaluate(() => {
+      35 |             const sessions = JSON.parse(localStorage.getItem('aegis.sessions.v0') || '[]');
+      36 |             return sessions[0]?.id;
+        at E:\AEGIS-COLAB-APP\tests\session-stabilization.spec.ts:33:72
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\session-stabilization-Sess-e46d7-N-QA-02-Join-Active-Session-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  5 failed
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:24:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Strict Visibility Gating for Lock Button 
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:65:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Deferral Requires Rationale 
+    [chromium] ΓÇ║ tests\governance-integrity.spec.ts:100:5 ΓÇ║ Governance Integrity Validation ΓÇ║ BM-QA-01: Ledger Snapshot Integrity 
+    [chromium] ΓÇ║ tests\session-stabilization.spec.ts:11:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-01: Start and Resume Session 
+    [chromium] ΓÇ║ tests\session-stabilization.spec.ts:31:5 ΓÇ║ Session Stabilization Integrity ΓÇ║ BM-SESSION-QA-02: Join Active Session 

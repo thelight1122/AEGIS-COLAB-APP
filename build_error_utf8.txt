@@ -1,0 +1,89 @@
+﻿[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 1918 modules transformed.
+node.exe : [31mΓ£ù[39m 
+Build failed in 2.32s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: ([3  
+  1mΓ£ù[39m Build faile   
+ d in 2.32s:String) [],    
+ RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+[31merror during build:
+[31msrc/pages/Chamber.tsx 
+(2:9): "ChamberLayout" is 
+not exported by "src/compon
+ents/chamber/ChamberLayout.
+tsx", imported by "src/page
+s/Chamber.tsx".[31m
+file: [36mE:/AEGIS-COLAB-A
+PP/src/pages/Chamber.tsx:2:
+9[31m
+[33m
+1: 
+2: import { ChamberLayout 
+} from '../components/chamb
+er/ChamberLayout';
+            ^
+3: 
+4: export default function 
+Chamber() {
+[31m
+    at getRollupError (file
+:///E:/AEGIS-COLAB-APP/node
+_modules/rollup/dist/es/sha
+red/parseAst.js:402:41)
+    at error (file:///E:/AE
+GIS-COLAB-APP/node_modules/
+rollup/dist/es/shared/parse
+Ast.js:398:42)
+    at Module.error (file:/
+//E:/AEGIS-COLAB-APP/node_m
+odules/rollup/dist/es/share
+d/node-entry.js:17040:16)
+    at 
+Module.traceVariable (file:
+///E:/AEGIS-COLAB-APP/node_
+modules/rollup/dist/es/shar
+ed/node-entry.js:17452:29)
+    at 
+ModuleScope.findVariable (f
+ile:///E:/AEGIS-COLAB-APP/n
+ode_modules/rollup/dist/es/
+shared/node-entry.js:15070:
+39)
+    at 
+FunctionScope.findVariable 
+(file:///E:/AEGIS-COLAB-APP
+/node_modules/rollup/dist/e
+s/shared/node-entry.js:5673
+:38)
+    at FunctionBodyScope.fi
+ndVariable (file:///E:/AEGI
+S-COLAB-APP/node_modules/ro
+llup/dist/es/shared/node-en
+try.js:5673:38)
+    at Identifier.bind (fil
+e:///E:/AEGIS-COLAB-APP/nod
+e_modules/rollup/dist/es/sh
+ared/node-entry.js:5447:40)
+    at CallExpression.bind 
+(file:///E:/AEGIS-COLAB-APP
+/node_modules/rollup/dist/e
+s/shared/node-entry.js:2825
+:28)
+    at CallExpression.bind 
+(file:///E:/AEGIS-COLAB-APP
+/node_modules/rollup/dist/e
+s/shared/node-entry.js:1217
+9:15)[39m

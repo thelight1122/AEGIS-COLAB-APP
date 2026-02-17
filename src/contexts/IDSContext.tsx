@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { type IDSCard, type Attachment, MOCK_IDS_FEED } from '../types';
+import { isE2E } from '../lib/e2e';
 
 interface NodeOption {
     id: string;
@@ -22,7 +23,7 @@ interface IDSContextType {
 const IDSContext = createContext<IDSContextType | undefined>(undefined);
 
 export function IDSProvider({ children }: { children: ReactNode }) {
-    const [idsCards, setIdsCards] = useState<IDSCard[]>(MOCK_IDS_FEED);
+    const [idsCards, setIdsCards] = useState<IDSCard[]>(isE2E() ? [] : MOCK_IDS_FEED);
     const [canvasNodes, setCanvasNodes] = useState<NodeOption[]>([]);
     const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
 
