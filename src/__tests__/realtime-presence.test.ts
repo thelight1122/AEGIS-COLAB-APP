@@ -82,13 +82,31 @@ describe('Realtime & Presence Contract', () => {
             expect(boardCode).toContain('simulateAIMessage');
         });
 
-        it('should parse simulated AI names from body', () => {
-            expect(boardCode).toContain('m.kind === \'ai_sim\'');
-            expect(boardCode).toContain('m.body.match(/^\\[SIM:([^\\]]+)\\] (.*)/)');
+        it('should parse simulated AI names from kind using pipe delimiter', () => {
+            expect(boardCode).toContain('m.kind?.startsWith(\'ai_sim|\')');
+            expect(boardCode).toContain('displayName = m.kind.split(\'|\')[1] || \'AI\'');
         });
 
         it('should display AI badges for simulated posts', () => {
             expect(boardCode).toContain('AI</span>}');
+        });
+        describe('Persona Variants & Lane Awareness', () => {
+            it('should implement stable variant selection', () => {
+                expect(boardCode).toContain('const variantIndex = stableHash(seed) %');
+            });
+
+            it('should implement lane awareness (prior turns)', () => {
+                expect(boardCode).toContain('priorTurns: AutoReplyTurn[] = []');
+                expect(boardCode).toContain('pointsSkipped.push(cat)');
+            });
+
+            it('should renamed Reply x3 to Stress Test x3', () => {
+                expect(boardCode).toContain('Stress Test x3');
+            });
+
+            it('should enforce word limit', () => {
+                expect(boardCode).toContain('split(\' \').slice(0, 90).join(\' \')');
+            });
         });
     });
 });

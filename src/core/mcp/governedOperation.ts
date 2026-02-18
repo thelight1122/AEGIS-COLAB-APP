@@ -28,6 +28,11 @@ export interface ToolProposal {
     rationale: string;
 }
 
+export const GovernedTools = {
+    SimulateAI: "ai.simulate_message",
+    ReadFile: "file.read_readonly"
+} as const;
+
 export interface ExecutionRequest {
     requestedAt: number;
     accepted: boolean;
@@ -93,9 +98,10 @@ export function assertGovernedOperation(op: unknown): asserts op is GovernedOper
 }
 
 /**
- * Enforces ReadOnly mode for Phase 1.
+ * Enforces ReadOnly mode for Phase 1, with exceptions for internal simulations.
  */
 export function enforceReadOnly(op: GovernedOperation): void {
+    if (op.proposal.toolId === GovernedTools.SimulateAI) return;
     if (op.mode !== ToolMode.ReadOnly) {
         throw new Error(`Phase 1 Error: GovernedOperation mode must be ReadOnly. Found: ${op.mode}`);
     }

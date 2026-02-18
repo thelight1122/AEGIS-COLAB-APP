@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type {
     GovernedOperation,
     ToolProposal
@@ -19,17 +19,14 @@ import { executeGovernedReadOnlyTool } from "./governedToolConduit";
  * Hook to manage and interact with governed operations.
  */
 export function useGovernedOperations(artifactId: string) {
-    const [ops, setOps] = useState<GovernedOperation[]>([]);
-
-    // Sync status on mount and ledger changes
-    useEffect(() => {
+    const [ops, setOps] = useState<GovernedOperation[]>(() => {
         const ledger = loadOps();
-        const current = deriveCurrentOps(ledger);
-        // Only update if current derived state differs to avoid render loops
-        if (JSON.stringify(current) !== JSON.stringify(ops)) {
-            setOps(current);
-        }
-    }, [ops]);
+        return deriveCurrentOps(ledger);
+    });
+
+    // We no longer need an effect to sync ops on mount since we use lazy initializer.
+    // However, if other components update loadOps() outside this hook, we might need a subscriber.
+    // For Phase 1, all updates happen through this hook's methods.
 
     const proposeReadOnlyToolCall = useCallback((proposal: ToolProposal, lineage: { sessionId?: string; peerId?: string }) => {
         const op: GovernedOperation = {

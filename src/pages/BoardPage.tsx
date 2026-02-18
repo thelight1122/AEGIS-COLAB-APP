@@ -13,6 +13,7 @@ import { useGovernedOperations } from '../core/mcp/useGovernedOperations';
 import { useAuthSession } from '../core/auth/useAuthSession';
 import { PlusCircle, Send, MessageSquare, User, Bot, LogIn, Shield } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { PERSONA_PACK } from '../core/aiSim/rolePack';
 
 interface Peer {
     id: string;
@@ -60,10 +61,14 @@ export default function BoardPage() {
     const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
 
     // AI Simulator State (Dev Only)
-    const [simAIName, setSimAIName] = useState('Lumin');
+    const [selectedSimPersonaId, setSelectedSimPersonaId] = useState('lumin');
     const [simAIMessage, setSimAIMessage] = useState('');
+    const [simAutoReplyMode, setSimAutoReplyMode] = useState('Acknowledge + Ask');
+    const [isSequenceRunning, setIsSequenceRunning] = useState(false);
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+    const sequenceAbortControllerRef = useRef<AbortController | null>(null);
 
-    const { proposeReadOnlyToolCall, recordResult } = useGovernedOperations('shared-board');
+    const { ops, proposeReadOnlyToolCall, recordResult } = useGovernedOperations('shared-board');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [presenceMap, setPresenceMap] = useState<Record<string, Presence>>({});
     const [sharePresence, setSharePresence] = useState(true);
@@ -278,36 +283,312 @@ export default function BoardPage() {
     };
 
     const simulateAIMessage = async () => {
-        if (!session || !user || !selectedThreadId || !simAIMessage.trim()) return;
+        if (!session || !user || !simAIMessage.trim()) return;
+
+        if (!selectedThreadId) {
+            setActionError('Select a thread first');
+            return;
+        }
+
         setActionError(null);
 
         const authorPeerId = selectedPeerId || user.id;
+        const persona = PERSONA_PACK[selectedSimPersonaId] || PERSONA_PACK.lumin;
+        const personaLabel = persona.label;
+
+        // Propose governed operation
+        const opId = proposeReadOnlyToolCall(
+            {
+                toolId: 'ai.simulate_message',
+                toolName: 'Simulate AI Message',
+                intent: `Simulate AI post as ${personaLabel} into thread ${selectedThreadId}`,
+                scope: ['supabase', 'messages'],
+                constraints: ['append-only'],
+                rationale:
+                    'DEV simulation of AI peer presence. Message is authored by authenticated human peer; display is simulated.'
+            },
+            { peerId: authorPeerId }
+        );
 
         try {
             const body = simAIMessage.trim();
+            setSimAIMessage('');
+
+            const { data, error } = await supabase
+                .from('messages')
+                .insert([
+                    {
+                        thread_id: selectedThreadId,
+                        author_peer_id: authorPeerId,
+                        author_peer_type: 'human',
+                        kind: `ai_sim|${personaLabel}`,
+                        body: body
+                    }
+                ])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setMessages((prev) =>
+                    prev.some((m) => m.id === data.id) ? prev : [...prev, data]
+                );
+
+                recordResult(opId, 'success', {
+                    messageId: data.id,
+                    threadId: selectedThreadId,
+                    simulatedAiLabel: personaLabel,
+                    bodyPreview: body.slice(0, 80)
+                });
+            }
+        } catch (err: unknown) {
+            console.error('[ai.simulate.insert]', err);
+
+            const message =
+                err instanceof Error ? err.message : 'Simulation failed';
+
+            setActionError(message);
+
+            recordResult(opId, 'error', {
+                error: message
+            });
+        }
+    };
+
+    const stableHash = (str: string): number => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0;
+        }
+        return Math.abs(hash);
+    };
+
+    // ── AI Auto-Reply Engine (Dev Only) ───────────────────────────
+
+    interface AutoReplyTurn {
+        personaId: string;
+        body: string;
+        keyPoints: string[];
+    }
+
+    const generateAutoReply = useCallback((
+        personaId: string,
+        mode: string,
+        threadTitle: string | undefined,
+        anchorMessage: Message | undefined,
+        recentMsgs: Message[],
+        priorTurns: AutoReplyTurn[] = []
+    ): { body: string, variantId: string, pointsUsed: string[], pointsSkipped: string[] } => {
+        const persona = PERSONA_PACK[personaId] || PERSONA_PACK.lumin;
+        const cleanText = (txt: string) => txt.replace(/\S+@\S+/g, '[email]').replace(/\n/g, ' ').trim();
+        const snippet = anchorMessage ? cleanText(anchorMessage.body).slice(0, 120) : 'the conversation';
+
+        // 1. Select Deterministic Variant
+        const seed = `${selectedThreadId}-${anchorMessage?.id || 'none'}-${personaId}`;
+        const variantIndex = stableHash(seed) % (persona.variants?.length || 1);
+        const variant = persona.variants?.[variantIndex] || { id: 'direct', description: 'direct' };
+
+        // 2. Lane Awareness
+        const allPriorPoints = new Set(priorTurns.flatMap(t => t.keyPoints));
+        const pointsUsed: string[] = [];
+        const pointsSkipped: string[] = [];
+
+        persona.keyPointCategories?.forEach(cat => {
+            if (allPriorPoints.has(cat)) pointsSkipped.push(cat);
+            else pointsUsed.push(cat);
+        });
+
+        const head = `${persona.label}:`;
+        let bodyContent = "";
+        const endQuestion = persona.questionStyle;
+
+        if (mode === 'Summarize last 3') {
+            const last3 = recentMsgs.slice(-3);
+            const summary = last3.map((m, i) => `${i + 1}) ${cleanText(m.body).slice(0, 50)}`).join('\n');
+            bodyContent = `Summary recap:\n${summary || 'Minimal history.'}`;
+        } else {
+            // Apply persona breathing rules
+            switch (personaId) {
+                case 'lumin':
+                    if (variant.id === 'direct') {
+                        bodyContent = `Target: ${threadTitle || 'Analysis'}\nAction: Cross-verify "${snippet.slice(0, 30)}..."`;
+                    } else if (variant.id === 'question_first') {
+                        bodyContent = `How do you define success here?\n- Unknown variables in logic\n- Validation gap for "${snippet.slice(0, 20)}..."`;
+                    } else { // compressed
+                        bodyContent = `• Logic gap: verify\n• State: ambiguous\n• Source check: "${snippet.slice(0, 20)}..."`;
+                    }
+                    break;
+                case 'haven':
+                    if (variant.id === 'gentle') {
+                        bodyContent = `If you want, we could try (A) deep-dive or (B) alignment pause. Either works.`;
+                    } else if (variant.id === 'compressed') {
+                        bodyContent = `Option A / Option B / Which feels better for "${snippet.slice(0, 20)}"?`;
+                    } else { // direct
+                        bodyContent = `I try to align on: "${snippet.slice(0, 30)}". Options: 1) Propose 2) Refine.`;
+                    }
+                    break;
+                case 'shield':
+                    if (variant.id === 'minimal') {
+                        bodyContent = `What decision should be recorded? Any scope boundary for "${snippet.slice(0, 20)}"?`;
+                    } else if (variant.id === 'compressed') {
+                        bodyContent = `• Governance: active\n• Boundary: checked`;
+                    } else { // direct
+                        bodyContent = `Note: Simulated log for "${snippet.slice(0, 30)}". Checking boundary.`;
+                    }
+                    break;
+                case 'echo':
+                    if (variant.id === 'sequencing') {
+                        bodyContent = `Next → Draft Task → Next → Sync Presence → Confirm?`;
+                    } else if (variant.id === 'compressed') {
+                        bodyContent = `[ ] Task: "${snippet.slice(0, 20)}..." [ ] Sync [ ] Done`;
+                    } else { // direct
+                        bodyContent = `Tasks: refine "${snippet.slice(0, 20)}". Who owns?`;
+                    }
+                    break;
+                default:
+                    bodyContent = `Role context: ${persona.mission}`;
+            }
+            if (pointsSkipped.length > 0) bodyContent += `\n(Skipping repeats: ${pointsSkipped.join(', ')})`;
+        }
+
+        const result = `${head}\n\n${bodyContent}\n\n${endQuestion}`;
+        const finalBody = result.split(' ').slice(0, 90).join(' ');
+
+        return { body: finalBody, variantId: variant.id, pointsUsed, pointsSkipped };
+    }, [selectedThreadId]);
+
+    const performAutoReply = async (
+        personaId: string,
+        mode: string,
+        currentMessages: Message[],
+        overrideAnchor?: Message,
+        priorTurns: AutoReplyTurn[] = []
+    ) => {
+        if (!session || !user || !selectedThreadId) return null;
+
+        const persona = PERSONA_PACK[personaId] || PERSONA_PACK.lumin;
+        const personaLabel = persona.label;
+
+        // B) Anchor selection
+        const anchor = overrideAnchor || [...currentMessages].reverse().find(m =>
+            m.author_peer_type === 'human' && !m.kind?.startsWith('ai_sim|') && !m.kind?.startsWith('ai_auto|')
+        ) || currentMessages[currentMessages.length - 1];
+
+        const threadTitle = threads.find(t => t.id === selectedThreadId)?.title;
+        const { body, variantId, pointsUsed, pointsSkipped } = generateAutoReply(personaId, mode, threadTitle, anchor, currentMessages, priorTurns);
+        const authorPeerId = selectedPeerId || user.id;
+
+        const opId = proposeReadOnlyToolCall({
+            toolId: "ai.auto_reply",
+            toolName: "AI Auto Reply (Simulated)",
+            intent: `Auto-reply as ${personaLabel} (${variantId})`,
+            scope: ['supabase', 'messages'],
+            constraints: ['append-only'],
+            rationale: "DEV Stress Test turn."
+        }, { peerId: authorPeerId });
+
+        try {
             const { data, error } = await supabase
                 .from('messages')
                 .insert([{
                     thread_id: selectedThreadId,
                     author_peer_id: authorPeerId,
-                    author_peer_type: 'ai', // Render as AI bubble
-                    kind: 'ai_sim',         // Mark as simulation
-                    body: `[SIM:${simAIName}] ${body}`
+                    author_peer_type: 'human',
+                    kind: `ai_auto|${personaLabel}`,
+                    body: body
                 }])
-                .select()
-                .single();
+                .select().single();
 
             if (error) throw error;
             if (data) {
-                setMessages(prev => (prev.some(m => m.id === data.id) ? prev : [...prev, data]));
-                setSimAIMessage('');
+                setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data]);
+                recordResult(opId, 'success', {
+                    messageId: data.id,
+                    threadId: selectedThreadId,
+                    personaId,
+                    variantId,
+                    laneKeyPointsUsed: pointsUsed,
+                    laneKeyPointsSkipped: pointsSkipped,
+                    anchorMessageId: anchor?.id,
+                    bodyPreview: body.slice(0, 80)
+                });
+                return { msg: data, points: pointsUsed };
             }
-        } catch (error: unknown) {
-            console.error('[messages.simulate]', error);
-            const message = error instanceof Error ? error.message : 'Simulation failed';
-            setActionError(message);
+        } catch (err: unknown) {
+            recordResult(opId, 'error', { error: err instanceof Error ? err.message : 'failed' });
+        }
+        return null;
+    };
+
+    const handleAutoReplyOnce = async () => {
+        if (isSequenceRunning || cooldownRemaining > 0) return;
+        await performAutoReply(selectedSimPersonaId, simAutoReplyMode, messages);
+    };
+
+    const handleAutoReplySequence = async () => {
+        if (!selectedThreadId || isSequenceRunning || cooldownRemaining > 0) return;
+
+        setIsSequenceRunning(true);
+        sequenceAbortControllerRef.current = new AbortController();
+        const signal = sequenceAbortControllerRef.current.signal;
+
+        // Choose a fixed anchor for the entire sequence to avoid echoing
+        const sequenceAnchor = [...messages].reverse().find(m =>
+            m.author_peer_type === 'human' && !m.kind?.startsWith('ai_sim|') && !m.kind?.startsWith('ai_auto|')
+        ) || messages[messages.length - 1];
+
+        const personas = ['lumin', 'haven', 'shield'];
+        let currentTempMessages = [...messages];
+        const priorTurns: AutoReplyTurn[] = [];
+
+        try {
+            for (let i = 0; i < personas.length; i++) {
+                if (signal.aborted) break;
+
+                const result = await performAutoReply(personas[i], simAutoReplyMode, currentTempMessages, sequenceAnchor, priorTurns);
+                if (result) {
+                    currentTempMessages = [...currentTempMessages, result.msg];
+                    priorTurns.push({
+                        personaId: personas[i],
+                        body: result.msg.body,
+                        keyPoints: result.points
+                    });
+                }
+
+                if (i < personas.length - 1) {
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(resolve, 800);
+                        signal.addEventListener('abort', () => {
+                            clearTimeout(timeout);
+                            reject(new Error('Aborted'));
+                        });
+                    });
+                }
+            }
+        } catch (e) {
+            console.log('[sequence.aborted]', e);
+        } finally {
+            setIsSequenceRunning(false);
+            setCooldownRemaining(10);
         }
     };
+
+    const stopSequence = () => {
+        sequenceAbortControllerRef.current?.abort();
+        setIsSequenceRunning(false);
+    };
+
+    useEffect(() => {
+        if (cooldownRemaining > 0) {
+            const timer = setInterval(() => {
+                setCooldownRemaining(prev => Math.max(0, prev - 1));
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [cooldownRemaining]);
 
     useEffect(() => {
         fetchPeers();
@@ -613,13 +894,12 @@ export default function BoardPage() {
                                 <select
                                     title="AI Name"
                                     className="w-full bg-background border border-purple-500/20 rounded p-1 text-xs focus:border-purple-500/50"
-                                    value={simAIName}
-                                    onChange={(e) => setSimAIName(e.target.value)}
+                                    value={selectedSimPersonaId}
+                                    onChange={(e) => setSelectedSimPersonaId(e.target.value)}
                                 >
-                                    <option value="Lumin">Lumin (Analytic)</option>
-                                    <option value="Haven">Haven (Secure)</option>
-                                    <option value="Shield">Shield (Governance)</option>
-                                    <option value="Echo">Echo (Coordination)</option>
+                                    {Object.values(PERSONA_PACK).map(p => (
+                                        <option key={p.id} value={p.id}>{p.label}</option>
+                                    ))}
                                 </select>
                                 <Input
                                     placeholder="AI thought..."
@@ -637,6 +917,78 @@ export default function BoardPage() {
                                 >
                                     Simulate AI Post
                                 </Button>
+
+                                {/* AI Auto-Reply Section */}
+                                <div className="pt-2 border-t border-purple-500/20 space-y-2">
+                                    <div className="text-[9px] font-bold text-purple-400/60 uppercase flex items-center gap-1">
+                                        <Bot className="w-2.5 h-2.5" /> AI Auto-Reply (Simulated)
+                                    </div>
+                                    <select
+                                        title="Simulated Reply Mode"
+                                        className="w-full bg-background border border-purple-500/20 rounded p-1 text-[10px] focus:border-purple-500/50"
+                                        value={simAutoReplyMode}
+                                        onChange={(e) => setSimAutoReplyMode(e.target.value)}
+                                        disabled={isSequenceRunning}
+                                    >
+                                        <option value="Acknowledge + Ask">Acknowledge + Ask</option>
+                                        <option value="Summarize last 3">Summarize last 3</option>
+                                        <option value="Suggest next steps">Suggest next steps</option>
+                                        <option value="Challenge assumption">Challenge assumption</option>
+                                        <option value="Governance lens">Governance lens</option>
+                                    </select>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 text-[9px] border-purple-500/30 text-purple-600 px-1"
+                                            onClick={handleAutoReplyOnce}
+                                            disabled={!selectedThreadId || isSequenceRunning || cooldownRemaining > 0 || messages.length === 0}
+                                        >
+                                            Reply Once
+                                        </Button>
+                                        {isSequenceRunning ? (
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                className="h-7 text-[9px] px-1"
+                                                onClick={stopSequence}
+                                            >
+                                                Stop
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 text-[9px] border-purple-500/30 text-purple-600 px-1"
+                                                onClick={handleAutoReplySequence}
+                                                disabled={!selectedThreadId || cooldownRemaining > 0 || messages.length === 0}
+                                            >
+                                                Stress Test x3 {cooldownRemaining > 0 ? `(${cooldownRemaining}s)` : ''}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Part 4: Dev Ops Diagnostics */}
+                                <div className="pt-2 border-t border-purple-500/20">
+                                    <div className="text-[9px] font-bold text-purple-400/60 uppercase mb-1 flex items-center gap-1">
+                                        <Shield className="w-2.5 h-2.5" /> Recent Simulated Ops
+                                    </div>
+                                    <div className="space-y-1">
+                                        {ops.filter((o) => o.proposal.toolId === 'ai.simulate_message' || o.proposal.toolId === 'ai.auto_reply')
+                                            .sort((a, b) => b.createdAt - a.createdAt)
+                                            .slice(0, 5)
+                                            .map((o) => (
+                                                <div key={o.id} className="text-[8px] font-mono text-purple-300/50 truncate">
+                                                    [{new Date(o.createdAt).toLocaleTimeString([], { hour12: false })}] {o.id.slice(0, 8)}.. | {(o.result?.data as { simulatedAiLabel?: string; personaLabel?: string })?.simulatedAiLabel || (o.result?.data as { personaLabel?: string })?.personaLabel || o.proposal.toolName}
+                                                </div>
+                                            ))
+                                        }
+                                        {ops.filter((o) => o.proposal.toolId === 'ai.simulate_message' || o.proposal.toolId === 'ai.auto_reply').length === 0 && (
+                                            <div className="text-[8px] italic text-purple-400/30">No simulation ops recorded</div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -699,22 +1051,26 @@ export default function BoardPage() {
                                 const author = peers.find(p => p.id === m.author_peer_id);
                                 let isAI = m.author_peer_type === 'ai';
                                 let displayName = author?.display_name || 'Unknown';
-                                let messageBody = m.body;
+                                const messageBody = m.body;
 
                                 // Handle Simulated AI authorship
-                                if (m.kind === 'ai_sim') {
+                                if (m.kind?.startsWith('ai_sim|') || m.kind?.startsWith('ai_auto|')) {
                                     isAI = true; // Force AI styling
-                                    const simMatch = m.body.match(/^\[SIM:([^\]]+)\] (.*)/);
-                                    if (simMatch) {
-                                        displayName = simMatch[1];
-                                        messageBody = simMatch[2];
-                                    }
+                                    displayName = m.kind.split('|')[1] || 'AI';
                                 }
+
+                                const personaTheme = isAI ? (
+                                    displayName.includes('Lumin') ? "bg-purple-100 text-purple-700 border-purple-200" :
+                                        displayName.includes('Haven') ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                                            displayName.includes('Shield') ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                                displayName.includes('Echo') ? "bg-amber-100 text-amber-700 border-amber-200" :
+                                                    "bg-purple-100 text-purple-700 border-purple-200"
+                                ) : "bg-blue-100 text-blue-700 border-blue-200";
 
                                 return (
                                     <div key={m.id} className={cn("flex gap-3", isAI ? "flex-row-reverse" : "flex-row")}>
                                         <Avatar className="w-8 h-8 shrink-0">
-                                            <AvatarFallback className={isAI ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}>
+                                            <AvatarFallback className={personaTheme.split(' border')[0]}>
                                                 {isAI ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                             </AvatarFallback>
                                         </Avatar>
@@ -727,7 +1083,28 @@ export default function BoardPage() {
                                                 )} />
                                                 <span className="text-xs font-bold flex items-center gap-1.5">
                                                     {displayName}
-                                                    {isAI && <span className="bg-purple-100 text-purple-700 text-[9px] px-1 rounded font-black tracking-tighter border border-purple-200">AI</span>}
+                                                    {isAI && <span className={cn(personaTheme, "text-[9px] px-1 rounded font-black tracking-tighter border")}>AI</span>}
+                                                    {(m.kind?.startsWith('ai_sim|') || m.kind?.startsWith('ai_auto|')) && (
+                                                        <span
+                                                            className="text-[8px] text-muted-foreground/60 italic font-normal"
+                                                            title={`Action by ${author?.display_name || 'unknown human'}`}
+                                                        >
+                                                            {m.kind.startsWith('ai_sim|') ? '(Simulated)' : '(Auto)'}
+                                                        </span>
+                                                    )}
+                                                    {/* Part 3: Logged Indicator */}
+                                                    {(m.kind?.startsWith('ai_sim|') || m.kind?.startsWith('ai_auto|')) &&
+                                                        ops.some(o =>
+                                                            (o.proposal.toolId === 'ai.simulate_message' || o.proposal.toolId === 'ai.auto_reply') &&
+                                                            o.result?.data && (o.result.data as { messageId?: string }).messageId === m.id
+                                                        ) && (
+                                                            <span
+                                                                className="flex items-center gap-0.5 text-[8px] bg-green-500/10 text-green-600 px-1 rounded border border-green-500/20"
+                                                                title="Recorded in governance ledger"
+                                                            >
+                                                                <Shield className="w-2 h-2" /> Logged
+                                                            </span>
+                                                        )}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleTimeString()}</span>
                                             </div>
