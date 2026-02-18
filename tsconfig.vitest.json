@@ -6,7 +6,8 @@
         "moduleResolution": "bundler",
         "types": [
             "node",
-            "vitest"
+            "vitest",
+            "vite/client"
         ],
         "strict": true,
         "noEmit": true,

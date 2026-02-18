@@ -6,6 +6,8 @@ export type Artifact = {
     id: string;
     domainTags: string[];
     status: ArtifactStatus;
+    isHighImpact?: boolean;
+    hasTension?: boolean;
 };
 
 export type PeerType = "human" | "ai";
@@ -14,6 +16,7 @@ export type Peer = {
     id: string;
     type: PeerType;
     domains: string[];
+    intersectionDepth?: number; // 0..1
 };
 
 export type Lens = {
@@ -42,6 +45,7 @@ export type InclusionState = {
     awarenessSatisfied: boolean;
     lockAvailable: boolean;
     reasons: string[];
+    detectedShadowAffects: string[];
 };
 
 export type PeerConsiderationLedger = {
@@ -52,4 +56,6 @@ export type PeerConsiderationLedger = {
     deferredLenses: DeferredLens[];
     missingLenses: string[]; // must be []
     timestamp: number;
+    awarenessPercent: number;
+    detectedShadowAffects: string[];
 };

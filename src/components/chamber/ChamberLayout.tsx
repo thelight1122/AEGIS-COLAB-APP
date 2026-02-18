@@ -10,6 +10,7 @@ import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as Go
 import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
 import { IDSStream } from './IDSStream';
 import { computeInclusionState, canLock } from '../../core/governance/inclusionState';
+import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS } from '../../core/governance/systemLenses';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isE2E } from '../../lib/e2e';
@@ -29,6 +30,8 @@ const defaultMetadata = {
     id: 'current-artifact',
     label: 'Main Logic Protocol',
     domainTags: ['Product', 'Engineering'], // Intersection with multiple peers, ensuring un-acked state if no seeds
+    isHighImpact: false,
+    hasTension: false
 };
 
 export default function ChamberLayout() {
@@ -98,13 +101,17 @@ export default function ChamberLayout() {
         if (currentSession?.artifactId === 'v4') {
             return {
                 title: 'Operational Layer — Prism Refract Behavior',
-                domains: ['Engineering', 'Product', 'Risks']
+                domains: ['Engineering', 'Product', 'Risks'],
+                isHighImpact: true,
+                hasTension: false
             };
         }
 
         return {
             title: defaultMetadata.label,
-            domains: defaultMetadata.domainTags
+            domains: defaultMetadata.domainTags,
+            isHighImpact: defaultMetadata.isHighImpact,
+            hasTension: defaultMetadata.hasTension
         };
     });
 
@@ -123,21 +130,27 @@ export default function ChamberLayout() {
         const governArtifact: GovernanceArtifact = {
             id: artifactId,
             domainTags: artifactMetadata.domains,
-            status: "Active"
+            status: "Active",
+            isHighImpact: (artifactMetadata as { isHighImpact?: boolean }).isHighImpact,
+            hasTension: (artifactMetadata as { hasTension?: boolean }).hasTension
         };
 
         const governPeers: GovernancePeer[] = registryPeers.map(p => ({
             id: p.id,
             type: p.type,
-            declaredDomains: p.domains,
+            domains: p.domains,
             lensIds: []
         }));
 
-        const governLenses: GovernanceLens[] = MOCK_TELEMETRY.lenses.map(l => ({
-            id: l.name,
-            domains: l.domains,
-            autoReview: false
-        }));
+        const governLenses: GovernanceLens[] = [
+            ...MOCK_TELEMETRY.lenses.map(l => ({
+                id: l.name,
+                domains: l.domains,
+                autoReview: false
+            })),
+            { id: RATIONAL_SYNTHESIS_LENS, domains: [], autoReview: false },
+            { id: AFFECTIVE_SYNTHESIS_LENS, domains: [], autoReview: false }
+        ];
 
         const inclusion: GovernanceInclusionState = computeInclusionState(governArtifact, governPeers, governLenses, governingEvents);
 
@@ -159,7 +172,7 @@ export default function ChamberLayout() {
             activeDomains: artifactMetadata.domains,
             inclusion
         };
-    }, [artifactMetadata.domains, governingEvents, artifactId, registryPeers]);
+    }, [artifactMetadata, governingEvents, artifactId, registryPeers]);
 
     const currentPeers = useMemo(() => {
         const acks = new Set(governingEvents.filter(e => e.type === 'AWARENESS_ACK').map(e => {
@@ -211,19 +224,25 @@ export default function ChamberLayout() {
         const governArtifact: GovernanceArtifact = {
             id: artifactId,
             domainTags: artifactMetadata.domains,
-            status: "Active"
+            status: "Active",
+            isHighImpact: (artifactMetadata as { isHighImpact?: boolean }).isHighImpact,
+            hasTension: (artifactMetadata as { hasTension?: boolean }).hasTension
         };
         const governPeers: GovernancePeer[] = registryPeers.map(p => ({
             id: p.id,
             type: p.type,
-            declaredDomains: p.domains,
+            domains: p.domains,
             lensIds: []
         }));
-        const governLenses: GovernanceLens[] = MOCK_TELEMETRY.lenses.map(l => ({
-            id: l.name,
-            domains: l.domains,
-            autoReview: false
-        }));
+        const governLenses: GovernanceLens[] = [
+            ...MOCK_TELEMETRY.lenses.map(l => ({
+                id: l.name,
+                domains: l.domains,
+                autoReview: false
+            })),
+            { id: RATIONAL_SYNTHESIS_LENS, domains: [], autoReview: false },
+            { id: AFFECTIVE_SYNTHESIS_LENS, domains: [], autoReview: false }
+        ];
 
         const { ok, state } = canLock(governArtifact, governPeers, governLenses, governingEvents);
 
@@ -253,7 +272,7 @@ export default function ChamberLayout() {
             ...prev,
             { type: 'LOCK_REQUEST', timestamp: Date.now() }
         ]);
-    }, [artifactMetadata.title, artifactMetadata.domains, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers]);
+    }, [artifactMetadata, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers]);
 
     const saveMetadata = () => {
         setArtifactMetadata(tempMetadata);
@@ -301,7 +320,7 @@ export default function ChamberLayout() {
                                 </h2>
                                 <div className="flex items-center gap-1 mt-0.5">
                                     <Tag className="w-3 h-3 text-muted-foreground" />
-                                    {artifactMetadata.domains.map(d => (
+                                    {artifactMetadata.domains.map((d: string) => (
                                         <span key={d} className="text-[10px] text-muted-foreground font-mono bg-muted px-1 rounded">
                                             {d}
                                         </span>

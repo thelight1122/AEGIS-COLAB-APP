@@ -9,7 +9,11 @@ import type {
     PeerConsiderationLedger,
 } from "./types";
 
+import { detectShadowAffects } from "./shadowSentinel";
+import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS } from "./systemLenses";
+
 const uniq = (arr: string[]) => Array.from(new Set(arr));
+const intersect = (a: string[], b: string[]) => a.filter((x) => b.includes(x));
 const intersectNonEmpty = (a: string[], b: string[]) => a.some((x) => b.includes(x));
 
 export function computeInclusionState(
@@ -20,8 +24,15 @@ export function computeInclusionState(
 ): InclusionState {
     const domainTags = Array.isArray(artifact.domainTags) ? artifact.domainTags : [];
 
-    const intersectingPeers = peers
-        .filter((p: Peer) => intersectNonEmpty(p.domains || [], domainTags))
+    // 1. Calculate Weighted Intersection Depth for Peers
+    const enrichedPeers = peers.map(p => {
+        const overlap = intersect(p.domains || [], domainTags);
+        const depth = domainTags.length > 0 ? overlap.length / domainTags.length : 0;
+        return { ...p, intersectionDepth: depth };
+    });
+
+    const intersectingPeers = enrichedPeers
+        .filter((p) => p.intersectionDepth > 0)
         .map((p) => p.id.trim());
 
     const intersectingLenses = uniq(lenses
@@ -34,7 +45,7 @@ export function computeInclusionState(
     >[];
 
     const acknowledgedPeers = uniq([
-        ...peers.filter((p: Peer) => (p as any).acknowledged).map((p) => p.id.trim()),
+        ...peers.filter((p: Peer) => (p as Peer & { acknowledged?: boolean }).acknowledged).map((p) => p.id.trim()),
         ...ackEvents.map((e) => e.peerId.trim()),
     ].filter((id) => intersectingPeers.includes(id)));
 
@@ -43,7 +54,7 @@ export function computeInclusionState(
 
     const awarenessSatisfied = awarenessPercent >= 0.999;
 
-    // Represented lenses: by contributions with lensId OR proxy reviews
+    // 2. Synthesis & Coverage
     const contributionEvents = events.filter((e) => e.type === "CONTRIBUTION") as Extract<
         GovernanceEvent,
         { type: "CONTRIBUTION" }
@@ -62,11 +73,19 @@ export function computeInclusionState(
 
     const representedLenses = uniq(
         [...representedByContribution, ...representedByProxy].filter((id) =>
-            intersectingLenses.includes(id)
+            intersectingLenses.includes(id) || id === RATIONAL_SYNTHESIS_LENS || id === AFFECTIVE_SYNTHESIS_LENS
         )
     );
 
-    // Deferred lenses require non-empty rationale
+    // 3. Shadow Affect Detection
+    const detectedShadowAffects = detectShadowAffects(events);
+
+    // 4. Convergence Requirements (System Lenses)
+    const isHighImpact = artifact.isHighImpact || artifact.hasTension;
+    const hasRational = representedLenses.includes(RATIONAL_SYNTHESIS_LENS);
+    const hasAffective = representedLenses.includes(AFFECTIVE_SYNTHESIS_LENS);
+    const synthesisSatisfied = !isHighImpact || (hasRational && hasAffective);
+
     const deferEvents = events.filter((e) => e.type === "DEFER_LENS") as Extract<
         GovernanceEvent,
         { type: "DEFER_LENS" }
@@ -90,16 +109,37 @@ export function computeInclusionState(
         (id) => !representedLenses.includes(id) && !deferredLensIds.includes(id)
     );
 
-    const lockAvailable = awarenessSatisfied && missingLenses.length === 0;
+    const lockAvailable = awarenessSatisfied && missingLenses.length === 0 && synthesisSatisfied && detectedShadowAffects.length === 0;
 
     const reasons: string[] = [];
-    if (!awarenessSatisfied) {
-        reasons.push("Not all intersecting peers have acknowledged awareness.");
+
+    // Prioritize missing primary intersects (depth = 1)
+    const unacknowledgedPeers = enrichedPeers.filter(p => p.intersectionDepth > 0 && !acknowledgedPeers.includes(p.id));
+    const primariesMissing = unacknowledgedPeers.filter(p => p.intersectionDepth === 1);
+    const partialsMissing = unacknowledgedPeers.filter(p => p.intersectionDepth < 1);
+
+    if (primariesMissing.length > 0) {
+        reasons.push(`Primary domain experts missing acknowledgement: ${primariesMissing.map(p => (p as Peer & { name?: string }).name || p.id).join(", ")}`);
     }
+    if (partialsMissing.length > 0 && !awarenessSatisfied) {
+        reasons.push(`Partial domain intersects missing acknowledgement: ${partialsMissing.length}`);
+    }
+
     if (missingLenses.length > 0) {
         reasons.push(
-            `The following lenses are unrepresented and not deferred: ${missingLenses.join(", ")}`
+            `Missing lenses: ${missingLenses.join(", ")}`
         );
+    }
+
+    if (isHighImpact && !synthesisSatisfied) {
+        const missing = [];
+        if (!hasRational) missing.push(RATIONAL_SYNTHESIS_LENS);
+        if (!hasAffective) missing.push(AFFECTIVE_SYNTHESIS_LENS);
+        reasons.push(`High-Impact artifact requires: ${missing.join(" & ")}`);
+    }
+
+    if (detectedShadowAffects.length > 0) {
+        reasons.push(`Shadow Affects detected! Revision required: ${detectedShadowAffects.join("; ")}`);
     }
 
     return {
@@ -113,6 +153,7 @@ export function computeInclusionState(
         awarenessSatisfied,
         lockAvailable,
         reasons,
+        detectedShadowAffects
     };
 }
 
@@ -139,5 +180,7 @@ export function buildLedgerSnapshot(
         deferredLenses: inclusionState.deferredLenses,
         missingLenses: [],
         timestamp,
+        awarenessPercent: inclusionState.awarenessPercent,
+        detectedShadowAffects: inclusionState.detectedShadowAffects
     };
 }

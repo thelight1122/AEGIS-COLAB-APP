@@ -5,14 +5,19 @@
  */
 
 /**
- * Normalizes a path for consistent comparison across platforms.
- * Replaces backslashes with forward slashes and resolves '..' segments.
+ * Normalizes a path for consistent comparison.
+ * In a Node environment, this should ideally be path.resolve().
+ * For cross-platform/browser compatibility, we ensure absolute resolution.
  */
-export function normalizePath(p: string): string {
-    // Basic normalization: use forward slashes for cross-platform consistency
+export function canonicalizePath(p: string, base: string = '/'): string {
+    // Basic normalization: use forward slashes
     let normalized = p.replace(/\\/g, '/');
 
-    // Resolve '..' and '.' segments (simplified resolution for Phase 1)
+    // If path is not absolute, join with base
+    if (!normalized.startsWith('/')) {
+        normalized = base.replace(/\\/g, '/') + (base.endsWith('/') ? '' : '/') + normalized;
+    }
+
     const segments = normalized.split('/');
     const resolved: string[] = [];
 
@@ -25,30 +30,28 @@ export function normalizePath(p: string): string {
         }
     }
 
-    return resolved.join('/');
+    return '/' + resolved.join('/');
 }
 
 /**
- * Validates if the given path is allowed by the allowlist.
- * A path is allowed if it starts with one of the allowlisted prefixes
- * after both have been normalized.
+ * Validates if the given path is allowed by the allowlist using Canonical Comparison.
  */
 export function isPathAllowed(path: string, allowlist: string[]): boolean {
     if (!allowlist || allowlist.length === 0) return false;
 
-    const normalizedPath = normalizePath(path);
+    // We use a virtual root '/' for canonicalization in this logic
+    const canonicalPath = canonicalizePath(path);
 
-    // Safety check: ensure no '..' after normalization attempts to escape
-    // Note: normalizePath above already resolves '..', but we verify no leading '..' 
-    // or absolute escapes that were missed.
-    if (normalizedPath.startsWith('..') || normalizedPath.includes('/../')) {
+    // Safety check: no directory traversal escape
+    if (canonicalPath === '/' && path.includes('..')) {
         return false;
     }
 
     return allowlist.some(allowedPrefix => {
-        const normalizedPrefix = normalizePath(allowedPrefix);
-        // Path must start with the prefix and follow with a separator or end
-        return normalizedPath === normalizedPrefix ||
-            normalizedPath.startsWith(normalizedPrefix + '/');
+        const canonicalPrefix = canonicalizePath(allowedPrefix);
+
+        // Canonical Prefix must match the start of Canonical Path
+        return canonicalPath === canonicalPrefix ||
+            canonicalPath.startsWith(canonicalPrefix + '/');
     });
 }

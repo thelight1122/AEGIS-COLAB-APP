@@ -3,7 +3,7 @@ import { type TelemetryData, type Peer, LOCK_INCLUSION_THRESHOLD } from '../../t
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 
 interface TelemetryPanelProps {
     telemetry: TelemetryData;
@@ -23,6 +23,15 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
     const missingLenses = lenses.filter((l) => l.status === 'missing');
     const deferredLenses = lenses.filter((l) => l.status === 'deferred');
 
+    const totalMissing = missingLenses.length;
+    const score = inclusionScore;
+
+    // Love Vibe Shift logic: towards HSL(320, 80%, 95%) as convergence nears 100%
+    const intensity = Math.max(0, (score - 50) / 50) * (totalMissing === 0 ? 1 : 0.7);
+    const bgGradient = `linear-gradient(135deg, 
+        hsl(var(--card)) 0%, 
+        ${intensity > 0.1 ? `hsla(320, 80%, 95%, ${intensity * 0.15})` : 'hsl(var(--card))'} 100%
+    )`;
     const allAcknowledged = peers.length > 0 && peers.every((p) => p.acknowledged);
     const inclusionMet = inclusionScore >= LOCK_INCLUSION_THRESHOLD;
 
@@ -32,8 +41,19 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
         setRationale('');
     };
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.style.setProperty('--telemetry-bg', bgGradient);
+        }
+    }, [bgGradient]);
+
     return (
-        <div className="h-full bg-card border-l border-border flex flex-col p-4 space-y-5 overflow-y-auto">
+        <div
+            ref={containerRef}
+            className="telemetry-panel-container h-full border-l border-border flex flex-col p-4 space-y-5 overflow-y-auto transition-all duration-1000"
+        >
             {/* Header */}
             <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Activity className="w-4 h-4" />

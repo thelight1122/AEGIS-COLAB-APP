@@ -100,8 +100,7 @@
   fill: var(--color-muted-foreground) !important;
   fill-opacity: 0.3 !important;
   stroke: none !important;
-  rx: 2 !important;
-  ry: 2 !important;
+  border-radius: 2px !important;
 }
 
 .react-flow__attribution {
@@ -125,4 +124,8 @@
   stroke: var(--color-muted-foreground) !important;
   stroke-width: 2 !important;
   opacity: 0.4 !important;
+}
+
+.telemetry-panel-container {
+  background: var(--telemetry-bg, hsl(var(--card)));
 }

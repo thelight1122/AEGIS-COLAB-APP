@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+declare global {
+    interface Window {
+        __AEGIS_E2E__?: {
+            resetAppState: () => void;
+            seedScenarioLockableAfterActions: () => void;
+            seedReadyToLock: () => void;
+        };
+    }
+}
+
+
 /**
  * Governance Integrity Validation Protocol v1.0
  */
@@ -119,6 +130,58 @@ test.describe('Governance Integrity Validation', () => {
         });
 
         await lockButton.click();
+    });
+
+    test('BM-QA-BMs: Weighted Intersection & Shadow Affect Detection', async ({ page }) => {
+        // 1. Setup multi-domain artifact
+        await page.getByTestId('edit-metadata').click();
+        await page.locator('input[aria-label="Target Domains"]').fill('Product, Engineering');
+        await page.locator('button[title*="Save Metadata"]').click();
+
+        // 2. Verify "Primary domain experts missing" in Convergence Pending section (or alert if we tried to lock)
+        // Since we can't easily read the text of the pending section without specific IDs, 
+        // we'll look for the lack of lock button.
+        await expect(page.getByTestId('lock-button')).not.toBeAttached();
+
+        // 3. Trigger a shadow affect by sending a message (wait, shadow affects are detected from events)
+        // Actually, in this app, 'DEFER_LENS' rationale is a governance event.
+        const productDefer = page.getByTestId('defer-lens-Product');
+        await productDefer.click();
+
+        const textarea = page.getByTestId('defer-rationale');
+        const saveButton = page.getByTestId('confirm-defer');
+
+        await textarea.fill('I MUST have this for my survival');
+        await saveButton.click();
+
+        // 4. Verify that lock is still unavailable even if other criteria met
+        // We need to fulfill others first.
+        // Product ack (p3), Eng ack (p2)
+        await page.getByTestId('peer-ack-p3').click();
+        await page.getByTestId('peer-ack-p2').click();
+        // Eng lens invoke
+        await page.getByTestId('invoke-lens-Engineering').click();
+
+        // Even if all acked and domains covered, shadow affect 'I MUST' should block lock
+        await expect(page.getByTestId('lock-button')).not.toBeAttached();
+
+        // 5. Check for "Shadow Affects detected" in the convergence pending text
+        await expect(page.locator('div:has-text("Shadow Affects detected")')).toBeVisible();
+    });
+
+    test('BM-QA-BMs: Love Vibe Frequency Visualization', async ({ page }) => {
+        const telemetryPanel = page.locator('div:has-text("Coherence Telemetry")').first().locator('..');
+
+        // 1. Initial background (neutral)
+        // Note: background might be complex with gradients, so we check for the exclusion score increment
+        const initialBg = await telemetryPanel.evaluate(el => window.getComputedStyle(el).background);
+
+        // 2. Increase inclusion score
+        await page.getByTestId('peer-ack-p1').click(); // Acknowledge User
+
+        // 3. Verify background change (it should have a gradient with the 'Love Vibe' pink-ish color hsla(320...))
+        const activeBg = await telemetryPanel.evaluate(el => window.getComputedStyle(el).background);
+        expect(activeBg).not.toBe(initialBg);
     });
 
 });
