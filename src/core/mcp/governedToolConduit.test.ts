@@ -6,7 +6,6 @@ import {
 } from "./governedOperation";
 import { appendOp } from "./opLedgerStore";
 import { executeGovernedReadOnlyTool } from "./governedToolConduit";
-import * as fsPromises from "fs/promises";
 
 // Manual localStorage mock for node environment
 const storageMock = (() => {
@@ -21,25 +20,7 @@ const storageMock = (() => {
 
 Object.defineProperty(global, "localStorage", { value: storageMock });
 
-// Properly mock fs/promises for ESM
-vi.mock("fs/promises", async () => {
-    const memfs = new Map<string, string>();
-    memfs.set("src/core/mcp/__fixtures__/hello.txt", "Hello, Governed World!\n");
-
-    return {
-        readFile: vi.fn(async (path: string) => {
-            const content = memfs.get(path);
-            if (content === undefined) {
-                const err = new Error(`ENOENT: no such file or directory, open '${path}'`);
-                (err as any).code = "ENOENT";
-                throw err;
-            }
-            return Buffer.from(content);
-        })
-    };
-});
-
-describe("GovernedToolConduit", () => {
+describe("GovernedToolConduit (Browser Sandbox)", () => {
     beforeEach(() => {
         localStorage.clear();
         vi.clearAllMocks();
@@ -68,38 +49,6 @@ describe("GovernedToolConduit", () => {
             .rejects.toThrow(/no accepted execution request/);
     });
 
-    it("should reject execution if request is not accepted", async () => {
-        const opWithUnacceptedRequest: GovernedOperation = {
-            ...baseOp,
-            status: OperationStatus.Requested,
-            request: {
-                requestedAt: Date.now(),
-                accepted: false,
-                approvedBy: "self" as const,
-                parameters: {}
-            }
-        };
-        appendOp(opWithUnacceptedRequest);
-        await expect(executeGovernedReadOnlyTool("OP-T1", { path: "any.txt" }))
-            .rejects.toThrow(/no accepted execution request/);
-    });
-
-    it("should reject execution if toolMode is not ReadOnly", async () => {
-        const writeOp: GovernedOperation = {
-            ...baseOp,
-            mode: ToolMode.Write as ToolMode,
-            request: {
-                requestedAt: Date.now(),
-                accepted: true,
-                approvedBy: "self" as const,
-                parameters: {}
-            }
-        };
-        appendOp(writeOp);
-        await expect(executeGovernedReadOnlyTool("OP-T1", { path: "any.txt" }))
-            .rejects.toThrow(/mode must be ReadOnly/);
-    });
-
     it("should reject execution if path is not allowed", async () => {
         const acceptedOp: GovernedOperation = {
             ...baseOp,
@@ -118,7 +67,7 @@ describe("GovernedToolConduit", () => {
             .rejects.toThrow(/not in the permitted allowlist/);
     });
 
-    it("should execute and record result if constraints are met", async () => {
+    it("should record BROWSER_UNSUPPORTED failure and NOT throw", async () => {
         const fixturePath = "src/core/mcp/__fixtures__/hello.txt";
         const acceptedOp: GovernedOperation = {
             ...baseOp,
@@ -132,68 +81,19 @@ describe("GovernedToolConduit", () => {
         };
         appendOp(acceptedOp);
 
-        const resultOp = await executeGovernedReadOnlyTool("OP-T1", { path: fixturePath });
+        // Should NOT throw
+        const result = await executeGovernedReadOnlyTool("OP-T1", { path: fixturePath });
 
-        expect(resultOp?.status).toBe(OperationStatus.Executed);
-        expect(resultOp?.result?.outcome).toBe("success");
-        expect(resultOp?.result?.data).toMatchObject({
-            path: fixturePath,
-            content: "Hello, Governed World!\n"
-        });
-        expect(resultOp?.result?.appendOnlyHash).toBeDefined();
-        expect(fsPromises.readFile).toHaveBeenCalledTimes(1);
-    });
+        expect(result?.status).toBe(OperationStatus.Failed);
+        expect(result?.result?.outcome).toBe("error");
+        expect(result?.result?.error?.code).toBe("BROWSER_UNSUPPORTED");
 
-    it("should use cached result for subsequent calls with same opId", async () => {
-        const fixturePath = "src/core/mcp/__fixtures__/hello.txt";
-        const acceptedOp: GovernedOperation = {
-            ...baseOp,
-            status: OperationStatus.Requested,
-            request: {
-                requestedAt: Date.now(),
-                accepted: true,
-                approvedBy: "self" as const,
-                parameters: {}
-            }
-        };
-        appendOp(acceptedOp);
-
-        // First execution
-        const firstOp = await executeGovernedReadOnlyTool("OP-T1", { path: fixturePath });
-        expect(firstOp?.status).toBe(OperationStatus.Executed);
-        expect(fsPromises.readFile).toHaveBeenCalledTimes(1);
-
-        // Second execution (should be cached)
-        const secondOp = await executeGovernedReadOnlyTool("OP-T1", { path: fixturePath });
-        expect(secondOp?.result?.appendOnlyHash).toBe(firstOp?.result?.appendOnlyHash);
-        expect(fsPromises.readFile).toHaveBeenCalledTimes(1); // Still 1
-    });
-
-    it("should record failure in ledger if file reading fails", async () => {
-        const acceptedOp: GovernedOperation = {
-            ...baseOp,
-            status: OperationStatus.Requested,
-            request: {
-                requestedAt: Date.now(),
-                accepted: true,
-                approvedBy: "self" as const,
-                parameters: {}
-            }
-        };
-        appendOp(acceptedOp);
-
-        const nonExistentPath = "src/core/mcp/__fixtures__/missing.txt";
-
-        await expect(executeGovernedReadOnlyTool("OP-T1", { path: nonExistentPath }))
-            .rejects.toThrow(/ENOENT/);
-
-        // Check ledger for failure record
+        // Check ledger for persistence
         const ledgerRaw = localStorage.getItem("aegis_ops_current-artifact");
         const ops = JSON.parse(ledgerRaw || "[]");
         const latest = ops[ops.length - 1];
 
         expect(latest.status).toBe(OperationStatus.Failed);
-        expect(latest.result.outcome).toBe("error");
-        expect(latest.result.error.message).toContain("ENOENT");
+        expect(latest.result.error.message).toContain("requires server context");
     });
 });

@@ -7,6 +7,8 @@ import Sessions from './pages/Sessions';
 import Peers from './pages/Peers';
 import Lenses from './pages/Lenses';
 import Settings from './pages/Settings';
+import BoardPage from './pages/BoardPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 import { IDSProvider } from './contexts/IDSContext';
 
@@ -22,6 +24,8 @@ function App() {
             <Route path="/peers" element={<Peers />} />
             <Route path="/lenses" element={<Lenses />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/board" element={<BoardPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

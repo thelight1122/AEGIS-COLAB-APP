@@ -50,10 +50,13 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                     )} data-testid="awareness-percent">{inclusionScore}%</span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                        className={cn("h-full transition-all duration-500 w-[var(--pw)]", inclusionMet ? "bg-green-500" : "bg-yellow-500")}
-                        style={{ '--pw': `${inclusionScore}%` } as React.CSSProperties}
-                    />
+                    <svg className="w-full h-full">
+                        <rect
+                            height="100%"
+                            width={`${inclusionScore}%`}
+                            className={cn("transition-all duration-500", inclusionMet ? "fill-green-500" : "fill-yellow-500")}
+                        />
+                    </svg>
                 </div>
                 {!inclusionMet && (
                     <p className="text-[10px] text-muted-foreground">Needs ≥{LOCK_INCLUSION_THRESHOLD}% for lock</p>
@@ -69,10 +72,13 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                     </span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                        className={cn("h-full transition-all duration-500 w-[var(--pw)]", drift < 10 ? "bg-green-500" : "bg-red-500")}
-                        style={{ '--pw': `${drift}%` } as React.CSSProperties}
-                    />
+                    <svg className="w-full h-full">
+                        <rect
+                            height="100%"
+                            width={`${drift}%`}
+                            className={cn("transition-all duration-500", drift < 10 ? "fill-green-500" : "fill-red-500")}
+                        />
+                    </svg>
                 </div>
             </div>
 

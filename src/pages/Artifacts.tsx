@@ -121,10 +121,13 @@ export default function Artifacts() {
                                 <div className="text-xs text-muted-foreground mt-1">{version.timestamp}</div>
                                 <div className="mt-2 flex items-center gap-2">
                                     <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className={cn("h-full rounded-full transition-all", version.inclusionScore >= 75 ? "bg-green-500" : "bg-yellow-500")}
-                                            style={{ width: `${version.inclusionScore}%` }}
-                                        />
+                                        <svg className="w-full h-full">
+                                            <rect
+                                                height="100%"
+                                                width={`${version.inclusionScore}%`}
+                                                className={cn("transition-all duration-500", version.inclusionScore >= 75 ? "fill-green-500" : "fill-yellow-500")}
+                                            />
+                                        </svg>
                                     </div>
                                     <span className="text-[10px] font-mono text-muted-foreground">{version.inclusionScore}%</span>
                                 </div>

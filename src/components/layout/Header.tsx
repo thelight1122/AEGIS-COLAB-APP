@@ -1,5 +1,6 @@
 
 import { cn } from '../../lib/utils';
+import { AuthStatus } from '../ui';
 
 interface HeaderProps {
     className?: string;
@@ -31,6 +32,8 @@ export function Header({ className, title = "AEGIS Coherence Chamber" }: HeaderP
                     <div className="h-full bg-transparent w-[30%]" />
                 </div>
                 <span className="text-xs text-muted-foreground">70% Coherence</span>
+                <div className="h-4 w-px bg-border mx-1" />
+                <AuthStatus />
             </div>
         </header>
     );

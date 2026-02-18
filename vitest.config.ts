@@ -7,7 +7,7 @@ export default mergeConfig(
         test: {
             globals: true,
             environment: 'node',
-            include: ['src/**/*.test.ts'],
+            include: ['src/**/*.test.{ts,tsx}'],
 
             // Keep console output normal, also emit JUnit
             reporters: ['default', 'junit'],

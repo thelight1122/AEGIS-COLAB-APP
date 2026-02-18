@@ -9,8 +9,8 @@ const baseArtifact: Artifact = {
 };
 
 const peers: Peer[] = [
-    { id: "Tracey", type: "human", declaredDomains: ["Operational Layer"], lensIds: [] },
-    { id: "Auditor-1", type: "human", declaredDomains: ["Canon Integrity"], lensIds: [] },
+    { id: "Tracey", type: "human", domains: ["Operational Layer"] },
+    { id: "Auditor-1", type: "human", domains: ["Canon Integrity"] },
 ];
 
 const lenses: Lens[] = [

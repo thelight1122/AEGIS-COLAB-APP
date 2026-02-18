@@ -106,7 +106,7 @@ export default function Peers() {
                     <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
                         <Upload className="w-3.5 h-3.5" /> Import
                     </Button>
-                    <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+                    <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} title="Import Peers JSON" aria-label="Import Peers JSON" />
                     <Button size="sm" onClick={openCreate} className="gap-1.5">
                         <Plus className="w-3.5 h-3.5" /> Add Peer
                     </Button>
@@ -292,6 +292,7 @@ function PeerForm({ initial, onSave, onCancel }: PeerFormProps) {
                 <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground uppercase">Type</label>
                     <select
+                        title="Peer Type"
                         className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         value={type}
                         onChange={(e) => setType(e.target.value as Peer['type'])}
@@ -303,6 +304,7 @@ function PeerForm({ initial, onSave, onCancel }: PeerFormProps) {
                 <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground uppercase">Status</label>
                     <select
+                        title="Peer Status"
                         className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         value={status}
                         onChange={(e) => setStatus(e.target.value as Peer['status'])}

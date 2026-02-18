@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { loadSessions, saveSessions, applyAbandonment } from '../../core/sessions/sessionStore';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { ConfigStatus } from '../ui/ConfigStatus';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -22,13 +23,16 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-auto p-6 relative">
-                    {children}
-                </main>
+        <div className="flex flex-col h-screen w-full bg-background text-foreground overflow-hidden">
+            <ConfigStatus />
+            <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <Header />
+                    <main className="flex-1 overflow-auto p-6 relative">
+                        {children}
+                    </main>
+                </div>
             </div>
         </div>
     );

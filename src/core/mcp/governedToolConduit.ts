@@ -1,5 +1,3 @@
-import { readFile } from "fs/promises";
-import { createHash } from "crypto";
 import {
     OperationStatus,
     enforceReadOnly
@@ -12,18 +10,19 @@ import {
 } from "./opLedgerStore";
 import { isPathAllowed } from "./pathPolicy";
 
-const MAX_CONTENT_BYTES = 100 * 1024; // 100KB default cap for storage
-
 /**
  * Executes a governed read-only tool (fs.readFile) for a given operation.
- * Enforces all governance constraints and records the result in the ledger.
- * Uses deterministic caching to avoid re-executing successful tools for the same opId.
+ * BROWSER-SAFE STUB: In Phase 1, filesystem access is not available in the browser.
+ * This function validates governance constraints and records a deterministic failure.
+ * 
+ * NOTE: This function does not throw on environment-related failures (BROWSER_UNSUPPORTED)
+ * to ensure UI stability, but it will throw on missing ledger state or invalid metadata.
  */
 export async function executeGovernedReadOnlyTool(
     opId: string,
     toolInput: { path: string; encoding?: "utf8" | "base64" }
 ) {
-    const { path, encoding = "utf8" } = toolInput;
+    const { path } = toolInput;
     const ledger = loadOps();
 
     // 1. Locate the operation by ID
@@ -66,67 +65,25 @@ export async function executeGovernedReadOnlyTool(
         throw new Error(`Execution failed: Path "${path}" is not in the permitted allowlist.`);
     }
 
-    // 5. Deterministic Caching: Replay existing success result
-    if (op.status === OperationStatus.Executed && op.result?.outcome === "success") {
-        return op;
-    }
+    // 5. Browser-safe failure recording
+    const message = "Read-only filesystem tool requires server context (Phase 1: not available in browser).";
 
-    try {
-        // 6. Execute Tool
-        const contentBuffer = await readFile(path);
-        const bytes = contentBuffer.length;
-        const content = encoding === "base64"
-            ? contentBuffer.toString("base64")
-            : contentBuffer.toString("utf8");
-
-        // 7. Generate Deterministic Hash
-        const hash = createHash("sha256").update(contentBuffer).digest("hex");
-
-        // 8. Store Result (with size-based cap)
-        const storeContent = bytes <= MAX_CONTENT_BYTES;
-
-        const resultData = {
-            path,
-            encoding,
-            bytes,
-            hash,
-            content: storeContent ? content : undefined,
-            contentPreview: content.slice(0, 500) + (content.length > 500 ? "..." : ""),
-            omittedDueToSize: !storeContent
-        };
-
-        const updatedOps = updateOpStatus(opId, {
-            status: OperationStatus.Executed,
-            result: {
-                completedAt: Date.now(),
-                outcome: "success",
-                data: resultData,
-                appendOnlyHash: hash
+    const failedOps = updateOpStatus(opId, {
+        status: OperationStatus.Failed,
+        result: {
+            completedAt: Date.now(),
+            outcome: "error",
+            data: { path },
+            error: {
+                code: "BROWSER_UNSUPPORTED",
+                message
             }
-        });
+        }
+    });
 
-        const nextCurrent = deriveCurrentOps(updatedOps);
-        return nextCurrent.find(o => findOriginalId(o, updatedOps) === lineageId);
+    const nextCurrent = deriveCurrentOps(failedOps);
+    const resultOp = nextCurrent.find(o => findOriginalId(o, failedOps) === lineageId);
 
-    } catch (err) {
-        const e = err as { code?: string; message: string };
-        // Record failure in ledger
-        const failedOps = updateOpStatus(opId, {
-            status: OperationStatus.Failed,
-            result: {
-                completedAt: Date.now(),
-                outcome: "error" as const,
-                data: { path },
-                error: {
-                    code: e.code || "TOOL_EXECUTION_ERROR",
-                    message: e.message
-                }
-            }
-        });
-
-        // Record in ledger
-        deriveCurrentOps(failedOps); // Ensure derived state is updated
-
-        throw e; // Re-throw to inform caller, but record is now in ledger
-    }
+    // Return the failed operation instead of throwing, per browser-safety requirements.
+    return resultOp;
 }
