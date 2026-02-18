@@ -139,7 +139,7 @@ describe('AuthCallbackPage', () => {
 
         vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
             data: { session: null, user: null },
-            error: { message: 'Invalid code', name: 'AuthError', status: 400 } as any
+            error: { message: 'Invalid code', name: 'AuthError', status: 400 } as unknown as AuthTokenResponse['error']
         } as AuthTokenResponse);
 
         render(
@@ -161,7 +161,7 @@ describe('AuthCallbackPage', () => {
         vi.mocked(supabase.auth.getSession).mockResolvedValue({
             data: { session: mockSession },
             error: null
-        } as any);
+        } as unknown as AuthTokenResponse);
 
         render(
             <MemoryRouter>

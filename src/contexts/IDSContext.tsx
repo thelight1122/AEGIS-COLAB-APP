@@ -1,3 +1,4 @@
+"use client";
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { type IDSCard, type Attachment, MOCK_IDS_FEED } from '../types';
 import { isE2E } from '../lib/e2e';
@@ -95,6 +96,7 @@ export function IDSProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIDS() {
     const context = useContext(IDSContext);
     if (!context) {

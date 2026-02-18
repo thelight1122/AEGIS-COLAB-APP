@@ -7,6 +7,6 @@ declare global {
             seedScenarioLockableAfterActions: () => void;
             seedReadyToLock: () => void;
         };
-        __AEGIS_LAST_METADATA__?: any;
+        __AEGIS_LAST_METADATA__?: unknown;
     }
 }

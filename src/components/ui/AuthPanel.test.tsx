@@ -80,7 +80,7 @@ describe('AuthPanel', () => {
         vi.mocked(useAuthSession).mockReturnValue({ session: null, user: null, loading: false });
         const rateLimitPromise = Promise.resolve({
             data: { user: null, session: null },
-            error: { message: 'Email rate limit exceeded', status: 429 } as unknown as any
+            error: { message: 'Email rate limit exceeded', status: 429 } as unknown as AuthOtpResponse['error']
         } as AuthOtpResponse);
         vi.mocked(supabase.auth.signInWithOtp).mockReturnValue(rateLimitPromise);
 

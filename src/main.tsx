@@ -8,7 +8,7 @@ import { e2eHarness } from './core/e2e/e2eHarness'
 declare global {
   interface Window {
     __AEGIS_E2E__?: typeof e2eHarness;
-    __AEGIS_LAST_METADATA__?: any;
+    __AEGIS_LAST_METADATA__?: unknown;
   }
 }
 
