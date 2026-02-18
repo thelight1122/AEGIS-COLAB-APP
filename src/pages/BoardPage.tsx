@@ -39,6 +39,12 @@ interface Message {
     created_at: string;
 }
 
+interface Presence {
+    peer_id: string;
+    status: 'online' | 'away' | 'offline';
+    last_seen_at: string;
+}
+
 /** Produce a short suffix from a UUID for display (last 6 chars) */
 function shortId(id: string): string {
     return id.slice(-6);
@@ -55,6 +61,8 @@ export default function BoardPage() {
 
     const { proposeReadOnlyToolCall, recordResult } = useGovernedOperations('shared-board');
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [presenceMap, setPresenceMap] = useState<Record<string, Presence>>({});
+    const [sharePresence, setSharePresence] = useState(true);
 
     const [peersLoading, setPeersLoading] = useState(true);
     const [peersError, setPeersError] = useState<string | null>(null);
@@ -158,6 +166,36 @@ export default function BoardPage() {
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [messagesError, setMessagesError] = useState<string | null>(null);
 
+    // ── Realtime: Threads (Part 1) ───────────────────────────────────
+    useEffect(() => {
+        if (!session) return;
+
+        const channel = supabase
+            .channel('public:threads')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'threads'
+            }, (payload) => {
+                const newThread = payload.new as Thread;
+                setThreads((prev) => {
+                    if (prev.some(t => t.id === newThread.id)) return prev;
+                    return [newThread, ...prev];
+                });
+            })
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('[threads.realtime] Subscribed');
+                } else {
+                    console.error('[threads.realtime] Subscription error:', status);
+                }
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session]);
+
     // ... (existing code)
 
     const fetchMessages = useCallback(async (threadId: string) => {
@@ -183,6 +221,7 @@ export default function BoardPage() {
 
     const sendMessage = async () => {
         if (!session || !user || !newMessage.trim() || !selectedThreadId) return;
+        setActionError(null);
 
         // Determine author identity: prefer selected peer, fallback to session user
         const authorPeerId = selectedPeerId || user.id;
@@ -228,7 +267,7 @@ export default function BoardPage() {
         } catch (error: unknown) {
             console.error('[messages.insert]', error);
             const message = error instanceof Error ? error.message : 'Unknown error';
-            alert(`Failed to send message: ${message}`); // Simple UI feedback
+            setActionError(message);
             recordResult(opId, 'error', { error: message });
             // Optionally restore the message to input? (Complexity for Phase 1, skipping)
         }
@@ -242,6 +281,8 @@ export default function BoardPage() {
     useEffect(() => {
         if (selectedThreadId) {
             fetchMessages(selectedThreadId);
+
+            // Realtime: Messages (Part 2)
             const subscription = supabase
                 .channel(`thread-${selectedThreadId}`)
                 .on('postgres_changes', {
@@ -250,9 +291,18 @@ export default function BoardPage() {
                     table: 'messages',
                     filter: `thread_id=eq.${selectedThreadId}`
                 }, (payload) => {
-                    setMessages((prev) => [...prev, payload.new as Message]);
+                    const newMessage = payload.new as Message;
+                    setMessages((prev) => {
+                        // Dedupe by message id
+                        if (prev.some(m => m.id === newMessage.id)) return prev;
+                        return [...prev, newMessage];
+                    });
                 })
-                .subscribe();
+                .subscribe((status) => {
+                    if (status !== 'SUBSCRIBED') {
+                        console.error('[messages.realtime] Subscription error:', status);
+                    }
+                });
 
             return () => {
                 supabase.removeChannel(subscription);
@@ -260,16 +310,29 @@ export default function BoardPage() {
         }
     }, [selectedThreadId, fetchMessages]);
 
+    const [autoScroll, setAutoScroll] = useState(true);
+
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        const scrollEl = scrollRef.current;
+        if (!scrollEl) return;
+
+        // If autoScroll is on, stick to bottom
+        if (autoScroll) {
+            scrollEl.scrollTop = scrollEl.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, autoScroll]);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const el = e.currentTarget;
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 50;
+        setAutoScroll(isAtBottom);
+    };
 
     // ── Actions ──────────────────────────────────────────────────────
 
     const createThread = async () => {
         if (!session || !user) return;
+        setActionError(null);
         const title = prompt('Thread Title:');
         if (!title) return;
 
@@ -294,7 +357,7 @@ export default function BoardPage() {
 
         if (error) {
             console.error('[threads.insert]', error);
-            alert(`Failed to create thread: ${error.message}`);
+            setActionError(error.message || 'Failed to create thread.');
             return;
         }
 
@@ -304,9 +367,91 @@ export default function BoardPage() {
         }
     };
 
+    // ── Presence Heartbeat & Subscription (Part 3 & 4) ─────────────
+    useEffect(() => {
+        if (!session || !selectedPeerId || !sharePresence) return;
+
+        // 1. Initial heartbeat
+        const heartbeat = async (status: 'online' | 'away' | 'offline' = 'online') => {
+            await supabase.from('peer_presence').upsert({
+                peer_id: selectedPeerId,
+                status: status,
+                last_seen_at: new Date().toISOString()
+            });
+        };
+
+        heartbeat();
+
+        // 2. 30s interval
+        const interval = setInterval(() => heartbeat(), 30000);
+
+        // 3. Page visibility away state
+        const handleVisibilityChange = () => {
+            heartbeat(document.visibilityState === 'visible' ? 'online' : 'away');
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // 4. Presence Subscription
+        const channel = supabase
+            .channel('public:peer_presence')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'peer_presence'
+            }, (payload) => {
+                const updated = payload.new as Presence;
+                setPresenceMap(prev => ({
+                    ...prev,
+                    [updated.peer_id]: updated
+                }));
+            })
+            .subscribe();
+
+        // Initial presence fetch
+        const loadPresence = async () => {
+            const { data } = await supabase.from('peer_presence').select('*');
+            if (data) {
+                const map: Record<string, Presence> = {};
+                data.forEach(p => { map[p.peer_id] = p as Presence; });
+                setPresenceMap(map);
+            }
+        };
+        loadPresence();
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            supabase.removeChannel(channel);
+            // Best effort offline
+            heartbeat('offline');
+        };
+    }, [session, selectedPeerId, sharePresence]);
+
+    const getPresenceStatus = (peerId: string) => {
+        const p = presenceMap[peerId];
+        if (!p) return 'offline';
+
+        const lastSeen = new Date(p.last_seen_at).getTime();
+        const now = new Date().getTime();
+        const diff = (now - lastSeen) / 1000;
+
+        if (diff > 300) return 'offline'; // 5 mins
+        if (p.status === 'away' || diff > 60) return 'away'; // 1 min or explicit away
+        return 'online';
+    };
+
 
 
     // ── Render ────────────────────────────────────────────────────────
+
+    if (authLoading || (session && peersLoading)) {
+        return (
+            <div className="flex flex-col h-full items-center justify-center gap-4 text-muted-foreground animate-pulse">
+                <Bot className="w-8 h-8 opacity-50" />
+                <p className="text-sm font-medium">Loading AEGIS Identity...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full gap-4 overflow-hidden">
@@ -332,7 +477,8 @@ export default function BoardPage() {
                 <div className="w-64 flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="font-bold text-lg">Threads</h2>
-                        <Button variant="ghost" size="sm" onClick={createThread} disabled={!session}>
+                        {/* Disable create if offline or loading */}
+                        <Button variant="ghost" size="sm" onClick={createThread} disabled={!session || threadsLoading}>
                             <PlusCircle className="w-4 h-4" />
                         </Button>
                     </div>
@@ -383,7 +529,10 @@ export default function BoardPage() {
 
                     {/* Identity / "Post As" Section */}
                     <div className="mt-auto pt-4 border-t space-y-2">
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Post As</div>
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] flex justify-between">
+                            Post As
+                            {peersError && <span className="text-destructive font-bold text-[10px]">{peersError}</span>}
+                        </div>
 
                         {/* Deterministic identity badge */}
                         <div className={cn(
@@ -418,6 +567,23 @@ export default function BoardPage() {
                                 ))}
                             </select>
                         )}
+
+                        <div className="pt-2 px-1">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={sharePresence}
+                                    onChange={(e) => setSharePresence(e.target.checked)}
+                                    className="w-3 h-3 rounded border-border"
+                                />
+                                <span className="text-[10px] text-muted-foreground group-hover:text-primary transition-colors uppercase tracking-tight font-medium">
+                                    Share Presence
+                                </span>
+                            </label>
+                            <p className="text-[9px] text-muted-foreground/60 leading-tight mt-1">
+                                Presence uses last_seen timestamps while active.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -433,6 +599,7 @@ export default function BoardPage() {
                         <div
                             className="flex-1 overflow-y-auto p-4 space-y-4"
                             ref={scrollRef}
+                            onScroll={handleScroll}
                         >
                             {messagesLoading && messages.length === 0 && (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
@@ -469,6 +636,11 @@ export default function BoardPage() {
                                         </Avatar>
                                         <div className={cn("flex flex-col max-w-[80%]", isAI ? "items-end" : "items-start")}>
                                             <div className="flex items-center gap-2 mb-1">
+                                                <div className={cn(
+                                                    "w-1.5 h-1.5 rounded-full shrink-0",
+                                                    getPresenceStatus(m.author_peer_id) === 'online' ? "bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" :
+                                                        getPresenceStatus(m.author_peer_id) === 'away' ? "bg-yellow-500" : "bg-muted-foreground/30"
+                                                )} />
                                                 <span className="text-xs font-bold">{author?.display_name || 'Unknown'}</span>
                                                 <span className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleTimeString()}</span>
                                             </div>
@@ -484,9 +656,28 @@ export default function BoardPage() {
                             })}
                         </div>
 
+                        {!autoScroll && (
+                            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="text-[10px] px-3 py-1.5 h-auto rounded-full shadow-lg border animate-in slide-in-from-bottom-2"
+                                    onClick={() => setAutoScroll(true)}
+                                >
+                                    <PlusCircle className="w-3 h-3 mr-1.5" />
+                                    New messages below
+                                </Button>
+                            </div>
+                        )}
+
 
                         {/* Compose Box */}
                         <div className="p-4 border-t bg-muted/30 shrink-0">
+                            {actionError && (
+                                <div className="text-xs text-destructive bg-destructive/10 p-2 rounded mb-2 border border-destructive/20 animate-in slide-in-from-bottom-2 fade-in">
+                                    <span className="font-bold">Error:</span> {actionError}
+                                </div>
+                            )}
                             {session ? (
                                 <div className="flex gap-2">
                                     <Input
@@ -494,8 +685,13 @@ export default function BoardPage() {
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                        disabled={!selectedThreadId}
                                     />
-                                    <Button onClick={sendMessage} size="icon">
+                                    <Button
+                                        onClick={sendMessage}
+                                        size="icon"
+                                        disabled={!selectedThreadId || !newMessage.trim()}
+                                    >
                                         <Send className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -509,6 +705,13 @@ export default function BoardPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Dev Debug Footer (visible in DEV only) */}
+            {import.meta.env.DEV && (
+                <div className="text-[10px] text-muted-foreground/40 font-mono text-center pb-1">
+                    DEV DEBUG: UID:{shortId(user?.id || '')} | Peer:{shortId(selectedPeerId || '')} | Type:{currentPeerType}
+                </div>
+            )}
         </div >
     );
 }
