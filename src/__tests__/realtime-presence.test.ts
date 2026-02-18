@@ -74,4 +74,21 @@ describe('Realtime & Presence Contract', () => {
             expect(boardCode).toContain('bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]');
         });
     });
+
+    describe('AI Peer Simulator (DEV)', () => {
+        it('should contain a simulation panel in DEV mode', () => {
+            expect(boardCode).toContain('import.meta.env.DEV');
+            expect(boardCode).toContain('AI Simulator');
+            expect(boardCode).toContain('simulateAIMessage');
+        });
+
+        it('should parse simulated AI names from body', () => {
+            expect(boardCode).toContain('m.kind === \'ai_sim\'');
+            expect(boardCode).toContain('m.body.match(/^\\[SIM:([^\\]]+)\\] (.*)/)');
+        });
+
+        it('should display AI badges for simulated posts', () => {
+            expect(boardCode).toContain('AI</span>}');
+        });
+    });
 });

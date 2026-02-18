@@ -59,6 +59,10 @@ export default function BoardPage() {
     const [newMessage, setNewMessage] = useState('');
     const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
 
+    // AI Simulator State (Dev Only)
+    const [simAIName, setSimAIName] = useState('Lumin');
+    const [simAIMessage, setSimAIMessage] = useState('');
+
     const { proposeReadOnlyToolCall, recordResult } = useGovernedOperations('shared-board');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [presenceMap, setPresenceMap] = useState<Record<string, Presence>>({});
@@ -270,6 +274,38 @@ export default function BoardPage() {
             setActionError(message);
             recordResult(opId, 'error', { error: message });
             // Optionally restore the message to input? (Complexity for Phase 1, skipping)
+        }
+    };
+
+    const simulateAIMessage = async () => {
+        if (!session || !user || !selectedThreadId || !simAIMessage.trim()) return;
+        setActionError(null);
+
+        const authorPeerId = selectedPeerId || user.id;
+
+        try {
+            const body = simAIMessage.trim();
+            const { data, error } = await supabase
+                .from('messages')
+                .insert([{
+                    thread_id: selectedThreadId,
+                    author_peer_id: authorPeerId,
+                    author_peer_type: 'ai', // Render as AI bubble
+                    kind: 'ai_sim',         // Mark as simulation
+                    body: `[SIM:${simAIName}] ${body}`
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                setMessages(prev => (prev.some(m => m.id === data.id) ? prev : [...prev, data]));
+                setSimAIMessage('');
+            }
+        } catch (error: unknown) {
+            console.error('[messages.simulate]', error);
+            const message = error instanceof Error ? error.message : 'Simulation failed';
+            setActionError(message);
         }
     };
 
@@ -568,6 +604,42 @@ export default function BoardPage() {
                             </select>
                         )}
 
+                        {/* AI Simulator Panel (Dev-only) */}
+                        {import.meta.env.DEV && (
+                            <div className="mt-4 p-3 rounded-lg border border-purple-500/30 bg-purple-500/5 space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="text-[10px] font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Bot className="w-3 h-3" /> AI Simulator
+                                </div>
+                                <select
+                                    title="AI Name"
+                                    className="w-full bg-background border border-purple-500/20 rounded p-1 text-xs focus:border-purple-500/50"
+                                    value={simAIName}
+                                    onChange={(e) => setSimAIName(e.target.value)}
+                                >
+                                    <option value="Lumin">Lumin (Analytic)</option>
+                                    <option value="Haven">Haven (Secure)</option>
+                                    <option value="Shield">Shield (Governance)</option>
+                                    <option value="Echo">Echo (Coordination)</option>
+                                </select>
+                                <Input
+                                    placeholder="AI thought..."
+                                    className="h-8 text-xs border-purple-500/20"
+                                    value={simAIMessage}
+                                    onChange={(e) => setSimAIMessage(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && simulateAIMessage()}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full h-7 text-[10px] border-purple-500/40 hover:bg-purple-500/10 text-purple-600"
+                                    onClick={simulateAIMessage}
+                                    disabled={!simAIMessage.trim()}
+                                >
+                                    Simulate AI Post
+                                </Button>
+                            </div>
+                        )}
+
                         <div className="pt-2 px-1">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
@@ -625,7 +697,19 @@ export default function BoardPage() {
 
                             {!messagesError && messages.map((m) => {
                                 const author = peers.find(p => p.id === m.author_peer_id);
-                                const isAI = m.author_peer_type === 'ai';
+                                let isAI = m.author_peer_type === 'ai';
+                                let displayName = author?.display_name || 'Unknown';
+                                let messageBody = m.body;
+
+                                // Handle Simulated AI authorship
+                                if (m.kind === 'ai_sim') {
+                                    isAI = true; // Force AI styling
+                                    const simMatch = m.body.match(/^\[SIM:([^\]]+)\] (.*)/);
+                                    if (simMatch) {
+                                        displayName = simMatch[1];
+                                        messageBody = simMatch[2];
+                                    }
+                                }
 
                                 return (
                                     <div key={m.id} className={cn("flex gap-3", isAI ? "flex-row-reverse" : "flex-row")}>
@@ -641,14 +725,17 @@ export default function BoardPage() {
                                                     getPresenceStatus(m.author_peer_id) === 'online' ? "bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" :
                                                         getPresenceStatus(m.author_peer_id) === 'away' ? "bg-yellow-500" : "bg-muted-foreground/30"
                                                 )} />
-                                                <span className="text-xs font-bold">{author?.display_name || 'Unknown'}</span>
+                                                <span className="text-xs font-bold flex items-center gap-1.5">
+                                                    {displayName}
+                                                    {isAI && <span className="bg-purple-100 text-purple-700 text-[9px] px-1 rounded font-black tracking-tighter border border-purple-200">AI</span>}
+                                                </span>
                                                 <span className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleTimeString()}</span>
                                             </div>
                                             <div className={cn(
                                                 "px-3 py-2 rounded-lg text-sm whitespace-pre-wrap",
                                                 isAI ? "bg-purple-600 text-white" : "bg-muted text-foreground"
                                             )}>
-                                                {m.body}
+                                                {messageBody}
                                             </div>
                                         </div>
                                     </div>
