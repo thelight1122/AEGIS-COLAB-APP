@@ -18,27 +18,29 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
     const { inclusionScore, drift, lenses, lockAvailable } = telemetry;
     const [deferringLens, setDeferringLens] = useState<string | null>(null);
     const [rationale, setRationale] = useState('');
+    const [isEligibilityExpanded, setIsEligibilityExpanded] = useState(false);
 
     const activeLenses = lenses.filter((l) => l.status === 'active');
     const missingLenses = lenses.filter((l) => l.status === 'missing');
     const deferredLenses = lenses.filter((l) => l.status === 'deferred');
 
     const totalMissing = missingLenses.length;
-    const score = inclusionScore;
 
-    // Love Vibe Shift logic: towards HSL(320, 80%, 95%) as convergence nears 100%
-    const intensity = Math.max(0, (score - 50) / 50) * (totalMissing === 0 ? 1 : 0.7);
-    const bgGradient = `linear-gradient(135deg, 
-        hsl(var(--card)) 0%, 
-        ${intensity > 0.1 ? `hsla(320, 80%, 95%, ${intensity * 0.15})` : 'hsl(var(--card))'} 100%
-    )`;
+    // Love Vibe Shift: transition towards hsla(320, 70%, 45%, alpha) as score reaches 100%
+    const alpha = Math.min(0.2, (inclusionScore / 100) * 0.2);
+    const resolvedIntensity = Math.max(0, 100 - (totalMissing * 20)) / 100;
+    const bgGradient = `linear-gradient(135deg, hsl(var(--card)) 0%, hsla(320, 70%, 45%, ${alpha * resolvedIntensity}) 100%)`;
+
     const allAcknowledged = peers.length > 0 && peers.every((p) => p.acknowledged);
     const inclusionMet = inclusionScore >= LOCK_INCLUSION_THRESHOLD;
 
-    const handleDeferSubmit = (lensName: string) => {
-        onDeferLens(lensName, rationale);
-        setDeferringLens(null);
-        setRationale('');
+    const handleDeferSubmit = (lensName: string, skip: boolean = false) => {
+        const finalRationale = skip ? 'Explicitly skipped by participant' : rationale.trim();
+        if (finalRationale) {
+            onDeferLens(lensName, finalRationale);
+            setDeferringLens(null);
+            setRationale('');
+        }
     };
 
     const containerRef = useRef<HTMLDivElement>(null);
@@ -53,12 +55,66 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
         <div
             ref={containerRef}
             className="telemetry-panel-container h-full border-l border-border flex flex-col p-4 space-y-5 overflow-y-auto transition-all duration-1000"
+            data-score={inclusionScore}
         >
-            {/* Header */}
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                Coherence Telemetry
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Coherence Telemetry
+                </h3>
+                <div className="text-[10px] font-mono text-primary animate-pulse">LIVE</div>
+            </div>
+
+            {/* Lock Eligibility Banner (GI-002) */}
+            <div
+                className={cn(
+                    "rounded-lg p-2.5 border transition-all cursor-pointer select-none",
+                    lockAvailable
+                        ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400"
+                        : "bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400"
+                )}
+                onClick={() => setIsEligibilityExpanded(!isEligibilityExpanded)}
+                data-testid="lock-eligibility-banner"
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-tight">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Lock Eligibility: {lockAvailable ? "Ready" : "Pending"}
+                    </div>
+                    <span className="text-[10px] opacity-70">{isEligibilityExpanded ? 'Collapse' : 'Details'}</span>
+                </div>
+                {!lockAvailable && !isEligibilityExpanded && (
+                    <div className="mt-1 text-[10px] leading-tight opacity-90 truncate">
+                        {telemetry.inclusion?.reasons[0] || "Requirements not met"}
+                    </div>
+                )}
+                {isEligibilityExpanded && (
+                    <div className="mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200" data-testid="eligibility-details">
+                        {telemetry.inclusion?.reasons.length ? (
+                            telemetry.inclusion.reasons.map((r, i) => (
+                                <div key={i} className="text-[10px] leading-tight flex gap-1.5">
+                                    <span className="opacity-50">•</span>
+                                    <span>{r}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-[10px] italic opacity-70">No specific blockers identified.</div>
+                        )}
+                        {!inclusionMet && (
+                            <div className="text-[10px] leading-tight flex gap-1.5 font-medium">
+                                <span className="opacity-50">•</span>
+                                <span>Awareness: {inclusionScore}% (Target: {LOCK_INCLUSION_THRESHOLD}%)</span>
+                            </div>
+                        )}
+                        {!allAcknowledged && (
+                            <div className="text-[10px] leading-tight flex gap-1.5 text-yellow-600 dark:text-yellow-400">
+                                <span className="opacity-50">•</span>
+                                <span>Awaiting peer acknowledgments</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Inclusion Meter */}
             <div className="space-y-1">
@@ -87,7 +143,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
             <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                     <span>Drift Signal</span>
-                    <span className={cn("font-medium", drift < 10 ? "text-green-500" : "text-red-500")}>
+                    <span className={cn("font-medium", drift < 10 ? "text-green-500" : "text-red-500")} data-testid="drift-percent">
                         {drift}%
                     </span>
                 </div>
@@ -136,6 +192,7 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                     peer.acknowledged ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                                 )}
                                 onClick={() => !peer.acknowledged && onAcknowledge(peer.id)}
+                                data-testid={`peer-ack-${peer.id}`}
                             >
                                 {peer.acknowledged ? '✓' : '...'}
                             </span>
@@ -209,16 +266,19 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                                 </div>
                                 {deferringLens === lens.name && (
                                     <div className="flex flex-col gap-2 mt-1 animate-in slide-in-from-top-1 duration-200">
+                                        <div className="text-[9px] font-semibold text-muted-foreground uppercase px-0.5">Rationale for deferral (optional for Peer, required for ledger)</div>
                                         <textarea
-                                            className="text-[10px] bg-background border border-border rounded p-1.5 min-h-[40px] focus:outline-none focus:ring-1 focus:ring-primary"
-                                            placeholder="Reason for deferral (optional)..."
+                                            className="text-[10px] bg-background border border-border rounded p-1.5 min-h-[50px] focus:outline-none focus:ring-1 focus:ring-primary"
+                                            placeholder="Why is this lens being deferred at this time?"
                                             value={rationale}
                                             onChange={(e) => setRationale(e.target.value)}
                                             data-testid="defer-rationale"
+                                            autoFocus
                                         />
                                         <div className="flex justify-end gap-1">
-                                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setDeferringLens(null)}>Cancel</Button>
-                                            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name)} data-testid="confirm-defer">Save</Button>
+                                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setDeferringLens(null)}>Cancel</Button>
+                                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name, true)} data-testid="skip-defer">Skip Rationale</Button>
+                                            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => handleDeferSubmit(lens.name)} data-testid="confirm-defer">Save & Defer</Button>
                                         </div>
                                     </div>
                                 )}
@@ -228,30 +288,22 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                 )}
             </div>
 
-            {/* Lock Button */}
-            <div className="pt-3 border-t border-border mt-auto">
-                {lockAvailable ? (
-                    <button
-                        className="w-full py-2.5 px-4 rounded-md flex items-center justify-center gap-2 font-medium transition-all text-sm bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm animate-in fade-in zoom-in duration-300"
+            {/* Lock Button - Strict Visibility Gating (GI-001) */}
+            {lockAvailable && (
+                <div className="pt-3 border-t border-border mt-auto animate-in fade-in zoom-in-95 duration-300">
+                    <Button
+                        className={cn(
+                            "w-full py-6 font-bold uppercase tracking-widest text-xs transition-all shadow-lg",
+                            "bg-primary text-primary-foreground hover:scale-[1.02]"
+                        )}
                         onClick={onLockVersion}
-                        id="lock-version-button"
                         data-testid="lock-button"
                     >
-                        <Lock className="w-4 h-4" />
-                        Lock Version
-                    </button>
-                ) : (
-                    <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                        <div className="flex items-center gap-2 mb-2 font-semibold uppercase tracking-tighter opacity-70">
-                            <Activity className="w-3 h-3" />
-                            Convergence Pending
-                        </div>
-                        {!allAcknowledged && <p>• Waiting for peer acknowledgments</p>}
-                        {missingLenses.length > 0 && <p>• Missing lens coverage ({missingLenses.length})</p>}
-                        {!inclusionMet && <p>• Inclusion below {LOCK_INCLUSION_THRESHOLD}%</p>}
-                    </div>
-                )}
-            </div>
+                        <Lock className="w-4 h-4 mr-2" />
+                        Lock Operational Version
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

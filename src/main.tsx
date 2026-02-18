@@ -5,8 +5,15 @@ import App from './App.tsx'
 import { isE2E } from './lib/e2e'
 import { e2eHarness } from './core/e2e/e2eHarness'
 
+declare global {
+  interface Window {
+    __AEGIS_E2E__?: typeof e2eHarness;
+    __AEGIS_LAST_METADATA__?: any;
+  }
+}
+
 if (isE2E()) {
-  (window as any).__AEGIS_E2E__ = e2eHarness;
+  window.__AEGIS_E2E__ = e2eHarness;
 }
 
 createRoot(document.getElementById('root')!).render(

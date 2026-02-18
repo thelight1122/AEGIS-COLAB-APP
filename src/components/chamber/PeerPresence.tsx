@@ -88,7 +88,7 @@ export function PeerPresence({ peers, onAcknowledge }: PeerPresenceProps) {
                                         variant="ghost"
                                         size="sm"
                                         className="h-5 px-2 text-[10px]"
-                                        data-testid={`peer-ack-${peer.id}`}
+                                        data-testid={`presence-peer-ack-${peer.id}`}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onAcknowledge(peer.id);

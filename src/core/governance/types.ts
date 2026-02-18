@@ -25,12 +25,24 @@ export type Lens = {
     autoReview: boolean;
 };
 
+export type LensAcknowledgments = Record<string, boolean | string>;
+
+export interface BaseGovernanceEvent {
+    timestamp: number;
+    timestamp_utc: string; // ISO 8601 with Z
+    participant_session_id: string;
+    awareness_score_before: number; // 0-100
+    awareness_score_after: number; // 0-100
+    lens_acknowledgments?: LensAcknowledgments;
+}
+
 export type GovernanceEvent =
-    | { type: "AWARENESS_ACK"; peerId: string; timestamp: number }
-    | { type: "CONTRIBUTION"; peerId: string; lensId?: string; timestamp: number }
-    | { type: "PROXY_REVIEW"; lensId: string; timestamp: number }
-    | { type: "DEFER_LENS"; lensId: string; rationale: string; timestamp: number }
-    | { type: "LOCK_REQUEST"; timestamp: number };
+    | ({ type: "AWARENESS_ACK"; peerId: string } & BaseGovernanceEvent)
+    | ({ type: "CONTRIBUTION"; peerId: string; lensId?: string } & BaseGovernanceEvent)
+    | ({ type: "PROXY_REVIEW"; lensId: string } & BaseGovernanceEvent)
+    | ({ type: "DEFER_LENS"; lensId: string; rationale: string } & BaseGovernanceEvent)
+    | ({ type: "lens_deferral_with_rationale"; lensId: string; rationale: string } & BaseGovernanceEvent)
+    | ({ type: "LOCK_REQUEST" } & BaseGovernanceEvent);
 
 export type DeferredLens = { lensId: string; rationale: string };
 

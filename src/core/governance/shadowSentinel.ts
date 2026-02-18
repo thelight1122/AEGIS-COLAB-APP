@@ -38,7 +38,7 @@ export function detectShadowAffects(events: GovernanceEvent[]): string[] {
 
     events.forEach((event) => {
         // Only check events that carry textual rationale or context
-        if (event.type === "DEFER_LENS") {
+        if ("rationale" in event && typeof event.rationale === "string") {
             const content = event.rationale.toLowerCase();
 
             SURVIVAL_PATTERNS.forEach(re => {
@@ -48,11 +48,7 @@ export function detectShadowAffects(events: GovernanceEvent[]): string[] {
             PARENTAL_TONE_PATTERNS.forEach(re => {
                 if (re.test(content)) affects.push(`Parental Tone Detected: "${re.source.replace(/\\b/g, '')}"`);
             });
-        }
 
-        // Check for general glitches in any string fields if they existed, 
-        // but for now we look at general markers in rationale
-        if ("rationale" in event && typeof event.rationale === "string") {
             GLITCH_MARKERS.forEach(re => {
                 if (re.test(event.rationale)) affects.push(`Glitch Marker: "${re.source}"`);
             });

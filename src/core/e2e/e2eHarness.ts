@@ -25,14 +25,14 @@ export const e2eHarness = {
      */
     seedScenarioLockableAfterActions: () => {
         const e2ePeers = [
-            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering'] },
+            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering', 'Operational Layer'] },
             { id: 'p3', name: 'Sarah', type: 'human', role: 'Product', status: 'online', acknowledged: false, domains: ['Product'] },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
 
         localStorage.setItem("aegis_metadata_current-artifact", JSON.stringify({
             title: "Operational Layer — Prism Refract Behavior",
-            domains: ["Operational Layer", "Product"]
+            domains: ["Operational Layer", "Product", "Engineering"]
         }));
 
         localStorage.setItem("aegis.sessions.v0", JSON.stringify([]));

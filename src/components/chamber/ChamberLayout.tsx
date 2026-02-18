@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
-import { Tag, Edit2, Check } from 'lucide-react';
+import { Tag, Edit2, Check, History, Layout, Clock } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
@@ -59,6 +59,9 @@ export default function ChamberLayout() {
         setFocusNode
     } = useIDS();
 
+    const [displacedSnapshot, setDisplacedSnapshot] = useState<{ time: string, events: GovernanceEvent[] } | null>(null);
+    const [activeTab, setActiveTab] = useState<'whiteboard' | 'reflection'>('whiteboard');
+
     // Unified Governance Event Stream (Concurrency Model v0.1)
     const [governingEvents, setGoverningEvents] = useState<GovernanceEvent[]>(
         currentSession?.eventLog || []
@@ -85,6 +88,29 @@ export default function ChamberLayout() {
         return () => clearInterval(interval);
     }, [currentSession]);
 
+    // Session Protection (Multi-tab Hijack) (GI-003)
+    useEffect(() => {
+        if (!currentSession) return;
+        const channel = new BroadcastChannel(`aegis-session-${currentSession.id}`);
+
+        const handleMessage = (msg: MessageEvent) => {
+            if (msg.data.type === 'TAB_JOINED') {
+                // Another tab joined, snapshot and displace this one (SSSP)
+                const snapshotTime = new Date().toISOString();
+                setDisplacedSnapshot({ time: snapshotTime, events: governingEvents });
+                // We could also record an SSSP event to the ledger if we want
+            }
+        };
+
+        channel.addEventListener('message', handleMessage);
+        channel.postMessage({ type: 'TAB_JOINED' });
+
+        return () => {
+            channel.removeEventListener('message', handleMessage);
+            channel.close();
+        };
+    }, [currentSession, governingEvents]);
+
     // Artifact Metadata
     const [artifactMetadata, setArtifactMetadata] = useState(() => {
         const stored = localStorage.getItem(METADATA_KEY);
@@ -92,13 +118,15 @@ export default function ChamberLayout() {
             try {
                 const parsed = JSON.parse(stored);
                 return {
-                    title: parsed.label || parsed.title,
-                    domains: parsed.domainTags || parsed.domains || []
+                    title: parsed.label || parsed.title || parsed.labels?.[0] || 'Main Logic Protocol',
+                    domains: parsed.domainTags || parsed.domains || [],
+                    isHighImpact: !!parsed.isHighImpact,
+                    hasTension: !!parsed.hasTension
                 };
             } catch (e) { console.error('Failed to parse metadata', e); }
         }
 
-        if (currentSession?.artifactId === 'v4') {
+        if (currentSession?.artifactId === 'v4' || artifactId === 'v4') {
             return {
                 title: 'Operational Layer — Prism Refract Behavior',
                 domains: ['Engineering', 'Product', 'Risks'],
@@ -117,6 +145,12 @@ export default function ChamberLayout() {
 
     // Load peers from registry
     const registryPeers = useMemo(() => loadPeers(), []);
+
+    useEffect(() => {
+        if (isE2E()) {
+            window.__AEGIS_LAST_METADATA__ = artifactMetadata;
+        }
+    }, [artifactMetadata]);
 
     const [isEditingMetadata, setIsEditingMetadata] = useState(false);
     const [tempMetadata, setTempMetadata] = useState(artifactMetadata);
@@ -158,8 +192,8 @@ export default function ChamberLayout() {
             inclusionScore: Math.round(inclusion.awarenessPercent * 100),
             drift: 12,
             convergence: 45,
-            lenses: inclusion.intersectingLenses.map(id => {
-                const gl = governLenses.find(l => l.id === id)!;
+            lenses: (inclusion.intersectingLenses || []).map(id => {
+                const gl = governLenses.find(l => l.id === id) || { domains: [] };
                 const deferred = inclusion.deferredLenses.find(d => d.lensId === id);
                 return {
                     name: id,
@@ -168,7 +202,7 @@ export default function ChamberLayout() {
                     deferralRationale: deferred?.rationale
                 };
             }),
-            lockAvailable: inclusion.lockAvailable,
+            lockAvailable: !!inclusion.lockAvailable,
             activeDomains: artifactMetadata.domains,
             inclusion
         };
@@ -189,26 +223,65 @@ export default function ChamberLayout() {
         setNodes(nodes);
     }, [setNodes]);
 
+    const createHardenedEvent = useCallback((type: GovernanceEvent['type'], extra: Partial<GovernanceEvent> = {}): GovernanceEvent => {
+        const timestamp = Date.now();
+        const timestamp_utc = new Date(timestamp).toISOString();
+        const scoreBefore = telemetry.inclusionScore;
+
+        // Lens acknowledgments current state
+        const lens_acknowledgments: Record<string, boolean | string> = {};
+        telemetry.lenses.forEach(l => {
+            lens_acknowledgments[l.name] = l.status === 'active' ? true : (l.status === 'deferred' ? (l.deferralRationale || true) : false);
+        });
+
+        // Simulate next state to find awareness_score_after
+        const nextEvents: GovernanceEvent[] = [...governingEvents, { ...extra, type, timestamp, timestamp_utc } as GovernanceEvent];
+        const nextInclusion = computeInclusionState(
+            { id: artifactId, domainTags: artifactMetadata.domains, status: 'Active' },
+            registryPeers.map(p => ({ id: p.id, type: p.type, domains: p.domains })),
+            [
+                ...MOCK_TELEMETRY.lenses.map(l => ({ id: l.name, domains: l.domains, autoReview: false })),
+                { id: RATIONAL_SYNTHESIS_LENS, domains: [], autoReview: false },
+                { id: AFFECTIVE_SYNTHESIS_LENS, domains: [], autoReview: false }
+            ],
+            nextEvents
+        );
+
+        return {
+            ...extra,
+            type,
+            timestamp,
+            timestamp_utc,
+            participant_session_id: currentSession?.id || 'anon',
+            awareness_score_before: scoreBefore,
+            awareness_score_after: Math.round(nextInclusion.awarenessPercent * 100),
+            lens_acknowledgments
+        } as GovernanceEvent;
+    }, [telemetry, currentSession, governingEvents, artifactId, artifactMetadata.domains, registryPeers]);
+
     const handleAcknowledge = useCallback((peerId: string) => {
-        setGoverningEvents(prev => [
-            ...prev,
-            { type: 'AWARENESS_ACK', peerId, timestamp: Date.now() }
-        ]);
-    }, []);
+        setGoverningEvents(prev => {
+            const ev = createHardenedEvent('AWARENESS_ACK', { peerId });
+            return [...prev, ev];
+        });
+    }, [createHardenedEvent]);
 
     const handleInvokeLens = useCallback((lensId: string) => {
-        setGoverningEvents(prev => [
-            ...prev,
-            { type: 'PROXY_REVIEW', lensId, timestamp: Date.now() }
-        ]);
-    }, []);
+        setGoverningEvents(prev => {
+            const ev = createHardenedEvent('PROXY_REVIEW', { lensId });
+            return [...prev, ev];
+        });
+    }, [createHardenedEvent]);
 
     const handleDeferLens = useCallback((lensId: string, rationale?: string) => {
-        setGoverningEvents(prev => [
-            ...prev,
-            { type: 'DEFER_LENS', lensId, rationale: rationale || 'No rationale provided', timestamp: Date.now() }
-        ]);
-    }, []);
+        setGoverningEvents(prev => {
+            const ev = createHardenedEvent('lens_deferral_with_rationale', {
+                lensId,
+                rationale: rationale || 'Explicitly skipped by peer'
+            });
+            return [...prev, ev];
+        });
+    }, [createHardenedEvent]);
 
     const handleCloseSession = useCallback(() => {
         if (!currentSession) return;
@@ -268,11 +341,11 @@ export default function ChamberLayout() {
 
         alert(ledgerSnapshot);
 
-        setGoverningEvents(prev => [
-            ...prev,
-            { type: 'LOCK_REQUEST', timestamp: Date.now() }
-        ]);
-    }, [artifactMetadata, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers]);
+        setGoverningEvents(prev => {
+            const ev = createHardenedEvent('LOCK_REQUEST');
+            return [...prev, ev];
+        });
+    }, [artifactMetadata, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers, createHardenedEvent]);
 
     const saveMetadata = () => {
         setArtifactMetadata(tempMetadata);
@@ -331,6 +404,24 @@ export default function ChamberLayout() {
                     )}
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="flex bg-muted p-1 rounded-md mr-4">
+                        <button
+                            className={cn("px-3 py-1 text-xs rounded-sm transition-all flex items-center gap-1.5", activeTab === 'whiteboard' ? "bg-background shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground")}
+                            onClick={() => setActiveTab('whiteboard')}
+                        >
+                            <Layout className="w-3.5 h-3.5" />
+                            Nexus Whiteboard
+                        </button>
+                        <button
+                            className={cn("px-3 py-1 text-xs rounded-sm transition-all flex items-center gap-1.5", activeTab === 'reflection' ? "bg-background shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground")}
+                            onClick={() => setActiveTab('reflection')}
+                            data-testid="reflection-tab"
+                        >
+                            <Clock className="w-3.5 h-3.5" />
+                            Timeline · Reflection
+                        </button>
+                    </div>
+
                     {currentSession && (
                         <Button
                             variant="outline"
@@ -360,11 +451,57 @@ export default function ChamberLayout() {
                     />
                 </div>
 
-                <div className="flex-1 relative min-w-0 z-0">
-                    <WhiteboardArea
-                        focusNodeId={focusNodeId}
-                        onNodesReady={handleNodesReady}
-                    />
+                <div className="flex-1 relative min-w-0 z-0 bg-muted/20">
+                    {activeTab === 'whiteboard' ? (
+                        <WhiteboardArea
+                            focusNodeId={focusNodeId}
+                            onNodesReady={handleNodesReady}
+                        />
+                    ) : (
+                        <div className="h-full overflow-y-auto p-8 space-y-6">
+                            <div className="max-w-3xl mx-auto space-y-8">
+                                <div className="border-l-2 border-primary/20 pl-8 space-y-8">
+                                    {[...governingEvents].reverse().map((event, idx) => (
+                                        <div key={idx} className="relative">
+                                            <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-background border-2 border-primary" />
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                                    <Clock className="w-3 h-3" />
+                                                    {event.timestamp_utc ? new Date(event.timestamp_utc).toLocaleString() : new Date(event.timestamp).toLocaleString()}
+                                                </div>
+                                                <div className="bg-card border border-border rounded-lg p-4 shadow-sm space-y-2">
+                                                    <div className="font-semibold text-sm flex items-center justify-between">
+                                                        <span className="text-primary">{event.type.replace(/_/g, ' ')}</span>
+                                                        <span className="text-[10px] font-mono opacity-50">{event.participant_session_id?.slice(0, 8)}...</span>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {event.type === 'AWARENESS_ACK' && `Peer ${event.peerId} acknowledged awareness.`}
+                                                        {event.type === 'PROXY_REVIEW' && `Lens ${event.lensId} review captured via proxy.`}
+                                                        {(event.type === 'DEFER_LENS' || event.type === 'lens_deferral_with_rationale') && (
+                                                            <div className="space-y-2">
+                                                                <p>Lens {event.lensId} deferred.</p>
+                                                                <div className="bg-muted/50 p-2 rounded text-[11px] italic">
+                                                                    "{event.rationale}"
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {event.type === 'LOCK_REQUEST' && `Lock requested for versioning.`}
+                                                    </div>
+                                                    <div className="pt-2 flex gap-4 text-[9px] font-mono opacity-70 border-t border-border/50">
+                                                        <span>Score: {event.awareness_score_before ?? '??'} → {event.awareness_score_after ?? '??'}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="relative">
+                                        <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-primary" />
+                                        <div className="text-[10px] font-bold text-primary uppercase tracking-widest pl-2">Session Commenced</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className={cn("w-72 flex-shrink-0 z-10 shadow-xl shadow-black/5 border-l border-border bg-card", isLocked && "opacity-60 pointer-events-none")}>
@@ -392,6 +529,39 @@ export default function ChamberLayout() {
                     showComposer={true}
                 />
             </div>
+
+            {displacedSnapshot && (
+                <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-[100] flex items-center justify-center p-6 text-center animate-in fade-in duration-500">
+                    <div className="max-w-md space-y-6">
+                        <div className="mx-auto w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center">
+                            <History className="w-8 h-8 text-yellow-600" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold tracking-tight">Session Continuity Preserved</h2>
+                            <p className="text-muted-foreground text-sm">
+                                A Snapshot (SSSP) was captured at <span className="font-mono text-primary">{displacedSnapshot.time}</span>.<br />
+                                The active session is being continued in another tab.
+                            </p>
+                        </div>
+                        <div className="pt-4 space-y-3">
+                            <button
+                                className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-all shadow-sm flex items-center justify-center gap-2"
+                                onClick={() => {
+                                    setGoverningEvents(displacedSnapshot.events);
+                                    setActiveTab('reflection');
+                                    setDisplacedSnapshot(null);
+                                }}
+                            >
+                                <Clock className="w-4 h-4" />
+                                View Stability Snapshot
+                            </button>
+                            <p className="text-[10px] text-muted-foreground">
+                                You may re-join the active Nexus after the other tab is closed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
