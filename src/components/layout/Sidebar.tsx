@@ -10,7 +10,8 @@ import {
     MoreHorizontal,
     LogOut,
     User as UserIcon,
-    Shield
+    Shield,
+    Terminal
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
@@ -19,6 +20,7 @@ import { IDSStream } from '../chamber/IDSStream';
 import { useLocation } from 'react-router-dom';
 import { useAuthSession } from '../../core/auth/useAuthSession';
 import { supabase } from '../../core/supabase/client';
+import { isToolsEnabled } from '../../features/tools/env';
 
 interface SidebarProps {
     className?: string;
@@ -34,6 +36,10 @@ export function Sidebar({ className }: SidebarProps) {
         { to: "/board", icon: Users, label: "Shared Board" },
         { to: "/settings", icon: Settings, label: "Settings" },
     ];
+
+    if (isToolsEnabled()) {
+        navItems.push({ to: "/tools", icon: Terminal, label: "Tools" });
+    }
 
     const { idsCards, canvasNodes, attachNode, removeAttachment, clearStream, setFocusNode } = useIDS();
     const { session, user } = useAuthSession();

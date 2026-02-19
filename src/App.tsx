@@ -9,6 +9,7 @@ import Lenses from './pages/Lenses';
 import Settings from './pages/Settings';
 import BoardPage from './pages/BoardPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import { ToolsRoute } from './routes/ToolsRoute';
 
 import { IDSProvider } from './contexts/IDSContext';
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/board" element={<BoardPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/tools/*" element={<ToolsRoute />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

@@ -41,7 +41,11 @@ import type { Session as LiveSession } from '../core/sessions/types';
 export default function Artifacts() {
     const navigate = useNavigate();
     const [sessions, setSessions] = useState<LiveSession[]>(() => loadSessions());
-    const [selectedVersionId, setSelectedVersionId] = useState<string>(MOCK_VERSIONS[MOCK_VERSIONS.length - 2]?.id || MOCK_VERSIONS[0].id);
+    const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
+        MOCK_VERSIONS.length > 0
+            ? (MOCK_VERSIONS[MOCK_VERSIONS.length - 2]?.id || MOCK_VERSIONS[0].id)
+            : null
+    );
     const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
 
     const handleStartSession = (artifactId: string) => {
@@ -57,7 +61,7 @@ export default function Artifacts() {
     };
 
     const selectedVersion = useMemo(
-        () => MOCK_VERSIONS.find((v) => v.id === selectedVersionId)!,
+        () => MOCK_VERSIONS.find((v) => v.id === selectedVersionId) || null,
         [selectedVersionId]
     );
 
@@ -137,167 +141,182 @@ export default function Artifacts() {
                 </div>
             </section>
 
-            {/* Version Detail Summary (GI-032) */}
-            <div className="bg-muted/30 border border-border p-4 rounded-lg flex items-center justify-between">
-                <div>
-                    <h4 className="text-sm font-bold flex items-center gap-2">
-                        {selectedVersion.label} Detail
-                    </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                        {selectedVersion.domains.map((d: string) => (
-                            <span key={d} className="text-[10px] uppercase font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
-                                {d}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-                <div className="text-right flex flex-col items-end gap-2">
-                    <div className="flex flex-col items-end">
-                        <div className="text-xs text-muted-foreground">Inclusion Score</div>
-                        <div className={cn("text-lg font-bold", selectedVersion.inclusionScore >= 80 ? "text-green-500" : "text-yellow-500")}>
-                            {selectedVersion.inclusionScore}%
+            {/* Version Detail & Proposals */}
+            {selectedVersion ? (
+                <div className="space-y-8">
+                    {/* Version Detail Summary (GI-032) */}
+                    <div className="bg-muted/30 border border-border p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h4 className="text-sm font-bold flex items-center gap-2">
+                                {selectedVersion.label} Detail
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                                {selectedVersion.domains.map((d: string) => (
+                                    <span key={d} className="text-[10px] uppercase font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
+                                        {d}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="text-right flex flex-col items-end gap-2">
+                            <div className="flex flex-col items-end">
+                                <div className="text-xs text-muted-foreground">Inclusion Score</div>
+                                <div className={cn("text-lg font-bold", selectedVersion.inclusionScore >= 80 ? "text-green-500" : "text-yellow-500")}>
+                                    {selectedVersion.inclusionScore}%
+                                </div>
+                            </div>
+                            {(() => {
+                                const activeSession = getActiveSessionForArtifact(sessions, selectedVersion.id);
+                                if (activeSession) {
+                                    return (
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                                            onClick={() => handleJoinSession(activeSession.id)}
+                                            data-testid="session-join"
+                                        >
+                                            <PlayCircle className="w-4 h-4" />
+                                            Join Active Session
+                                        </Button>
+                                    );
+                                }
+                                return (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={() => handleStartSession(selectedVersion.id)}
+                                        data-testid="session-start"
+                                    >
+                                        <PlayCircle className="w-4 h-4" />
+                                        Start Session
+                                    </Button>
+                                );
+                            })()}
                         </div>
                     </div>
-                    {(() => {
-                        const activeSession = getActiveSessionForArtifact(sessions, selectedVersion.id);
-                        if (activeSession) {
-                            return (
-                                <Button
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                                    onClick={() => handleJoinSession(activeSession.id)}
-                                    data-testid="session-join"
-                                >
-                                    <PlayCircle className="w-4 h-4" />
-                                    Join Active Session
-                                </Button>
-                            );
-                        }
-                        return (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-2"
-                                onClick={() => handleStartSession(selectedVersion.id)}
-                                data-testid="session-start"
-                            >
-                                <PlayCircle className="w-4 h-4" />
-                                Start Session
-                            </Button>
-                        );
-                    })()}
-                </div>
-            </div>
 
-            {/* Proposals */}
-            <section className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Proposals — {selectedVersion.label}
-                </h3>
-                {proposals.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No proposals in this version.</p>
-                ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {proposals.map((proposal) => {
-                            const cfg = proposalStatusConfig[proposal.status];
-                            const StatusIcon = cfg.icon;
-                            const isSelected = proposal.id === selectedProposalId;
-                            const entryCount = MOCK_CONSIDERATIONS.filter((c) => c.proposalId === proposal.id).length;
-                            return (
-                                <button
-                                    key={proposal.id}
-                                    onClick={() => setSelectedProposalId(isSelected ? null : proposal.id)}
-                                    className={cn(
-                                        "p-4 rounded-lg border text-left transition-all",
-                                        isSelected
-                                            ? "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20"
-                                            : cn("bg-card hover:shadow-sm", cfg.bg)
-                                    )}
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className="flex items-center gap-1.5">
-                                            <StatusIcon className={cn("w-4 h-4", cfg.color)} />
-                                            <span className={cn("text-xs font-medium capitalize", cfg.color)}>
-                                                {proposal.status}
-                                            </span>
-                                        </div>
-                                        {entryCount > 0 && (
-                                            <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
-                                                {entryCount} review{entryCount > 1 ? 's' : ''}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="font-semibold text-sm">{proposal.title}</div>
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{proposal.summary}</p>
-                                    <div className="text-[10px] text-muted-foreground mt-2">By {proposal.author}</div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-            </section>
-
-            {/* Consideration Ledger */}
-            <section className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Consideration Ledger
-                    {selectedProposalId && (
-                        <button
-                            onClick={() => setSelectedProposalId(null)}
-                            className="ml-2 text-[10px] text-primary hover:underline font-normal normal-case"
-                        >
-                            (show all)
-                        </button>
-                    )}
-                </h3>
-                {considerations.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No considerations recorded yet.</p>
-                ) : (
-                    <div className="border border-border rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-muted/50 border-b border-border">
-                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Peer</th>
-                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Domains</th>
-                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Lens</th>
-                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Verdict</th>
-                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Note</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {considerations.map((entry) => {
-                                    const cfg = verdictConfig[entry.verdict];
-                                    const VerdictIcon = cfg.icon;
+                    {/* Proposals */}
+                    <section className="space-y-3">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                            Proposals — {selectedVersion.label}
+                        </h3>
+                        {proposals.length === 0 ? (
+                            <p className="text-sm text-muted-foreground italic">No proposals in this version.</p>
+                        ) : (
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {proposals.map((proposal) => {
+                                    const cfg = proposalStatusConfig[proposal.status];
+                                    const StatusIcon = cfg.icon;
+                                    const isSelected = proposal.id === selectedProposalId;
+                                    const entryCount = MOCK_CONSIDERATIONS.filter((c) => c.proposalId === proposal.id).length;
                                     return (
-                                        <tr key={entry.id} className="border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
-                                            <td className="px-4 py-3 font-medium">{entry.peerName}</td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {(MOCK_PEERS.find(p => p.name === entry.peerName)?.domains || []).map((d: string) => (
-                                                        <span key={d} className="text-[9px] bg-muted px-1 rounded text-muted-foreground border border-border/50">
-                                                            {d}
-                                                        </span>
-                                                    ))}
+                                        <button
+                                            key={proposal.id}
+                                            onClick={() => setSelectedProposalId(isSelected ? null : proposal.id)}
+                                            className={cn(
+                                                "p-4 rounded-lg border text-left transition-all",
+                                                isSelected
+                                                    ? "border-primary bg-primary/5 shadow-md ring-1 ring-primary/20"
+                                                    : cn("bg-card hover:shadow-sm", cfg.bg)
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-1.5">
+                                                    <StatusIcon className={cn("w-4 h-4", cfg.color)} />
+                                                    <span className={cn("text-xs font-medium capitalize", cfg.color)}>
+                                                        {proposal.status}
+                                                    </span>
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{entry.lens}</span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full", cfg.bg, cfg.color)}>
-                                                    <VerdictIcon className="w-3 h-3" />
-                                                    {entry.verdict}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs">{entry.note}</td>
-                                        </tr>
+                                                {entryCount > 0 && (
+                                                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                                                        {entryCount} review{entryCount > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="font-semibold text-sm">{proposal.title}</div>
+                                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{proposal.summary}</p>
+                                            <div className="text-[10px] text-muted-foreground mt-2">By {proposal.author}</div>
+                                        </button>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Consideration Ledger */}
+                    <section className="space-y-3">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                            Consideration Ledger
+                            {selectedProposalId && (
+                                <button
+                                    onClick={() => setSelectedProposalId(null)}
+                                    className="ml-2 text-[10px] text-primary hover:underline font-normal normal-case"
+                                >
+                                    (show all)
+                                </button>
+                            )}
+                        </h3>
+                        {considerations.length === 0 ? (
+                            <p className="text-sm text-muted-foreground italic">No considerations recorded yet.</p>
+                        ) : (
+                            <div className="border border-border rounded-lg overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-muted/50 border-b border-border">
+                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Peer</th>
+                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Domains</th>
+                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Lens</th>
+                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Verdict</th>
+                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Note</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {considerations.map((entry) => {
+                                            const cfg = verdictConfig[entry.verdict];
+                                            const VerdictIcon = cfg.icon;
+                                            return (
+                                                <tr key={entry.id} className="border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
+                                                    <td className="px-4 py-3 font-medium">{entry.peerName}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {(MOCK_PEERS.find(p => p.name === entry.peerName)?.domains || []).map((d: string) => (
+                                                                <span key={d} className="text-[9px] bg-muted px-1 rounded text-muted-foreground border border-border/50">
+                                                                    {d}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{entry.lens}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full", cfg.bg, cfg.color)}>
+                                                            <VerdictIcon className="w-3 h-3" />
+                                                            {entry.verdict}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs">{entry.note}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-lg text-muted-foreground gap-4">
+                    <div className="p-4 rounded-full bg-muted/50">
+                        <Archive className="w-8 h-8 opacity-20" />
                     </div>
-                )}
-            </section>
+                    <div className="text-center">
+                        <p className="font-medium">No Artifacts Found</p>
+                        <p className="text-sm">Artifacts only appear when a session is finalized or demo seeds are enabled.</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
