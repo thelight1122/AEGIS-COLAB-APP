@@ -1,6 +1,6 @@
 # AEGIS Coherence Chamber
 
-# Governance State Machine Specification v1.0
+Governance State Machine Specification v1.0
 
 Status: Canon-Aligned Operational Specification  
 Scope: Inclusion Logic + Lock Availability Derivation  
