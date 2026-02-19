@@ -3,7 +3,8 @@ import { cn } from '../../lib/utils';
 import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
-import { Tag, Edit2, Check, History, Layout, Clock } from 'lucide-react';
+import { GatewayStatus } from './GatewayStatus';
+import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
@@ -11,6 +12,8 @@ import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
 import { IDSStream } from './IDSStream';
 import { computeInclusionState, canLock } from '../../core/governance/inclusionState';
 import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS } from '../../core/governance/systemLenses';
+import { callGateway } from '../../core/llm/gatewayClient';
+import { deriveChatThread } from '../../core/governance/chatDerivation';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isE2E } from '../../lib/e2e';
@@ -21,7 +24,9 @@ import {
     closeSession
 } from '../../core/sessions/sessionStore';
 import type { Session as LiveSession } from '../../core/sessions/types';
-import { loadPeers } from '../../lib/peerStore';
+import type { PeerProfile } from '../../core/peers/types';
+import { loadPeers as loadRegistryPeers } from '../../core/peers/peerRegistryStore';
+import type { Peer } from '../../types';
 
 const LOG_STORAGE_KEY = 'aegis_events_current-artifact';
 const METADATA_KEY = 'aegis_metadata_current-artifact';
@@ -61,6 +66,8 @@ export default function ChamberLayout() {
 
     const [displacedSnapshot, setDisplacedSnapshot] = useState<{ time: string, events: GovernanceEvent[] } | null>(null);
     const [activeTab, setActiveTab] = useState<'whiteboard' | 'reflection'>('whiteboard');
+    const [selectedChatPeerIds, setSelectedChatPeerIds] = useState<string[]>([]);
+    const [isChatting, setIsChatting] = useState(false);
 
     // Unified Governance Event Stream (Concurrency Model v0.1)
     const [governingEvents, setGoverningEvents] = useState<GovernanceEvent[]>(
@@ -144,7 +151,7 @@ export default function ChamberLayout() {
     });
 
     // Load peers from registry
-    const registryPeers = useMemo(() => loadPeers(), []);
+    const registryPeers = useMemo<PeerProfile[]>(() => loadRegistryPeers(), []);
 
     useEffect(() => {
         if (isE2E()) {
@@ -208,14 +215,19 @@ export default function ChamberLayout() {
         };
     }, [artifactMetadata, governingEvents, artifactId, registryPeers]);
 
-    const currentPeers = useMemo(() => {
+    const currentPeers = useMemo<Peer[]>(() => {
         const acks = new Set(governingEvents.filter(e => e.type === 'AWARENESS_ACK').map(e => {
             if (e.type === 'AWARENESS_ACK') return e.peerId;
             return null;
         }));
         return registryPeers.map(p => ({
-            ...p,
-            acknowledged: acks.has(p.id)
+            id: p.id,
+            name: p.name || p.handle,
+            type: p.type,
+            role: p.notes?.slice(0, 30) || (p.type === 'ai' ? 'AI Assistant' : 'Human Member'),
+            status: p.enabled ? 'online' : 'offline',
+            acknowledged: acks.has(p.id),
+            domains: p.domains
         }));
     }, [governingEvents, registryPeers]);
 
@@ -258,6 +270,55 @@ export default function ChamberLayout() {
             lens_acknowledgments
         } as GovernanceEvent;
     }, [telemetry, currentSession, governingEvents, artifactId, artifactMetadata.domains, registryPeers]);
+
+    const handleChat = useCallback(async (text: string) => {
+        if (!currentSession) return;
+        if (selectedChatPeerIds.length === 0) return;
+
+        setIsChatting(true);
+        try {
+            // Log local user message as a contribution? Or just the AI request
+            // For now, let's log the REQUESTED event
+            const selectedPeers = registryPeers.filter(p => selectedChatPeerIds.includes(p.id));
+
+            for (const peer of selectedPeers) {
+                if (peer.type !== 'ai') continue;
+
+                setGoverningEvents(prev => {
+                    const ev = createHardenedEvent('AI_CHAT_REQUESTED', {
+                        peerId: peer.id,
+                        provider: peer.provider,
+                        model: peer.model,
+                        prompt: text
+                    });
+                    return [...prev, ev];
+                });
+
+                // Call Gateway
+                const response = await callGateway({
+                    provider: peer.provider,
+                    model: peer.model,
+                    baseURL: peer.baseURL,
+                    messages: [
+                        { role: 'system', content: 'You are an AEGIS peer. Be concise.' }, // TODO: use personaId
+                        { role: 'user', content: text }
+                    ]
+                });
+
+                setGoverningEvents(prev => {
+                    const ev = createHardenedEvent('AI_CHAT_COMPLETED', {
+                        peerId: peer.id,
+                        responseText: response.text
+                    });
+                    return [...prev, ev];
+                });
+            }
+        } catch (error) {
+            console.error('Chat failed', error);
+        } finally {
+            setIsChatting(false);
+        }
+    }, [currentSession, selectedChatPeerIds, registryPeers, createHardenedEvent]);
 
     const handleAcknowledge = useCallback((peerId: string) => {
         setGoverningEvents(prev => {
@@ -404,6 +465,7 @@ export default function ChamberLayout() {
                     )}
                 </div>
                 <div className="flex items-center gap-3">
+                    <GatewayStatus />
                     <div className="flex bg-muted p-1 rounded-md mr-4">
                         <button
                             className={cn("px-3 py-1 text-xs rounded-sm transition-all flex items-center gap-1.5", activeTab === 'whiteboard' ? "bg-background shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground")}
@@ -445,9 +507,17 @@ export default function ChamberLayout() {
 
             <div className="flex-1 flex overflow-hidden min-h-0">
                 <div className={cn("w-64 flex-shrink-0 z-10 shadow-xl shadow-black/5", isLocked && "opacity-60 pointer-events-none")}>
+                    <div className="absolute inset-x-0 -top-6 flex justify-center pointer-events-none z-50">
+                        {isChatting && (
+                            <div className="bg-primary/20 backdrop-blur-md text-primary text-[10px] font-bold px-3 py-1 rounded-full animate-pulse border border-primary/30">
+                                AI PEERS PROCESSING...
+                            </div>
+                        )}
+                    </div>
                     <PeerPresence
                         peers={currentPeers.filter(p => p.domains.some(d => artifactMetadata.domains.includes(d)))}
                         onAcknowledge={handleAcknowledge}
+                        onSelectionChange={setSelectedChatPeerIds}
                     />
                 </div>
 
@@ -460,7 +530,51 @@ export default function ChamberLayout() {
                     ) : (
                         <div className="h-full overflow-y-auto p-8 space-y-6">
                             <div className="max-w-3xl mx-auto space-y-8">
-                                <div className="border-l-2 border-primary/20 pl-8 space-y-8">
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                                        <MessageSquare className="w-4 h-4" />
+                                        Chat Thread
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {deriveChatThread(governingEvents).map(msg => (
+                                            <div
+                                                key={msg.id}
+                                                className={cn(
+                                                    "p-3 rounded-lg text-sm max-w-[85%]",
+                                                    msg.role === 'assistant'
+                                                        ? "bg-primary/5 border border-primary/20 mr-auto"
+                                                        : "bg-muted ml-auto"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold uppercase opacity-50">
+                                                    {msg.role === 'assistant' ? (
+                                                        <>
+                                                            <Bot className="w-3 h-3" />
+                                                            {registryPeers.find(p => p.id === msg.peerId)?.name || msg.peerId}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <User className="w-3 h-3" />
+                                                            facilitator
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {msg.content}
+                                            </div>
+                                        ))}
+                                        {deriveChatThread(governingEvents).length === 0 && (
+                                            <div className="text-center py-8 text-muted-foreground text-xs italic">
+                                                No messages in this thread yet. Select an AI peer and type in the stream to commence dialogue.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                                        <History className="w-4 h-4" />
+                                        Governance Ledger
+                                    </h3>
                                     {[...governingEvents].reverse().map((event, idx) => (
                                         <div key={idx} className="relative">
                                             <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-background border-2 border-primary" />
@@ -477,6 +591,20 @@ export default function ChamberLayout() {
                                                     <div className="text-xs text-muted-foreground">
                                                         {event.type === 'AWARENESS_ACK' && `Peer ${event.peerId} acknowledged awareness.`}
                                                         {event.type === 'PROXY_REVIEW' && `Lens ${event.lensId} review captured via proxy.`}
+                                                        {event.type === 'AI_CHAT_REQUESTED' && (
+                                                            <div className="space-y-1">
+                                                                <p className="font-semibold text-foreground">Message to {event.peerId}:</p>
+                                                                <p className="italic bg-muted/30 p-2 rounded">"{event.prompt}"</p>
+                                                            </div>
+                                                        )}
+                                                        {event.type === 'AI_CHAT_COMPLETED' && (
+                                                            <div className="space-y-1">
+                                                                <p className="font-semibold text-foreground">Response from {event.peerId}:</p>
+                                                                <p className="border-l-2 border-primary/20 pl-2">
+                                                                    {event.responseText}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                         {(event.type === 'DEFER_LENS' || event.type === 'lens_deferral_with_rationale') && (
                                                             <div className="space-y-2">
                                                                 <p>Lens {event.lensId} deferred.</p>
@@ -494,10 +622,10 @@ export default function ChamberLayout() {
                                             </div>
                                         </div>
                                     ))}
-                                    <div className="relative">
-                                        <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-primary" />
-                                        <div className="text-[10px] font-bold text-primary uppercase tracking-widest pl-2">Session Commenced</div>
-                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-primary" />
+                                    <div className="text-[10px] font-bold text-primary uppercase tracking-widest pl-2">Session Commenced</div>
                                 </div>
                             </div>
                         </div>
@@ -523,7 +651,12 @@ export default function ChamberLayout() {
                     onAttach={attachNode}
                     onRemoveAttachment={removeAttachment}
                     onFocusNode={setFocusNode}
-                    onSend={addCard}
+                    onSend={(type, text) => {
+                        addCard(type, text);
+                        if (selectedChatPeerIds.length > 0) {
+                            handleChat(text);
+                        }
+                    }}
                     showFeed={false}
                     showHeader={true}
                     showComposer={true}

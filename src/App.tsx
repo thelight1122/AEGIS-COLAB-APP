@@ -4,7 +4,7 @@ import { AppShell } from './components/layout/AppShell';
 import Chamber from './pages/Chamber';
 import Artifacts from './pages/Artifacts';
 import Sessions from './pages/Sessions';
-import Peers from './pages/Peers';
+import TeamSetup from './pages/TeamSetup';
 import Lenses from './pages/Lenses';
 import Settings from './pages/Settings';
 import BoardPage from './pages/BoardPage';
@@ -21,7 +21,7 @@ function App() {
             <Route path="/" element={<Chamber />} />
             <Route path="/artifacts" element={<Artifacts />} />
             <Route path="/sessions" element={<Sessions />} />
-            <Route path="/peers" element={<Peers />} />
+            <Route path="/peers" element={<TeamSetup />} />
             <Route path="/lenses" element={<Lenses />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/board" element={<BoardPage />} />

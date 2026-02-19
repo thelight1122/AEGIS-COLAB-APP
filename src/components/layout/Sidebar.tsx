@@ -29,7 +29,7 @@ export function Sidebar({ className }: SidebarProps) {
         { to: "/", icon: LayoutDashboard, label: "Chamber" },
         { to: "/artifacts", icon: Layers, label: "Artifacts" },
         { to: "/sessions", icon: History, label: "Sessions" },
-        { to: "/peers", icon: Users, label: "Peers" },
+        { to: "/peers", icon: Users, label: "Team Setup" },
         { to: "/lenses", icon: Eye, label: "Lenses" },
         { to: "/board", icon: Users, label: "Shared Board" },
         { to: "/settings", icon: Settings, label: "Settings" },

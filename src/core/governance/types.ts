@@ -42,7 +42,9 @@ export type GovernanceEvent =
     | ({ type: "PROXY_REVIEW"; lensId: string } & BaseGovernanceEvent)
     | ({ type: "DEFER_LENS"; lensId: string; rationale: string } & BaseGovernanceEvent)
     | ({ type: "lens_deferral_with_rationale"; lensId: string; rationale: string } & BaseGovernanceEvent)
-    | ({ type: "LOCK_REQUEST" } & BaseGovernanceEvent);
+    | ({ type: "LOCK_REQUEST" } & BaseGovernanceEvent)
+    | ({ type: "AI_CHAT_REQUESTED"; peerId: string; provider: string; model: string; prompt: string } & BaseGovernanceEvent)
+    | ({ type: "AI_CHAT_COMPLETED"; peerId: string; responseText: string } & BaseGovernanceEvent);
 
 export type DeferredLens = { lensId: string; rationale: string };
 

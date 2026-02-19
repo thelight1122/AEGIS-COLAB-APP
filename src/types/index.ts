@@ -49,12 +49,7 @@ export interface TelemetryData {
 export const LOCK_INCLUSION_THRESHOLD = 75;
 
 // Dummy Data
-export const MOCK_PEERS: Peer[] = [
-    { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Operational Layer'] },
-    { id: 'p2', name: 'Atlas (AI)', type: 'ai', role: 'Systems Lens', status: 'online', matchScore: 95, acknowledged: false, domains: ['Engineering', 'Operational Layer'] },
-    { id: 'p3', name: 'Sarah', type: 'human', role: 'Product', status: 'busy', matchScore: 40, acknowledged: false, domains: ['Product'] },
-    { id: 'p4', name: 'Critique (AI)', type: 'ai', role: 'Risks Lens', status: 'online', matchScore: 80, acknowledged: false, domains: ['Security', 'Risks'] },
-];
+export const MOCK_PEERS: Peer[] = [];
 
 export const MOCK_IDS_FEED: IDSCard[] = [
     { id: 'c1', type: 'identification', content: 'Potential drift in user retention logic identified.', authorId: 'p2', timestamp: '10:42 AM' },

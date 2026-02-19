@@ -7,11 +7,21 @@ import { Button } from '../ui/button';
 interface PeerPresenceProps {
     peers: Peer[];
     onAcknowledge: (peerId: string) => void;
+    onSelectionChange?: (peerIds: string[]) => void;
 }
 
-export function PeerPresence({ peers, onAcknowledge }: PeerPresenceProps) {
+export function PeerPresence({ peers, onAcknowledge, onSelectionChange }: PeerPresenceProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
+    const [selectedForChat, setSelectedForChat] = useState<Set<string>>(new Set());
+
+    const togglePeerChatSelection = (id: string) => {
+        const next = new Set(selectedForChat);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelectedForChat(next);
+        onSelectionChange?.(Array.from(next));
+    };
 
     const filteredPeers = peers.filter(peer =>
         peer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,10 +57,29 @@ export function PeerPresence({ peers, onAcknowledge }: PeerPresenceProps) {
                         key={peer.id}
                         onClick={() => setSelectedPeerId(peer.id)}
                         className={cn(
-                            "p-3 rounded-md cursor-pointer transition-all border border-transparent hover:bg-muted/50",
-                            selectedPeerId === peer.id ? "bg-accent border-primary/20 shadow-sm" : ""
+                            "p-3 rounded-md cursor-pointer transition-all border border-transparent hover:bg-muted/50 relative group/item",
+                            selectedPeerId === peer.id ? "bg-accent border-primary/20 shadow-sm" : "",
+                            selectedForChat.has(peer.id) ? "border-primary/40 bg-primary/5" : ""
                         )}
                     >
+                        {/* Chat Selection Toggle */}
+                        {peer.type === 'ai' && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    togglePeerChatSelection(peer.id);
+                                }}
+                                className={cn(
+                                    "absolute -left-1 -top-1 w-5 h-5 rounded-full border flex items-center justify-center transition-all shadow-sm z-10",
+                                    selectedForChat.has(peer.id)
+                                        ? "bg-primary border-primary text-primary-foreground scale-110"
+                                        : "bg-background border-border text-muted-foreground opacity-0 group-hover/item:opacity-100"
+                                )}
+                                title="Select for AI dialogue"
+                            >
+                                <CheckCircle2 className="w-3 h-3" />
+                            </button>
+                        )}
                         <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
                                 <div className={cn(
