@@ -43,6 +43,7 @@ describe('useAuthSession', () => {
         expect(result.current.user).toEqual(mockSession.user);
     });
 
+
     it('should update state when auth state changes', async () => {
         let authChangeCallback: (event: AuthChangeEvent, session: Session | null) => void;
         vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((cb: (event: AuthChangeEvent, session: Session | null) => void) => {
