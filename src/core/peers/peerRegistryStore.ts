@@ -118,7 +118,13 @@ export function loadPeers(): PeerProfile[] {
 }
 
 export function savePeers(peers: PeerProfile[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(peers));
+    // Strip sensitive keys before persisting to disk
+    const sanitized = peers.map((p) => {
+        const copy = { ...p };
+        delete copy.apiKey;
+        return copy;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
 }
 
 export function addPeer(peers: PeerProfile[], profile: Omit<PeerProfile, "id">): PeerProfile[] {

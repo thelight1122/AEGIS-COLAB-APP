@@ -4,8 +4,9 @@ import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
 import { GatewayStatus } from './GatewayStatus';
-import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare } from 'lucide-react';
+import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare, XCircle } from 'lucide-react';
 import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
 import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
@@ -302,26 +303,38 @@ export default function ChamberLayout() {
                 });
 
                 // Call Gateway
-                const response = await callGateway({
-                    provider: peer.provider,
-                    model: peer.model,
-                    baseURL: peer.baseURL,
-                    messages: [
-                        { role: 'system', content: 'You are an AEGIS peer. Be concise.' }, // TODO: use personaId
-                        { role: 'user', content: text }
-                    ]
-                });
-
-                setGoverningEvents(prev => {
-                    const ev = createHardenedEvent('AI_CHAT_COMPLETED', {
-                        peerId: peer.id,
-                        responseText: response.text
+                try {
+                    const response = await callGateway({
+                        provider: peer.provider,
+                        model: peer.model,
+                        apiKey: peer.apiKey,
+                        baseURL: peer.baseURL,
+                        messages: [
+                            { role: 'system', content: 'You are an AEGIS peer. Be concise.' },
+                            { role: 'user', content: text }
+                        ]
                     });
-                    return [...prev, ev];
-                });
+
+                    setGoverningEvents(prev => {
+                        const ev = createHardenedEvent('AI_CHAT_COMPLETED', {
+                            peerId: peer.id,
+                            responseText: response.text
+                        });
+                        return [...prev, ev];
+                    });
+                } catch (err) {
+                    console.error('Model call failed:', err);
+                    setGoverningEvents(prev => {
+                        const ev = createHardenedEvent('AI_CHAT_FAILED', {
+                            peerId: peer.id,
+                            error: err instanceof Error ? err.message : 'Unknown provider error'
+                        });
+                        return [...prev, ev];
+                    });
+                }
             }
         } catch (error) {
-            console.error('Chat failed', error);
+            console.error('Chat thread failed', error);
         } finally {
             setIsChatting(false);
         }
@@ -535,8 +548,8 @@ export default function ChamberLayout() {
                             onNodesReady={handleNodesReady}
                         />
                     ) : (
-                        <div className="h-full overflow-y-auto p-8 space-y-6">
-                            <div className="max-w-3xl mx-auto space-y-8">
+                        <ScrollArea className="h-full">
+                            <div className="p-8 space-y-6 max-w-3xl mx-auto">
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                                         <MessageSquare className="w-4 h-4" />
@@ -547,17 +560,20 @@ export default function ChamberLayout() {
                                             <div
                                                 key={msg.id}
                                                 className={cn(
-                                                    "p-3 rounded-lg text-sm max-w-[85%]",
+                                                    "p-3 rounded-lg text-sm max-w-[85%] border shadow-sm",
                                                     msg.role === 'assistant'
-                                                        ? "bg-primary/5 border border-primary/20 mr-auto"
-                                                        : "bg-muted ml-auto"
+                                                        ? msg.status === 'error'
+                                                            ? "bg-destructive/5 border-destructive/20 mr-auto text-destructive"
+                                                            : "bg-primary/5 border-primary/20 mr-auto"
+                                                        : "bg-muted border-border/50 ml-auto"
                                                 )}
                                             >
-                                                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold uppercase opacity-50">
+                                                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold uppercase opacity-60">
                                                     {msg.role === 'assistant' ? (
                                                         <>
                                                             <Bot className="w-3 h-3" />
                                                             {registryPeers.find(p => p.id === msg.peerId)?.name || msg.peerId}
+                                                            {msg.status === 'error' && <span className="ml-auto text-[9px] bg-destructive text-destructive-foreground px-1.5 rounded-full">Error</span>}
                                                         </>
                                                     ) : (
                                                         <>
@@ -566,7 +582,24 @@ export default function ChamberLayout() {
                                                         </>
                                                     )}
                                                 </div>
-                                                {msg.content}
+                                                {msg.status === 'error' ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-destructive">
+                                                            <XCircle className="w-3.5 h-3.5" /> Provider Error
+                                                        </div>
+                                                        <p className="opacity-80 italic">{msg.content}</p>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 text-[9px] border-destructive/30 text-destructive hover:bg-destructive/10"
+                                                            onClick={() => alert(`Provider Error: ${msg.errorDetails}`)}
+                                                        >
+                                                            View Details
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                                )}
                                             </div>
                                         ))}
                                         {deriveChatThread(governingEvents).length === 0 && (
@@ -635,7 +668,7 @@ export default function ChamberLayout() {
                                     <div className="text-[10px] font-bold text-primary uppercase tracking-widest pl-2">Session Commenced</div>
                                 </div>
                             </div>
-                        </div>
+                        </ScrollArea>
                     )}
                 </div>
 

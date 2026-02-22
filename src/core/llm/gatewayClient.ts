@@ -29,7 +29,10 @@ export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
         console.info('Falling back to direct local call for LM Studio');
         const resp = await fetch(`${options.baseURL}/chat/completions`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.apiKey ? { 'Authorization': `Bearer ${options.apiKey}` } : {})
+            },
             body: JSON.stringify({
                 model: options.model,
                 messages: options.messages

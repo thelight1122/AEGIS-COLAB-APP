@@ -9,6 +9,7 @@ import {
     MOCK_VERSIONS, MOCK_PROPOSALS, MOCK_CONSIDERATIONS, MOCK_PEERS,
 } from '../types';
 import { Button } from '../components/ui/button';
+import { ScrollArea } from '../components/ui/scroll-area';
 
 const statusConfig = {
     locked: { color: 'text-green-500 bg-green-500/10 border-green-500/30', icon: Lock, label: 'Locked' },
@@ -260,49 +261,49 @@ export default function Artifacts() {
                         {considerations.length === 0 ? (
                             <p className="text-sm text-muted-foreground italic">No considerations recorded yet.</p>
                         ) : (
-                            <div className="border border-border rounded-lg overflow-hidden">
+                            <ScrollArea className="h-[450px] border border-border rounded-lg">
                                 <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-muted/50 border-b border-border">
-                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Peer</th>
-                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Domains</th>
-                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Lens</th>
-                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Verdict</th>
-                                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs uppercase">Note</th>
+                                    <thead className="sticky top-0 bg-muted z-10">
+                                        <tr className="border-b border-border shadow-sm">
+                                            <th className="text-left px-4 py-2.5 font-bold text-muted-foreground text-[10px] uppercase tracking-wider">Peer</th>
+                                            <th className="text-left px-4 py-2.5 font-bold text-muted-foreground text-[10px] uppercase tracking-wider">Domains</th>
+                                            <th className="text-left px-4 py-2.5 font-bold text-muted-foreground text-[10px] uppercase tracking-wider">Lens</th>
+                                            <th className="text-left px-4 py-2.5 font-bold text-muted-foreground text-[10px] uppercase tracking-wider">Verdict</th>
+                                            <th className="text-left px-4 py-2.5 font-bold text-muted-foreground text-[10px] uppercase tracking-wider">Note</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-border">
                                         {considerations.map((entry) => {
                                             const cfg = verdictConfig[entry.verdict];
                                             const VerdictIcon = cfg.icon;
                                             return (
-                                                <tr key={entry.id} className="border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
-                                                    <td className="px-4 py-3 font-medium">{entry.peerName}</td>
+                                                <tr key={entry.id} className="hover:bg-muted/30 transition-colors">
+                                                    <td className="px-4 py-3 font-medium text-xs">@{entry.peerName}</td>
                                                     <td className="px-4 py-3">
                                                         <div className="flex flex-wrap gap-1">
                                                             {(MOCK_PEERS.find(p => p.name === entry.peerName)?.domains || []).map((d: string) => (
-                                                                <span key={d} className="text-[9px] bg-muted px-1 rounded text-muted-foreground border border-border/50">
+                                                                <span key={d} className="text-[9px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground border border-border/50">
                                                                     {d}
                                                                 </span>
                                                             ))}
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{entry.lens}</span>
+                                                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">{entry.lens}</span>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full", cfg.bg, cfg.color)}>
+                                                        <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border", cfg.bg, cfg.color)}>
                                                             <VerdictIcon className="w-3 h-3" />
                                                             {entry.verdict}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs">{entry.note}</td>
+                                                    <td className="px-4 py-3 text-[11px] text-muted-foreground max-w-xs">{entry.note}</td>
                                                 </tr>
                                             );
                                         })}
                                     </tbody>
                                 </table>
-                            </div>
+                            </ScrollArea>
                         )}
                     </section>
                 </div>

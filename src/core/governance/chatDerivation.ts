@@ -6,6 +6,8 @@ export interface ChatThreadMessage {
     content: string;
     peerId?: string;
     timestamp: number;
+    status?: 'success' | 'error';
+    errorDetails?: string;
 }
 
 export function deriveChatThread(events: GovernanceEvent[]): ChatThreadMessage[] {
@@ -25,7 +27,18 @@ export function deriveChatThread(events: GovernanceEvent[]): ChatThreadMessage[]
                 role: 'assistant',
                 peerId: event.peerId,
                 content: event.responseText,
-                timestamp: event.timestamp
+                timestamp: event.timestamp,
+                status: 'success'
+            });
+        } else if (event.type === 'AI_CHAT_FAILED') {
+            messages.push({
+                id: `err-${event.timestamp}`,
+                role: 'assistant',
+                peerId: event.peerId,
+                content: 'Failed to generate response.',
+                timestamp: event.timestamp,
+                status: 'error',
+                errorDetails: event.error
             });
         }
     }

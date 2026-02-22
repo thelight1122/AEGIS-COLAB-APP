@@ -6,6 +6,7 @@ import type {
     WorkshopMessage,
     ExplorationPhase
 } from '../types/commons';
+import { getAdapter } from '../core/llm/adapters';
 
 export function CommonsProvider({ children }: { children: React.ReactNode }) {
     const [connectedModels, setConnectedModels] = useState<ConnectedModel[]>([]);
@@ -107,20 +108,40 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                 } catch (e) { console.error('Audio cue failed', e); }
             }
 
-            const response = `Response from ${model.model} regarding: ${userPrompt.slice(0, 20)}...`;
-            let currentText = "";
-            const words = response.split(" ");
+            let responseText = '';
+            try {
+                const adapter = getAdapter(model.provider);
+                const response = await adapter.completeChat({
+                    provider: model.provider,
+                    model: model.model,
+                    apiKey: model.apiKey,
+                    baseURL: model.endpointUrl,
+                    messages: [
+                        { role: 'system', content: 'You are an AEGIS peer collaborating in a Commons Workshop. Be concise, insightful, and adhere to the AEGIS Invariants (no coercion, preserve sovereignty).' },
+                        { role: 'user', content: userPrompt }
+                    ]
+                });
+                responseText = response.text;
+            } catch (err) {
+                console.error(`Model ${model.model} failed:`, err);
+                responseText = `[Error] ${err instanceof Error ? err.message : 'No response from provider'}`;
+            }
 
+            const words = responseText.split(" ");
+            let currentText = "";
+
+            // Simple streaming simulation for UI feel
             for (const word of words) {
                 currentText += (currentText ? " " : "") + word;
-                await new Promise(r => setTimeout(r, 100));
+                // Add message early if we want progressive rendering, but here we add once finished
+                // Wait, the original code adds it ONCE at the end. I'll maintain that for now but with the real text.
             }
 
             addMessage({
                 participant: model.model,
                 participantType: 'ai',
-                content: response,
-                posture: 'Define'
+                content: responseText,
+                posture: responseText.startsWith('[Error]') ? undefined : 'Define'
             });
             await new Promise(r => setTimeout(r, 500));
         }

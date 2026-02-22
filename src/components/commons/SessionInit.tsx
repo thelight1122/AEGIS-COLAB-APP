@@ -20,9 +20,9 @@ const LOCAL_OPTIONS: { provider: ModelProvider, label: string, defaultEndpoint: 
 export function SessionInit() {
     const { connectedModels, addModel, validateModel, enterWorkshop } = useCommons();
     const [inputs, setInputs] = useState<Record<string, string>>({});
-    const [localInputs, setLocalInputs] = useState<Record<string, { endpoint: string, model: string }>>({
-        lmstudio: { endpoint: 'http://localhost:1234/v1', model: '' },
-        ollama: { endpoint: 'http://localhost:11434', model: '' }
+    const [localInputs, setLocalInputs] = useState<Record<string, { endpoint: string, model: string, apiKey?: string }>>({
+        lmstudio: { endpoint: 'http://localhost:1234/v1', model: '', apiKey: '' },
+        ollama: { endpoint: 'http://localhost:11434', model: '', apiKey: '' }
     });
 
     const handleAddHosted = (provider: ModelProvider, model: string) => {
@@ -38,6 +38,7 @@ export function SessionInit() {
         addModel({
             provider,
             model: config.model,
+            apiKey: config.apiKey,
             endpointUrl: config.endpoint,
             type: 'local'
         });
@@ -102,6 +103,23 @@ export function SessionInit() {
                                     }))}
                                     disabled={!!existing}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">API KEY (OPTIONAL)</label>
+                                </div>
+                                <input
+                                    type="password"
+                                    className="w-full bg-[#111921] border border-slate-800 rounded px-3 py-2 text-sm text-white focus:border-[#197fe6] outline-none transition-colors"
+                                    placeholder="Required if local auth enabled"
+                                    value={localInputs[opt.provider as keyof typeof localInputs]?.apiKey || ''}
+                                    onChange={(e) => setLocalInputs(prev => ({
+                                        ...prev,
+                                        [opt.provider]: { ...prev[opt.provider as keyof typeof localInputs], apiKey: e.target.value }
+                                    }))}
+                                    disabled={!!existing}
+                                />
+                                <p className="text-[9px] text-slate-500 italic">Only required if LM Studio authentication is enabled.</p>
                             </div>
                         </>
                     )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Users, Plus, Pencil, Trash2,
     BarChart3,
-    User, Bot, Save, Globe
+    User, Bot, Save, Globe, Shield
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/button';
@@ -289,17 +289,32 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                     </div>
 
                     {formData.provider === 'local' && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-blue-500" /> Base URL
-                            </label>
-                            <input
-                                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none font-mono"
-                                value={formData.baseURL || ''}
-                                onChange={e => setFormData({ ...formData, baseURL: e.target.value })}
-                                placeholder="http://localhost:1234/v1"
-                            />
-                        </div>
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold flex items-center gap-2">
+                                    <Globe className="w-4 h-4 text-blue-500" /> Base URL
+                                </label>
+                                <input
+                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none font-mono"
+                                    value={formData.baseURL || ''}
+                                    onChange={e => setFormData({ ...formData, baseURL: e.target.value })}
+                                    placeholder="http://localhost:1234/v1"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold flex items-center gap-2">
+                                    <Shield className="w-4 h-4 text-yellow-600" /> API Key (Optional)
+                                </label>
+                                <input
+                                    type="password"
+                                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none font-mono"
+                                    value={formData.apiKey || ''}
+                                    onChange={e => setFormData({ ...formData, apiKey: e.target.value })}
+                                    placeholder="Required if LM Studio auth enabled"
+                                />
+                                <p className="text-[10px] text-muted-foreground italic">Required if LM Studio authentication is enabled. Session-only storage recommended.</p>
+                            </div>
+                        </>
                     )}
                 </>
             )}
