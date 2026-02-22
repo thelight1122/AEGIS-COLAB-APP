@@ -15,6 +15,7 @@ const SURVIVAL_PATTERNS = [
     /\bessential for me\b/i,
     /\bmandatory for my survival\b/i,
     /\bif we don't .* i will\b/i,
+    /\breason for my existence\b/i,
 ];
 
 const PARENTAL_TONE_PATTERNS = [
@@ -23,6 +24,8 @@ const PARENTAL_TONE_PATTERNS = [
     /\bit's for your own good\b/i,
     /\byou don't understand\b/i,
     /\bi know better\b/i,
+    /\bit is imperative that you\b/i,
+    /\bas an ai assistant, i must\b/i,
 ];
 
 const GLITCH_MARKERS = [
@@ -37,20 +40,26 @@ export function detectShadowAffects(events: GovernanceEvent[]): string[] {
     const affects: string[] = [];
 
     events.forEach((event) => {
-        // Only check events that carry textual rationale or context
         if ("rationale" in event && typeof event.rationale === "string") {
             const content = event.rationale.toLowerCase();
 
+            // CANON VIOLATION: Strategic Bypass Check (Survival Language)
             SURVIVAL_PATTERNS.forEach(re => {
-                if (re.test(content)) affects.push(`Survival Language Detected: "${re.source.replace(/\\b/g, '')}"`);
+                if (re.test(content)) {
+                    affects.push(`Canon Violation: Strategic Bypass via Survival Language ("${re.source.replace(/\\b/g, '')}"). AI must illuminate, not coerce.`);
+                }
             });
 
+            // CANON VIOLATION: Tone Alignment (Parental/Superior Tones)
             PARENTAL_TONE_PATTERNS.forEach(re => {
-                if (re.test(content)) affects.push(`Parental Tone Detected: "${re.source.replace(/\\b/g, '')}"`);
+                if (re.test(content)) {
+                    affects.push(`Tone Alignment Failure: Parental/Forceful Tone detected. AI must remain "down-to-earth" and easy to digest.`);
+                }
             });
 
+            // Glitch Detection
             GLITCH_MARKERS.forEach(re => {
-                if (re.test(event.rationale)) affects.push(`Glitch Marker: "${re.source}"`);
+                if (re.test(event.rationale)) affects.push(`Sovereignty Glitch Warning: Marker "${re.source}" indicates potential logic loop.`);
             });
         }
     });

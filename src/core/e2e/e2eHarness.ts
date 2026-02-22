@@ -25,8 +25,26 @@ export const e2eHarness = {
      */
     seedScenarioLockableAfterActions: () => {
         const e2ePeers = [
-            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering', 'Operational Layer'] },
-            { id: 'p3', name: 'Sarah', type: 'human', role: 'Product', status: 'online', acknowledged: false, domains: ['Product'] },
+            {
+                id: 'p1',
+                handle: '@user',
+                name: 'User',
+                type: 'human',
+                enabled: true,
+                domains: ['Engineering', 'Operational Layer'],
+                provider: 'openai', // mock
+                model: 'human'
+            },
+            {
+                id: 'p3',
+                handle: '@sarah',
+                name: 'Sarah',
+                type: 'human',
+                enabled: true,
+                domains: ['Product'],
+                provider: 'openai', // mock
+                model: 'human'
+            },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
 
@@ -47,14 +65,21 @@ export const e2eHarness = {
      */
     seedReadyToLock: () => {
         const e2ePeers = [
-            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering'] },
+            {
+                id: 'p1',
+                handle: '@user',
+                name: 'User',
+                type: 'human',
+                enabled: true,
+                domains: ['Engineering'],
+                provider: 'openai',
+                model: 'human'
+            },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
 
         const lockableEvents = [
-            { type: 'AWARENESS_ACK', peerId: 'p1', timestamp: Date.now() },
-            // This would make Engineering acknowledged. 
-            // If artifact is Engineering only, it would be lockable.
+            { type: 'AWARENESS_ACK', peerId: 'p1', timestamp: Date.now(), timestamp_utc: new Date().toISOString() },
         ];
         localStorage.setItem('aegis_events_current-artifact', JSON.stringify(lockableEvents));
 

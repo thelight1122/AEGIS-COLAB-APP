@@ -2,7 +2,7 @@ import { loadPeers as loadNewPeers } from '../core/peers/peerRegistryStore';
 import type { Peer } from '../types';
 import { isE2E } from './e2e';
 
-export const PEER_STORAGE_KEY = 'aegis-peers-registry';
+export const PEER_STORAGE_KEY = 'aegis.peers.v1';
 
 export function loadPeers(): Peer[] {
     const peers = loadNewPeers();

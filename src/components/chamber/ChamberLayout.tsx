@@ -150,8 +150,15 @@ export default function ChamberLayout() {
         };
     });
 
-    // Load peers from registry
-    const registryPeers = useMemo<PeerProfile[]>(() => loadRegistryPeers(), []);
+    // Load peers from registry and filter for the Circle of Four (plus E2E peers if active)
+    const registryPeers = useMemo<PeerProfile[]>(() => {
+        const rawPeers = loadRegistryPeers();
+        const circleOfFour = ['@tracey', '@linq', '@lumin', '@vespar'];
+        if (isE2E()) {
+            circleOfFour.push('@user', '@sarah');
+        }
+        return rawPeers.filter(p => circleOfFour.includes(p.handle));
+    }, []);
 
     useEffect(() => {
         if (isE2E()) {

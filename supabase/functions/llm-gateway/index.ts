@@ -1,18 +1,35 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+declare const Deno: {
+    serve: (handler: (req: Request) => Promise<Response>) => void;
+    env: {
+        get: (key: string) => string | undefined;
+    };
+};
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req) => {
+interface Message {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+}
+
+interface Peer {
+    provider: string;
+    model: string;
+    baseURL?: string;
+}
+
+Deno.serve(async (req: Request) => {
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
 
     try {
-        const { peer, messages, sessionId, artifactId } = await req.json();
+        const { peer, messages }: { peer: Peer, messages: Message[] } = await req.json();
         const { provider, model, baseURL } = peer;
 
         // Get key from env
@@ -33,18 +50,22 @@ Deno.serve(async (req) => {
         let result;
         if (provider === 'gemini') {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            const contents = messages.map((m: any) => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }]
-            }));
-            const systemMessage = messages.find((m: any) => m.role === 'system');
+
+            const systemMessage = messages.find(m => m.role === 'system');
             const systemInstruction = systemMessage ? { parts: [{ text: systemMessage.content }] } : undefined;
+
+            const contents = messages
+                .filter(m => m.role !== 'system')
+                .map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                }));
 
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: contents.filter((m: any) => messages[messages.indexOf(messages.find((x: any) => x.content === m.parts[0].text)!)].role !== 'system'),
+                    contents,
                     systemInstruction,
                 }),
             });
@@ -91,7 +112,8 @@ Deno.serve(async (req) => {
         });
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return new Response(JSON.stringify({ error: errorMessage }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

@@ -13,4 +13,5 @@ export interface PeerProfile {
     domains: string[]; // integration with Governance
     baseURL?: string;
     notes?: string;
+    dataQuad?: string[]; // Foundational knowledge segments (e.g., AEGIS Canon)
 }

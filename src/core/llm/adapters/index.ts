@@ -10,7 +10,7 @@ export interface ChatResponse {
         completionTokens: number;
         totalTokens: number;
     };
-    raw?: any;
+    raw?: unknown;
 }
 
 export interface ChatOptions {
