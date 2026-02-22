@@ -1,11 +1,13 @@
-export type ModelProvider = 'openai' | 'gemini' | 'anthropic';
+export type ModelProvider = 'openai' | 'gemini' | 'anthropic' | 'grok' | 'lmstudio' | 'ollama';
 
 export interface ConnectedModel {
     id: string;
     provider: ModelProvider;
     model: string;
-    apiKey: string;
+    apiKey?: string;
+    endpointUrl?: string;
     status: 'Not Connected' | 'Connected' | 'Validating';
+    type: 'hosted' | 'local';
 }
 
 export interface WorkshopMessage {

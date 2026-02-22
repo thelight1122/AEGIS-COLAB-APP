@@ -143,7 +143,9 @@ export function WorkshopInterior() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                <span className="text-sm font-medium text-white">You</span>
+                                <span className="text-sm font-medium text-white">
+                                    You <span className="text-[10px] text-slate-500 font-bold uppercase ml-1">(Human)</span>
+                                </span>
                             </div>
                             <span className="text-[10px] text-slate-500 uppercase font-bold">Active</span>
                         </div>
@@ -151,7 +153,11 @@ export function WorkshopInterior() {
                             <div key={model.id} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full bg-blue-500/50" />
-                                    <span className="text-sm font-medium text-slate-300">{model.model}</span>
+                                    <span className="text-sm font-medium text-slate-300">
+                                        {model.model} <span className="text-[10px] text-slate-500 font-bold uppercase ml-1">
+                                            ({model.type === 'hosted' ? 'Cloud' : 'Local'})
+                                        </span>
+                                    </span>
                                 </div>
                                 <span className="text-[10px] text-slate-500 uppercase font-bold">Connected</span>
                             </div>

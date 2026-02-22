@@ -1,8 +1,20 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Shield, Book, Layout, Lock, Cpu } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 export default function FrameworkPage() {
+    const { hash } = useLocation();
+
+    useEffect(() => {
+        if (hash) {
+            const element = document.getElementById(hash.replace('#', ''));
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, [hash]);
+
     return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#111921] text-slate-900 dark:text-slate-100 font-display transition-colors">
             <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-[#111921]/80">
@@ -36,7 +48,7 @@ export default function FrameworkPage() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div id="governance-layers" className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             { icon: Layout, title: 'Inherent Agency', desc: 'Peers operate without pre-programmed hierarchy. Alignment is voluntary and explicit.' },
                             { icon: Lock, title: 'Cryptographic Integrity', desc: 'Every contribution is signed and logged in an immutable ledger for total transparency.' },

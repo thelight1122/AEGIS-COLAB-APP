@@ -27,14 +27,20 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const addModel = (provider: ModelProvider, model: string, apiKey: string) => {
+    const addModel = ({ provider, model, apiKey, endpointUrl, type }: {
+        provider: ModelProvider,
+        model: string,
+        apiKey?: string,
+        endpointUrl?: string,
+        type: 'hosted' | 'local'
+    }) => {
         const id = crypto.randomUUID();
-        setConnectedModels(prev => [...prev, { id, provider, model, apiKey, status: 'Not Connected' }]);
+        setConnectedModels(prev => [...prev, { id, provider, model, apiKey, endpointUrl, status: 'Not Connected', type }]);
     };
 
     const validateModel = async (id: string) => {
         setConnectedModels(prev => prev.map(m => m.id === id ? { ...m, status: 'Validating' } : m));
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
         setConnectedModels(prev => prev.map(m => m.id === id ? { ...m, status: 'Connected' } : m));
         return true;
     };

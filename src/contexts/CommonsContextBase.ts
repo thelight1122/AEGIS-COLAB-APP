@@ -15,7 +15,13 @@ export interface CommonsContextType {
     roundRobinOrder: string[];
     currentTurnIndex: number | null;
 
-    addModel: (provider: ModelProvider, model: string, apiKey: string) => void;
+    addModel: (params: {
+        provider: ModelProvider,
+        model: string,
+        apiKey?: string,
+        endpointUrl?: string,
+        type: 'hosted' | 'local'
+    }) => void;
     validateModel: (id: string) => Promise<boolean>;
     enterWorkshop: () => void;
     addMessage: (message: Omit<WorkshopMessage, 'id' | 'timestamp'>) => void;

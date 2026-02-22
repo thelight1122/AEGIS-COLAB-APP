@@ -17,7 +17,7 @@ export default function LandingPage() {
                     <nav className="hidden md:flex items-center gap-10">
                         <a className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" href="#">About</a>
                         <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
-                        <a className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" href="#">Governance</a>
+                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework#governance-layers">Governance</Link>
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link to="/commons">
