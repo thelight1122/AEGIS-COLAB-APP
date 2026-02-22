@@ -30,6 +30,7 @@ export function Sidebar({ className }: SidebarProps) {
     const navItems = [
         { to: "/", icon: LayoutDashboard, label: "Chamber" },
         { to: "/artifacts", icon: Layers, label: "Artifacts" },
+        { to: "/commons", icon: Shield, label: "Commons" },
         { to: "/sessions", icon: History, label: "Sessions" },
         { to: "/peers", icon: Users, label: "Team Setup" },
         { to: "/lenses", icon: Eye, label: "Lenses" },
