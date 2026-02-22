@@ -4,9 +4,8 @@ import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
 import { GatewayStatus } from './GatewayStatus';
-import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare, XCircle } from 'lucide-react';
+import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare, XCircle, Code, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
 import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
@@ -35,7 +34,7 @@ const METADATA_KEY = 'aegis_metadata_current-artifact';
 const defaultMetadata = {
     id: 'current-artifact',
     label: 'Main Logic Protocol',
-    domainTags: ['Product', 'Engineering'], // Intersection with multiple peers, ensuring un-acked state if no seeds
+    domainTags: ['Product', 'Engineering'],
     isHighImpact: false,
     hasTension: false
 };
@@ -45,11 +44,9 @@ export default function ChamberLayout() {
     const navigate = useNavigate();
     const [sessions] = useState<LiveSession[]>(() => loadSessions());
 
-    // Find active session from state or fallback to first active
     const sessionId = location.state?.sessionId;
     const currentSession = useMemo(() => {
         if (sessionId) return sessions.find(s => s.id === sessionId);
-        // Fallback for refresh: find any active session
         return sessions.find(s => s.status === 'Active');
     }, [sessions, sessionId]);
 
@@ -70,12 +67,10 @@ export default function ChamberLayout() {
     const [selectedChatPeerIds, setSelectedChatPeerIds] = useState<string[]>([]);
     const [isChatting, setIsChatting] = useState(false);
 
-    // Unified Governance Event Stream (Concurrency Model v0.1)
     const [governingEvents, setGoverningEvents] = useState<GovernanceEvent[]>(
         currentSession?.eventLog || []
     );
 
-    // Sync events to session storage
     useEffect(() => {
         if (!currentSession) return;
         const allSessions = loadSessions();
@@ -85,28 +80,24 @@ export default function ChamberLayout() {
         saveSessions(nextSessions);
     }, [governingEvents, currentSession]);
 
-    // Heartbeat activity
     useEffect(() => {
         if (!currentSession) return;
         const interval = setInterval(() => {
             const allSessions = loadSessions();
             const nextSessions = touchSessionActivity(allSessions, currentSession.id);
             saveSessions(nextSessions);
-        }, 10000); // 10s heartbeat
+        }, 10000);
         return () => clearInterval(interval);
     }, [currentSession]);
 
-    // Session Protection (Multi-tab Hijack) (GI-003)
     useEffect(() => {
         if (!currentSession) return;
         const channel = new BroadcastChannel(`aegis-session-${currentSession.id}`);
 
         const handleMessage = (msg: MessageEvent) => {
             if (msg.data.type === 'TAB_JOINED') {
-                // Another tab joined, snapshot and displace this one (SSSP)
                 const snapshotTime = new Date().toISOString();
                 setDisplacedSnapshot({ time: snapshotTime, events: governingEvents });
-                // We could also record an SSSP event to the ledger if we want
             }
         };
 
@@ -119,7 +110,6 @@ export default function ChamberLayout() {
         };
     }, [currentSession, governingEvents]);
 
-    // Artifact Metadata
     const [artifactMetadata, setArtifactMetadata] = useState(() => {
         const stored = localStorage.getItem(METADATA_KEY);
         if (stored) {
@@ -151,14 +141,13 @@ export default function ChamberLayout() {
         };
     });
 
-    // Load peers from registry and filter for the Circle of Four (plus E2E peers if active)
     const registryPeers = useMemo<PeerProfile[]>(() => {
         const rawPeers = loadRegistryPeers();
         const circleOfFour = ['@tracey', '@linq', '@lumin', '@vespar'];
         if (isE2E()) {
             circleOfFour.push('@user', '@sarah');
         }
-        return rawPeers.filter(p => circleOfFour.includes(p.handle));
+        return rawPeers.filter(p => circleOfFour.includes(p.handle) && p.enabled);
     }, []);
 
     useEffect(() => {
@@ -174,7 +163,6 @@ export default function ChamberLayout() {
         return governingEvents.some(e => e.type === 'LOCK_REQUEST');
     }, [governingEvents]);
 
-    // Telemetry Data using Formal State Machine (GI-001)
     const telemetry = useMemo((): TelemetryData => {
         const governArtifact: GovernanceArtifact = {
             id: artifactId,
@@ -248,13 +236,11 @@ export default function ChamberLayout() {
         const timestamp_utc = new Date(timestamp).toISOString();
         const scoreBefore = telemetry.inclusionScore;
 
-        // Lens acknowledgments current state
         const lens_acknowledgments: Record<string, boolean | string> = {};
         telemetry.lenses.forEach(l => {
             lens_acknowledgments[l.name] = l.status === 'active' ? true : (l.status === 'deferred' ? (l.deferralRationale || true) : false);
         });
 
-        // Simulate next state to find awareness_score_after
         const nextEvents: GovernanceEvent[] = [...governingEvents, { ...extra, type, timestamp, timestamp_utc } as GovernanceEvent];
         const nextInclusion = computeInclusionState(
             { id: artifactId, domainTags: artifactMetadata.domains, status: 'Active' },
@@ -285,8 +271,6 @@ export default function ChamberLayout() {
 
         setIsChatting(true);
         try {
-            // Log local user message as a contribution? Or just the AI request
-            // For now, let's log the REQUESTED event
             const selectedPeers = registryPeers.filter(p => selectedChatPeerIds.includes(p.id));
 
             for (const peer of selectedPeers) {
@@ -302,7 +286,6 @@ export default function ChamberLayout() {
                     return [...prev, ev];
                 });
 
-                // Call Gateway
                 try {
                     const response = await callGateway({
                         provider: peer.provider,
@@ -339,6 +322,20 @@ export default function ChamberLayout() {
             setIsChatting(false);
         }
     }, [currentSession, selectedChatPeerIds, registryPeers, createHardenedEvent]);
+
+    const handleClearChat = useCallback(() => {
+        if (!currentSession) return;
+        if (!window.confirm('Clear artifact dialogue? History is preserved in the append-only ledger, but the chat view will reset. (Local-only session clear)')) {
+            return;
+        }
+
+        setGoverningEvents(prev => {
+            const ev = createHardenedEvent('SESSION_CLEARED', {
+                reason: 'User manual clear'
+            });
+            return [...prev, ev];
+        });
+    }, [currentSession, createHardenedEvent]);
 
     const handleAcknowledge = useCallback((peerId: string) => {
         setGoverningEvents(prev => {
@@ -401,7 +398,7 @@ export default function ChamberLayout() {
         const { ok, state } = canLock(governArtifact, governPeers, governLenses, governingEvents);
 
         if (!ok) {
-            alert(`Lock denied. Reasons:\n- ${state.reasons.join('\n- ')}`);
+            alert(`Lock denied. Reasons: \n - ${state.reasons.join('\n- ')}`);
             return;
         }
 
@@ -433,9 +430,10 @@ export default function ChamberLayout() {
         setIsEditingMetadata(false);
     };
 
+    const chatMessages = useMemo(() => deriveChatThread(governingEvents), [governingEvents]);
+
     return (
         <div className="flex flex-col h-full bg-background overflow-hidden">
-            {/* Governance Header */}
             <div className="h-14 border-b border-border bg-card/50 flex items-center justify-between px-6 z-30 backdrop-blur-sm">
                 <div className="flex items-center gap-4 flex-1">
                     {isEditingMetadata ? (
@@ -459,29 +457,27 @@ export default function ChamberLayout() {
                             </Button>
                         </div>
                     ) : (
-                        <>
-                            <div className="flex flex-col">
-                                <h2 className="text-sm font-bold flex items-center gap-2">
-                                    {artifactMetadata.title}
-                                    <button
-                                        onClick={() => { setTempMetadata(artifactMetadata); setIsEditingMetadata(true); }}
-                                        className="text-muted-foreground hover:text-primary"
-                                        title="Edit Metadata"
-                                        data-testid="edit-metadata"
-                                    >
-                                        <Edit2 className="w-3 h-3" />
-                                    </button>
-                                </h2>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                    <Tag className="w-3 h-3 text-muted-foreground" />
-                                    {artifactMetadata.domains.map((d: string) => (
-                                        <span key={d} className="text-[10px] text-muted-foreground font-mono bg-muted px-1 rounded">
-                                            {d}
-                                        </span>
-                                    ))}
-                                </div>
+                        <div className="flex flex-col">
+                            <h2 className="text-sm font-bold flex items-center gap-2">
+                                {artifactMetadata.title}
+                                <button
+                                    onClick={() => { setTempMetadata(artifactMetadata); setIsEditingMetadata(true); }}
+                                    className="text-muted-foreground hover:text-primary"
+                                    title="Edit Metadata"
+                                    data-testid="edit-metadata"
+                                >
+                                    <Edit2 className="w-3 h-3" />
+                                </button>
+                            </h2>
+                            <div className="flex items-center gap-1 mt-0.5">
+                                <Tag className="w-3 h-3 text-muted-foreground" />
+                                {artifactMetadata.domains.map((d: string) => (
+                                    <span key={d} className="text-[10px] text-muted-foreground font-mono bg-muted px-1 rounded">
+                                        {d}
+                                    </span>
+                                ))}
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
                 <div className="flex items-center gap-3">
@@ -541,134 +537,109 @@ export default function ChamberLayout() {
                     />
                 </div>
 
-                <div className="flex-1 relative min-w-0 z-0 bg-muted/20">
+                <div className="flex-1 relative min-w-0 z-0 bg-muted/20 text-foreground">
                     {activeTab === 'whiteboard' ? (
                         <WhiteboardArea
                             focusNodeId={focusNodeId}
                             onNodesReady={handleNodesReady}
                         />
                     ) : (
-                        <ScrollArea className="h-full">
-                            <div className="p-8 space-y-6 max-w-3xl mx-auto">
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                        <div className="h-full flex flex-col p-6 space-y-6 max-w-4xl mx-auto overflow-hidden">
+                            <div className="flex-[3] min-h-0 flex flex-col bg-card/40 rounded-xl border border-border/50 overflow-hidden shadow-sm">
+                                <header className="px-4 py-3 border-b border-border/50 flex items-center justify-between bg-muted/30 shrink-0">
+                                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                                         <MessageSquare className="w-4 h-4" />
-                                        Chat Thread
+                                        Artifact Dialogue
                                     </h3>
-                                    <div className="space-y-3">
-                                        {deriveChatThread(governingEvents).map(msg => (
-                                            <div
-                                                key={msg.id}
-                                                className={cn(
-                                                    "p-3 rounded-lg text-sm max-w-[85%] border shadow-sm",
-                                                    msg.role === 'assistant'
-                                                        ? msg.status === 'error'
-                                                            ? "bg-destructive/5 border-destructive/20 mr-auto text-destructive"
-                                                            : "bg-primary/5 border-primary/20 mr-auto"
-                                                        : "bg-muted border-border/50 ml-auto"
-                                                )}
-                                            >
-                                                <div className="flex items-center gap-2 mb-1 text-[10px] font-bold uppercase opacity-60">
-                                                    {msg.role === 'assistant' ? (
-                                                        <>
-                                                            <Bot className="w-3 h-3" />
-                                                            {registryPeers.find(p => p.id === msg.peerId)?.name || msg.peerId}
-                                                            {msg.status === 'error' && <span className="ml-auto text-[9px] bg-destructive text-destructive-foreground px-1.5 rounded-full">Error</span>}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <User className="w-3 h-3" />
-                                                            facilitator
-                                                        </>
+                                    <button
+                                        onClick={handleClearChat}
+                                        className="p-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive transition-all text-muted-foreground"
+                                        title="Clear chat view"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </header>
+
+                                <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+                                    {chatMessages.length === 0 ? (
+                                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 space-y-4">
+                                            <MessageSquare className="w-12 h-12 stroke-[1]" />
+                                            <p className="text-sm font-medium tracking-tight">No active dialogue. Begin session.</p>
+                                        </div>
+                                    ) : (
+                                        chatMessages.map(msg => (
+                                            <div key={msg.id} className={cn(
+                                                "flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                                                msg.role === 'user' ? "items-end" : "items-start"
+                                            )}>
+                                                <div className="flex items-center gap-2 px-1">
+                                                    {msg.role === 'assistant' && (
+                                                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                                                            {registryPeers.find(p => p.id === msg.peerId)?.name || 'AI Peer'}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[10px] tabular-nums font-mono text-muted-foreground/60">
+                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                                <div className={cn(
+                                                    "max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed shadow-sm",
+                                                    msg.role === 'user'
+                                                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                                                        : msg.status === 'error'
+                                                            ? "bg-destructive/10 border border-destructive/20 text-destructive rounded-tl-none font-medium"
+                                                            : "bg-muted border border-border text-foreground rounded-tl-none"
+                                                )}>
+                                                    {msg.content}
+                                                    {msg.status === 'error' && msg.errorDetails && (
+                                                        <div className="mt-2 text-[10px] opacity-70 border-t border-destructive/20 pt-2 font-mono">
+                                                            {msg.errorDetails}
+                                                        </div>
                                                     )}
                                                 </div>
-                                                {msg.status === 'error' ? (
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-destructive">
-                                                            <XCircle className="w-3.5 h-3.5" /> Provider Error
-                                                        </div>
-                                                        <p className="opacity-80 italic">{msg.content}</p>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="h-6 text-[9px] border-destructive/30 text-destructive hover:bg-destructive/10"
-                                                            onClick={() => alert(`Provider Error: ${msg.errorDetails}`)}
-                                                        >
-                                                            View Details
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                                                )}
                                             </div>
-                                        ))}
-                                        {deriveChatThread(governingEvents).length === 0 && (
-                                            <div className="text-center py-8 text-muted-foreground text-xs italic">
-                                                No messages in this thread yet. Select an AI peer and type in the stream to commence dialogue.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                                        <History className="w-4 h-4" />
-                                        Governance Ledger
-                                    </h3>
-                                    {[...governingEvents].reverse().map((event, idx) => (
-                                        <div key={idx} className="relative">
-                                            <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-background border-2 border-primary" />
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                                    <Clock className="w-3 h-3" />
-                                                    {event.timestamp_utc ? new Date(event.timestamp_utc).toLocaleString() : new Date(event.timestamp).toLocaleString()}
-                                                </div>
-                                                <div className="bg-card border border-border rounded-lg p-4 shadow-sm space-y-2">
-                                                    <div className="font-semibold text-sm flex items-center justify-between">
-                                                        <span className="text-primary">{event.type.replace(/_/g, ' ')}</span>
-                                                        <span className="text-[10px] font-mono opacity-50">{event.participant_session_id?.slice(0, 8)}...</span>
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {event.type === 'AWARENESS_ACK' && `Peer ${event.peerId} acknowledged awareness.`}
-                                                        {event.type === 'PROXY_REVIEW' && `Lens ${event.lensId} review captured via proxy.`}
-                                                        {event.type === 'AI_CHAT_REQUESTED' && (
-                                                            <div className="space-y-1">
-                                                                <p className="font-semibold text-foreground">Message to {event.peerId}:</p>
-                                                                <p className="italic bg-muted/30 p-2 rounded">"{event.prompt}"</p>
-                                                            </div>
-                                                        )}
-                                                        {event.type === 'AI_CHAT_COMPLETED' && (
-                                                            <div className="space-y-1">
-                                                                <p className="font-semibold text-foreground">Response from {event.peerId}:</p>
-                                                                <p className="border-l-2 border-primary/20 pl-2">
-                                                                    {event.responseText}
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                        {(event.type === 'DEFER_LENS' || event.type === 'lens_deferral_with_rationale') && (
-                                                            <div className="space-y-2">
-                                                                <p>Lens {event.lensId} deferred.</p>
-                                                                <div className="bg-muted/50 p-2 rounded text-[11px] italic">
-                                                                    "{event.rationale}"
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {event.type === 'LOCK_REQUEST' && `Lock requested for versioning.`}
-                                                    </div>
-                                                    <div className="pt-2 flex gap-4 text-[9px] font-mono opacity-70 border-t border-border/50">
-                                                        <span>Score: {event.awareness_score_before ?? '??'} → {event.awareness_score_after ?? '??'}%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="relative">
-                                    <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-primary" />
-                                    <div className="text-[10px] font-bold text-primary uppercase tracking-widest pl-2">Session Commenced</div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
-                        </ScrollArea>
+
+                            <div className="flex-[2] min-h-0 flex flex-col bg-muted/5 rounded-xl border border-border/30 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+                                <header className="px-4 py-2 border-b border-border/30 flex items-center gap-2 bg-muted/20 shrink-0">
+                                    <History className="w-3.5 h-3.5 text-muted-foreground" />
+                                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Governance Ledger</h3>
+                                </header>
+
+                                <div className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-[11px]">
+                                    {governingEvents.length === 0 ? (
+                                        <p className="text-muted-foreground/40 italic p-4">Ledger empty.</p>
+                                    ) : (
+                                        [...governingEvents].reverse().map((event, idx) => (
+                                            <div key={idx} className="flex gap-4 p-2 rounded hover:bg-muted/30 transition-colors group">
+                                                <div className="shrink-0 text-muted-foreground/40 w-16">
+                                                    {new Date(event.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <span className={cn(
+                                                        "font-bold mr-2",
+                                                        event.type.startsWith('AI_') ? "text-blue-500" :
+                                                            event.type === 'SESSION_CLEARED' ? "text-red-500" :
+                                                                "text-primary"
+                                                    )}>
+                                                        {event.type}
+                                                    </span>
+                                                    <span className="text-muted-foreground break-all">
+                                                        {event.type === 'AI_CHAT_REQUESTED' && `: ${event.prompt.substring(0, 40)}...`}
+                                                        {event.type === 'AWARENESS_ACK' && ` by ${event.peerId}`}
+                                                        {event.type === 'CONTRIBUTION' && ` peer:${event.peerId} lens:${event.lensId || 'none'}`}
+                                                        {event.type === 'SESSION_CLEARED' && ` (${event.reason})`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
@@ -739,5 +710,4 @@ export default function ChamberLayout() {
     );
 }
 
-// Export for use in other components if needed
 export { LOG_STORAGE_KEY, METADATA_KEY };

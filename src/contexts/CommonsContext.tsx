@@ -152,6 +152,11 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         setCurrentTurnIndex(null);
     };
 
+    const clearChat = () => {
+        setMessages([]);
+        setCurrentTurnIndex(null);
+    };
+
     return (
         <CommonsContext.Provider value={{
             connectedModels,
@@ -167,7 +172,8 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             addMessage,
             setAudioEnabled,
             startRoundRobin,
-            interruptRoundRobin
+            interruptRoundRobin,
+            clearChat
         }}>
             {children}
         </CommonsContext.Provider>

@@ -11,10 +11,13 @@ export interface ChatThreadMessage {
 }
 
 export function deriveChatThread(events: GovernanceEvent[]): ChatThreadMessage[] {
-    const messages: ChatThreadMessage[] = [];
+    let messages: ChatThreadMessage[] = [];
+    const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp);
 
-    for (const event of events) {
-        if (event.type === 'AI_CHAT_REQUESTED') {
+    for (const event of sortedEvents) {
+        if (event.type === 'SESSION_CLEARED') {
+            messages = [];
+        } else if (event.type === 'AI_CHAT_REQUESTED') {
             messages.push({
                 id: `req-${event.timestamp}`,
                 role: 'user',

@@ -28,6 +28,7 @@ export interface CommonsContextType {
     setAudioEnabled: (enabled: boolean) => void;
     startRoundRobin: (userPrompt: string) => void;
     interruptRoundRobin: () => void;
+    clearChat: () => void;
 }
 
 export const CommonsContext = createContext<CommonsContextType | undefined>(undefined);

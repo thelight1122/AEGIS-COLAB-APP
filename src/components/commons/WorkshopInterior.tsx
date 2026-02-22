@@ -11,7 +11,8 @@ import {
     Clock,
     Send,
     Loader2,
-    Info
+    Info,
+    Trash2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -20,7 +21,7 @@ export function WorkshopInterior() {
     const {
         connectedModels,
         messages,
-        addMessage,
+        clearChat,
         explorationPhase,
         currentTurnIndex,
         roundRobinOrder,
@@ -42,34 +43,10 @@ export function WorkshopInterior() {
         }
     }, [messages, currentTurnIndex]);
 
-    // Initial Seed
+    // Initial Seed removed to ensure fresh start
     useEffect(() => {
-        if (messages.length === 0) {
-            // Seed hardcoded v1 contributions
-            addMessage({
-                participant: 'System',
-                participantType: 'human',
-                content: 'Artifact Initialized: How should AI peers handle disagreement when coherence is desired?',
-                posture: 'Define'
-            });
-            setTimeout(() => {
-                addMessage({
-                    participant: 'Gemini',
-                    participantType: 'ai',
-                    content: 'Coherence should be sought through iterative clarification rather than forced averaging of outputs.',
-                    posture: 'Identify'
-                });
-            }, 500);
-            setTimeout(() => {
-                addMessage({
-                    participant: 'GPT-4o',
-                    participantType: 'ai',
-                    content: 'A disagreement should trigger a synthesis mode where the delta between perspectives is explicitly mapped.',
-                    posture: 'Define'
-                });
-            }, 1000);
-        }
-    }, [addMessage, messages.length]);
+        // No auto-seeding
+    }, []);
 
     // Close on outside click or ESC
     useEffect(() => {
@@ -108,6 +85,18 @@ export function WorkshopInterior() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => {
+                            if (window.confirm('Clear this chat view? This removes messages from this session view. (Session-only / local-only)')) {
+                                clearChat();
+                            }
+                        }}
+                        className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+                        title="Clear chat"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+
                     <button
                         onClick={() => setAudioEnabled(!audioEnabled)}
                         className="p-2 text-slate-500 hover:text-white transition-colors"

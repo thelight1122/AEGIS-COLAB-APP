@@ -45,7 +45,8 @@ export type GovernanceEvent =
     | ({ type: "LOCK_REQUEST" } & BaseGovernanceEvent)
     | ({ type: "AI_CHAT_REQUESTED"; peerId: string; provider: string; model: string; prompt: string } & BaseGovernanceEvent)
     | ({ type: "AI_CHAT_COMPLETED"; peerId: string; responseText: string } & BaseGovernanceEvent)
-    | ({ type: "AI_CHAT_FAILED"; peerId: string; error: string } & BaseGovernanceEvent);
+    | ({ type: "AI_CHAT_FAILED"; peerId: string; error: string } & BaseGovernanceEvent)
+    | ({ type: "SESSION_CLEARED"; reason?: string } & BaseGovernanceEvent);
 
 export type DeferredLens = { lensId: string; rationale: string };
 
