@@ -187,7 +187,7 @@ export function SessionInit() {
                         disabled={!hasConnected}
                         onClick={enterWorkshop}
                     >
-                        Enter Workshop
+                        Enter Commons Workshop
                     </Button>
                 </div>
             </div>

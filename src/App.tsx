@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
 import Chamber from './pages/Chamber';
@@ -12,6 +11,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import CommonsRoute from './pages/CommonsRoute';
 import LandingPage from './pages/LandingPage';
 import FrameworkPage from './pages/FrameworkPage';
+import GovernancePage from './pages/GovernancePage';
 import { ToolsRoute } from './routes/ToolsRoute';
 
 import { IDSProvider } from './contexts/IDSContext';
@@ -24,6 +24,7 @@ function App() {
           {/* Public Full-Screen Pages */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/framework" element={<FrameworkPage />} />
+          <Route path="/governance" element={<GovernancePage />} />
           <Route path="/commons" element={<CommonsRoute />} />
 
           {/* Dashboard Pages */}

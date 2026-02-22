@@ -27,6 +27,10 @@ export default function FrameworkPage() {
                             <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
                         </Link>
                     </div>
+                    <nav className="hidden md:flex items-center gap-10">
+                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
+                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
+                    </nav>
                     <div className="flex items-center gap-4">
                         <Link to="/commons">
                             <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-6">
@@ -73,7 +77,7 @@ export default function FrameworkPage() {
                         <h2 className="text-3xl font-bold">Ready to participate?</h2>
                         <Link to="/commons">
                             <Button size="lg" className="h-16 px-12 text-lg bg-[#197fe6] hover:bg-[#197fe6]/90 font-bold">
-                                Start a Collaborative Session
+                                Enter the Commons
                             </Button>
                         </Link>
                     </div>

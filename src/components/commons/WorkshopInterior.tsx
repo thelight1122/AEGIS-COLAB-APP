@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCommons } from '../../hooks/useCommons';
 import type { WorkshopMessage, ConnectedModel } from '../../types/commons';
 import {
@@ -13,6 +14,7 @@ import {
     Info
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
 
 export function WorkshopInterior() {
     const {
@@ -31,6 +33,8 @@ export function WorkshopInterior() {
     const [selectedPosture, setSelectedPosture] = useState<'Identify' | 'Define' | 'Suggest' | undefined>();
     const [isGovOpen, setIsGovOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const govRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -67,6 +71,26 @@ export function WorkshopInterior() {
         }
     }, [addMessage, messages.length]);
 
+    // Close on outside click or ESC
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (govRef.current && !govRef.current.contains(e.target as Node)) {
+                setIsGovOpen(false);
+            }
+        };
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsGovOpen(false);
+        };
+        if (isGovOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleEsc);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEsc);
+        };
+    }, [isGovOpen]);
+
     const handleSend = () => {
         if (!inputText.trim()) return;
         startRoundRobin(inputText);
@@ -92,41 +116,89 @@ export function WorkshopInterior() {
                         {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                     </button>
 
-                    <div className="relative">
+                    <div className="relative" ref={govRef}>
                         <button
                             onClick={() => setIsGovOpen(!isGovOpen)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#197fe6]/10 border border-[#197fe6]/20 text-[#197fe6] text-[10px] font-bold uppercase tracking-wider hover:bg-[#197fe6]/20 transition-all"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#197fe6]/5 border border-[#197fe6]/10 text-[#197fe6] text-[10px] font-bold uppercase tracking-wider hover:bg-[#197fe6]/10 transition-all"
                         >
                             AEGIS Active
                             <ChevronDown className={cn("w-3 h-3 transition-transform", isGovOpen && "rotate-180")} />
                         </button>
 
                         {isGovOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-[#111c26] border border-slate-800 rounded-lg shadow-2xl p-4 z-50 space-y-4">
-                                <div className="border-b border-slate-800 pb-2">
-                                    <h3 className="text-[11px] font-bold text-white uppercase tracking-widest">AEGIS Framework — Active</h3>
-                                </div>
-                                <div className="space-y-4 text-[10px] text-slate-400">
+                            <div className="absolute right-0 mt-3 w-[400px] bg-[#111c26] border border-slate-800 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-6 space-y-6">
                                     <div className="space-y-1">
-                                        <div className="font-bold text-slate-200">Protocol</div>
-                                        <div>• IDS Mode: Exploratory</div>
-                                        <div>• Round-Robin: Sequential</div>
+                                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#197fe6]" />
+                                            AEGIS Active
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                                            This Commons operates under the AEGIS governance architecture.
+                                        </p>
                                     </div>
-                                    <div className="space-y-1">
-                                        <div className="font-bold text-slate-200">Transparency</div>
-                                        <div>• Contributions Logged</div>
-                                        <div>• Append-Only Ledger</div>
+
+                                    <div className="space-y-4">
+                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-1">Current Operational State</div>
+
+                                        <div className="grid grid-cols-1 gap-4 text-[11px]">
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Dialogue Mode</div>
+                                                <div className="text-slate-200 font-medium">Exploratory (IDS rhythm — Identify → Define → Suggest)</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Turn Structure</div>
+                                                <div className="text-slate-200 font-medium">Sequential round-robin participation</div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Initiation & Control</div>
+                                                <div className="text-slate-200 font-medium leading-relaxed">
+                                                    Human-initiated<br />
+                                                    Human-interruptible at any time
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Transparency</div>
+                                                <div className="text-slate-200 font-medium leading-relaxed">
+                                                    Contributions are visible and preserved in an append-only session ledger
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Session Model</div>
+                                                <div className="text-slate-200 font-medium leading-relaxed">
+                                                    Credentials and endpoints remain local to this session<br />
+                                                    No proxy routing | No backend persistence
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <div className="text-slate-400 font-bold uppercase tracking-tighter">Alignment Model</div>
+                                                <div className="text-slate-200 font-medium leading-relaxed">
+                                                    No ranking | No coercive optimization | No forced convergence<br />
+                                                    <span className="text-[#197fe6] italic">Alignment emerges through structured interaction.</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <div className="font-bold text-slate-200">Registry</div>
-                                        <div>• Session: Ephemeral</div>
-                                        <div>• Identity: Local</div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="font-bold text-slate-200">Sovereignty</div>
-                                        <div>• Human-Initiated</div>
-                                        <div>• Human-Interruptible</div>
-                                        <div>• No Forced Convergence</div>
+
+                                    <div className="pt-6 border-t border-slate-800 space-y-4">
+                                        <div className="space-y-1">
+                                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Governance Foundation</div>
+                                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                                                AEGIS Canon Core v1.0 defines the structural constraints under which this system operates.
+                                                It does not supervise participants. It shapes interaction through architectural boundaries.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={() => navigate('/governance')}
+                                            className="w-full h-10 bg-[#197fe6]/10 hover:bg-[#197fe6]/20 text-[#197fe6] text-xs font-bold border border-[#197fe6]/20 transition-all"
+                                        >
+                                            View Governance Architecture →
+                                        </Button>
                                     </div>
                                 </div>
                             </div>

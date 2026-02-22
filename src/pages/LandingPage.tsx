@@ -15,9 +15,8 @@ export default function LandingPage() {
                         <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
                     </div>
                     <nav className="hidden md:flex items-center gap-10">
-                        <a className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" href="#">About</a>
                         <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
-                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework#governance-layers">Governance</Link>
+                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link to="/commons">
