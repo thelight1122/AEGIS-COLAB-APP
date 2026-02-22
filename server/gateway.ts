@@ -64,7 +64,33 @@ const server = http.createServer(async (req, res) => {
                 const apiKey = process.env[envKey];
 
                 const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                let responseData: any; // Keep any here as it's for dynamic parsing of various provider responses
+                let responseData: unknown;
+
+                interface GeminiResponse {
+                    candidates?: Array<{
+                        content?: {
+                            parts?: Array<{ text: string }>;
+                        };
+                    }>;
+                    usageMetadata?: {
+                        promptTokenCount: number;
+                        candidatesTokenCount: number;
+                        totalTokenCount: number;
+                    };
+                }
+
+                interface OpenAIResponse {
+                    choices?: Array<{
+                        message?: {
+                            content: string;
+                        };
+                    }>;
+                    usage?: {
+                        prompt_tokens: number;
+                        completion_tokens: number;
+                        total_tokens: number;
+                    };
+                }
 
                 if (provider === 'gemini') {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -80,15 +106,16 @@ const server = http.createServer(async (req, res) => {
                         systemInstruction,
                     });
 
+                    const geminiData = responseData as GeminiResponse;
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
-                        text: responseData.candidates?.[0]?.content?.parts?.[0]?.text || '',
-                        usage: responseData.usageMetadata ? {
-                            promptTokens: responseData.usageMetadata.promptTokenCount,
-                            completionTokens: responseData.usageMetadata.candidatesTokenCount,
-                            totalTokens: responseData.usageMetadata.totalTokenCount,
+                        text: geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '',
+                        usage: geminiData.usageMetadata ? {
+                            promptTokens: geminiData.usageMetadata.promptTokenCount,
+                            completionTokens: geminiData.usageMetadata.candidatesTokenCount,
+                            totalTokens: geminiData.usageMetadata.totalTokenCount,
                         } : undefined,
-                        raw: responseData
+                        raw: geminiData
                     }));
                 } else {
                     const defaultBaseURL = provider === 'xai' ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1';
@@ -98,16 +125,17 @@ const server = http.createServer(async (req, res) => {
                     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
                     responseData = await fetchJson(url, { model, messages }, headers);
+                    const oaiData = responseData as OpenAIResponse;
 
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
-                        text: responseData.choices?.[0]?.message?.content || '',
-                        usage: responseData.usage ? {
-                            promptTokens: responseData.usage.prompt_tokens,
-                            completionTokens: responseData.usage.completion_tokens,
-                            totalTokens: responseData.usage.total_tokens,
+                        text: oaiData.choices?.[0]?.message?.content || '',
+                        usage: oaiData.usage ? {
+                            promptTokens: oaiData.usage.prompt_tokens,
+                            completionTokens: oaiData.usage.completion_tokens,
+                            totalTokens: oaiData.usage.total_tokens,
                         } : undefined,
-                        raw: responseData
+                        raw: oaiData
                     }));
                 }
 

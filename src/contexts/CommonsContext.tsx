@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CommonsContext } from './CommonsContextBase';
 import type {
     ModelProvider,
@@ -16,17 +16,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     const [explorationPhase, setExplorationPhase] = useState<ExplorationPhase>('Divergent');
     const [roundRobinOrder, setRoundRobinOrder] = useState<string[]>([]);
     const [currentTurnIndex, setCurrentTurnIndex] = useState<number | null>(null);
-
-    // Mirror API keys to sessionStorage (but not database)
-    useEffect(() => {
-        const stored = sessionStorage.getItem('aegis_keys');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                console.log('Stored keys found', parsed);
-            } catch (e) { console.error('Failed to parse stored keys', e); }
-        }
-    }, []);
+    const [sessionId, setSessionId] = useState<string | null>(null);
 
     const addModel = ({ provider, model, apiKey, endpointUrl, type }: {
         provider: ModelProvider,
@@ -36,7 +26,25 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         type: 'hosted' | 'local'
     }) => {
         const id = crypto.randomUUID();
-        setConnectedModels(prev => [...prev, { id, provider, model, apiKey, endpointUrl, status: 'Not Connected', type }]);
+        setConnectedModels(prev => [...prev, {
+            id,
+            provider,
+            model,
+            apiKey,
+            endpointUrl,
+            status: 'Not Connected',
+            type,
+            isSelected: true,
+            isActive: true
+        }]);
+    };
+
+    const setModelSelection = (id: string, isSelected: boolean) => {
+        setConnectedModels(prev => prev.map(m => m.id === id ? { ...m, isSelected } : m));
+    };
+
+    const setModelActivity = (id: string, isActive: boolean) => {
+        setConnectedModels(prev => prev.map(m => m.id === id ? { ...m, isActive } : m));
     };
 
     const validateModel = async (id: string) => {
@@ -46,10 +54,24 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         return true;
     };
 
-    const enterWorkshop = () => {
-        if (connectedModels.some(m => m.status === 'Connected')) {
+    const enterWorkshop = (explicitSessionId?: string) => {
+        const eligible = connectedModels.filter(m =>
+            m.status === 'Connected' &&
+            m.isSelected &&
+            m.isActive
+        );
+
+        if (eligible.length > 0 || explicitSessionId) {
             setIsWorkshopActive(true);
-            setRoundRobinOrder(connectedModels.filter(m => m.status === 'Connected').map(m => m.id));
+            setRoundRobinOrder(eligible.map(m => m.id));
+
+            if (explicitSessionId) {
+                setSessionId(explicitSessionId);
+            } else if (!sessionId) {
+                // Generate new sessionId and initialize blank
+                setSessionId(`CS-${crypto.randomUUID()}`);
+                setMessages([]);
+            }
         }
     };
 
@@ -85,10 +107,19 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         interruptRoundRobin();
         addMessage({ participant: 'You', participantType: 'human', content: userPrompt, posture: 'Identify' });
 
-        for (let i = 0; i < roundRobinOrder.length; i++) {
+        // Filter by participation eligibility at start of turn
+        const eligibleModels = connectedModels.filter(m =>
+            m.status === 'Connected' &&
+            m.isSelected &&
+            m.isActive
+        );
+        const order = eligibleModels.map(m => m.id);
+        setRoundRobinOrder(order);
+
+        for (let i = 0; i < order.length; i++) {
             setCurrentTurnIndex(i);
-            const modelId = roundRobinOrder[i];
-            const model = connectedModels.find(m => m.id === modelId);
+            const modelId = order[i];
+            const model = eligibleModels.find(m => m.id === modelId);
             if (!model) continue;
 
             if (audioEnabled) {
@@ -127,16 +158,6 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                 responseText = `[Error] ${err instanceof Error ? err.message : 'No response from provider'}`;
             }
 
-            const words = responseText.split(" ");
-            let currentText = "";
-
-            // Simple streaming simulation for UI feel
-            for (const word of words) {
-                currentText += (currentText ? " " : "") + word;
-                // Add message early if we want progressive rendering, but here we add once finished
-                // Wait, the original code adds it ONCE at the end. I'll maintain that for now but with the real text.
-            }
-
             addMessage({
                 participant: model.model,
                 participantType: 'ai',
@@ -152,8 +173,16 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         setCurrentTurnIndex(null);
     };
 
-    const clearChat = () => {
-        setMessages([]);
+    const beginNewChat = () => {
+        const newSid = `CS-${crypto.randomUUID()}`;
+        setSessionId(newSid);
+        setMessages([{
+            id: crypto.randomUUID(),
+            participant: 'System',
+            participantType: 'ai',
+            content: 'New session started.',
+            timestamp: Date.now()
+        }]);
         setCurrentTurnIndex(null);
     };
 
@@ -166,6 +195,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             explorationPhase,
             roundRobinOrder,
             currentTurnIndex,
+            sessionId,
             addModel,
             validateModel,
             enterWorkshop,
@@ -173,7 +203,9 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             setAudioEnabled,
             startRoundRobin,
             interruptRoundRobin,
-            clearChat
+            beginNewChat,
+            setModelSelection,
+            setModelActivity
         }}>
             {children}
         </CommonsContext.Provider>

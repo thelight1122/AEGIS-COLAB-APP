@@ -1,32 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { PublicHeader } from '../components/layout/PublicHeader';
 
 export default function LandingPage() {
     return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#111921] text-slate-900 dark:text-slate-100 font-display transition-colors">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-[#111921]/80">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-12">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded bg-[#197fe6] text-white">
-                            <Shield className="w-5 h-5" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
-                    </div>
-                    <nav className="hidden md:flex items-center gap-10">
-                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
-                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
-                    </nav>
-                    <div className="flex items-center gap-4">
-                        <Link to="/commons">
-                            <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-6">
-                                Enter the Commons
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            <PublicHeader />
 
             <main>
                 {/* Hero Section */}
@@ -52,7 +33,7 @@ export default function LandingPage() {
                                 <div className="flex flex-wrap gap-4">
                                     <Link to="/commons">
                                         <Button size="lg" className="h-14 min-w-[200px] bg-[#197fe6] text-white font-bold shadow-lg shadow-[#197fe6]/25 hover:translate-y-[-2px] transition-all">
-                                            Enter the Commons
+                                            Enter Commons Workshop
                                         </Button>
                                     </Link>
                                     <Link to="/framework">

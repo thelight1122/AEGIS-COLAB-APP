@@ -1,29 +1,12 @@
-import { Shield, Scale, Activity, ShieldCheck, FileText } from 'lucide-react';
+import { Scale, Activity, ShieldCheck, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
+import { PublicHeader } from '../components/layout/PublicHeader';
 
 export default function GovernancePage() {
     return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#111921] text-slate-900 dark:text-slate-100 font-display transition-colors">
-            <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-[#111921]/80">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-12">
-                    <div className="flex items-center gap-3">
-                        <Link to="/" className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded bg-[#197fe6] text-white">
-                                <Shield className="w-5 h-5" />
-                            </div>
-                            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
-                        </Link>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link to="/commons">
-                            <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-6">
-                                Enter the Commons
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            <PublicHeader />
 
             <main className="py-20 lg:py-32">
                 <div className="mx-auto max-w-4xl px-6">
@@ -118,7 +101,7 @@ export default function GovernancePage() {
                     <div className="mt-32 pt-12 border-t border-slate-200 dark:border-slate-800 text-center">
                         <Link to="/commons">
                             <Button size="lg" className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold h-14 px-10">
-                                Enter the Commons
+                                Enter Commons Workshop
                             </Button>
                         </Link>
                     </div>

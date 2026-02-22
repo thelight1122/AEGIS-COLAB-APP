@@ -18,7 +18,7 @@ interface IDSStreamProps {
     onAttach: (cardId: string, nodeId: string) => void;
     onRemoveAttachment: (cardId: string, attachmentId: string) => void;
     onFocusNode: (nodeId: string) => void;
-    onClearStream?: () => void;
+    onBeginNewChat?: () => void;
     onSend?: (type: IDSCard['type'], content: string) => void;
     layout?: 'horizontal' | 'vertical';
     showHeader?: boolean;
@@ -32,7 +32,7 @@ export function IDSStream({
     onAttach,
     onRemoveAttachment,
     onFocusNode,
-    onClearStream,
+    onBeginNewChat,
     onSend,
     layout = 'horizontal',
     showHeader = true,
@@ -81,8 +81,8 @@ export function IDSStream({
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0 hover:bg-muted"
-                            onClick={onClearStream}
-                            title="Clear Stream"
+                            onClick={onBeginNewChat}
+                            title="Begin New Chat"
                         >
                             <MoreHorizontal className="w-4 h-4" />
                         </Button>

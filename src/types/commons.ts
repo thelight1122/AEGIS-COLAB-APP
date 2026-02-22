@@ -8,6 +8,8 @@ export interface ConnectedModel {
     endpointUrl?: string;
     status: 'Not Connected' | 'Connected' | 'Validating';
     type: 'hosted' | 'local';
+    isSelected: boolean;
+    isActive: boolean;
 }
 
 export interface WorkshopMessage {

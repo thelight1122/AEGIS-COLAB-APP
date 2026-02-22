@@ -42,7 +42,7 @@ export function Sidebar({ className }: SidebarProps) {
         navItems.push({ to: "/tools", icon: Terminal, label: "Tools" });
     }
 
-    const { idsCards, canvasNodes, attachNode, removeAttachment, clearStream, setFocusNode } = useIDS();
+    const { idsCards, canvasNodes, attachNode, removeAttachment, beginNewChat, setFocusNode } = useIDS();
     const { session, user } = useAuthSession();
     const location = useLocation();
 
@@ -97,8 +97,8 @@ export function Sidebar({ className }: SidebarProps) {
                         variant="ghost"
                         size="sm"
                         className="h-5 w-5 p-0 hover:bg-muted"
-                        onClick={clearStream}
-                        title="Clear Stream"
+                        onClick={beginNewChat}
+                        title="Begin New Chat"
                     >
                         <MoreHorizontal className="w-3.5 h-3.5" />
                     </Button>
@@ -111,7 +111,7 @@ export function Sidebar({ className }: SidebarProps) {
                         onAttach={attachNode}
                         onRemoveAttachment={removeAttachment}
                         onFocusNode={handleFocusNode}
-                        onClearStream={clearStream}
+                        onBeginNewChat={beginNewChat}
                         showComposer={false}
                         showHeader={false}
                     />

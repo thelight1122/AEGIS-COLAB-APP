@@ -21,7 +21,7 @@ export function WorkshopInterior() {
     const {
         connectedModels,
         messages,
-        clearChat,
+        beginNewChat,
         explorationPhase,
         currentTurnIndex,
         roundRobinOrder,
@@ -39,9 +39,13 @@ export function WorkshopInterior() {
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            if (isNearBottom || messages.length <= 1) {
+                scrollRef.current.scrollTop = scrollHeight;
+            }
         }
-    }, [messages, currentTurnIndex]);
+    }, [messages]);
 
     // Initial Seed removed to ensure fresh start
     useEffect(() => {
@@ -87,12 +91,12 @@ export function WorkshopInterior() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => {
-                            if (window.confirm('Clear this chat view? This removes messages from this session view. (Session-only / local-only)')) {
-                                clearChat();
+                            if (window.confirm('Begin a new chat session? This starts a fresh session branch.')) {
+                                beginNewChat();
                             }
                         }}
-                        className="p-2 text-slate-500 hover:text-red-400 transition-colors"
-                        title="Clear chat"
+                        className="p-2 text-slate-500 hover:text-[#197fe6] transition-colors"
+                        title="Begin New Chat"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
@@ -210,7 +214,7 @@ export function WorkshopInterior() {
                             </div>
                             <span className="text-[10px] text-slate-500 uppercase font-bold">Active</span>
                         </div>
-                        {connectedModels.filter((m: ConnectedModel) => m.status === 'Connected').map((model: ConnectedModel) => (
+                        {connectedModels.filter((m: ConnectedModel) => m.status === 'Connected' && m.isSelected && m.isActive).map((model: ConnectedModel) => (
                             <div key={model.id} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full bg-blue-500/50" />

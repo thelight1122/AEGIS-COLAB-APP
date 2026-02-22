@@ -15,32 +15,35 @@ import GovernancePage from './pages/GovernancePage';
 import { ToolsRoute } from './routes/ToolsRoute';
 
 import { IDSProvider } from './contexts/IDSContext';
+import { KeyringProvider } from './contexts/KeyringContext';
 
 function App() {
   return (
     <BrowserRouter>
-      <IDSProvider>
-        <Routes>
-          {/* Public Full-Screen Pages */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/framework" element={<FrameworkPage />} />
-          <Route path="/governance" element={<GovernancePage />} />
-          <Route path="/commons" element={<CommonsRoute />} />
+      <KeyringProvider>
+        <IDSProvider>
+          <Routes>
+            {/* Public Full-Screen Pages */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/framework" element={<FrameworkPage />} />
+            <Route path="/governance" element={<GovernancePage />} />
+            <Route path="/commons" element={<AppShell><CommonsRoute /></AppShell>} />
+            <Route path="/artifacts" element={<AppShell><Artifacts /></AppShell>} />
 
-          {/* Dashboard Pages */}
-          <Route path="/chamber" element={<AppShell><Chamber /></AppShell>} />
-          <Route path="/artifacts" element={<AppShell><Artifacts /></AppShell>} />
-          <Route path="/sessions" element={<AppShell><Sessions /></AppShell>} />
-          <Route path="/peers" element={<AppShell><TeamSetup /></AppShell>} />
-          <Route path="/lenses" element={<AppShell><Lenses /></AppShell>} />
-          <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
-          <Route path="/board" element={<AppShell><BoardPage /></AppShell>} />
-          <Route path="/tools/*" element={<AppShell><ToolsRoute /></AppShell>} />
+            {/* Dashboard Pages */}
+            <Route path="/chamber" element={<AppShell><Chamber /></AppShell>} />
+            <Route path="/sessions" element={<AppShell><Sessions /></AppShell>} />
+            <Route path="/peers" element={<AppShell><TeamSetup /></AppShell>} />
+            <Route path="/lenses" element={<AppShell><Lenses /></AppShell>} />
+            <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
+            <Route path="/board" element={<AppShell><BoardPage /></AppShell>} />
+            <Route path="/tools/*" element={<AppShell><ToolsRoute /></AppShell>} />
 
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </IDSProvider>
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </IDSProvider>
+      </KeyringProvider>
     </BrowserRouter>
   );
 }

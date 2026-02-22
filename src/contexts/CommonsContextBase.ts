@@ -14,6 +14,7 @@ export interface CommonsContextType {
     explorationPhase: ExplorationPhase;
     roundRobinOrder: string[];
     currentTurnIndex: number | null;
+    sessionId: string | null;
 
     addModel: (params: {
         provider: ModelProvider,
@@ -23,12 +24,14 @@ export interface CommonsContextType {
         type: 'hosted' | 'local'
     }) => void;
     validateModel: (id: string) => Promise<boolean>;
-    enterWorkshop: () => void;
+    enterWorkshop: (explicitSessionId?: string) => void;
     addMessage: (message: Omit<WorkshopMessage, 'id' | 'timestamp'>) => void;
     setAudioEnabled: (enabled: boolean) => void;
     startRoundRobin: (userPrompt: string) => void;
     interruptRoundRobin: () => void;
-    clearChat: () => void;
+    beginNewChat: () => void;
+    setModelSelection: (id: string, isSelected: boolean) => void;
+    setModelActivity: (id: string, isActive: boolean) => void;
 }
 
 export const CommonsContext = createContext<CommonsContextType | undefined>(undefined);

@@ -4,7 +4,7 @@ import { PeerPresence } from './PeerPresence';
 import { TelemetryPanel } from './TelemetryPanel';
 import { WhiteboardArea } from './WhiteboardArea';
 import { GatewayStatus } from './GatewayStatus';
-import { Tag, Edit2, Check, History, Layout, Clock, Bot, User, MessageSquare, XCircle, Code, Trash2 } from 'lucide-react';
+import { Tag, Edit2, Check, History, Layout, Clock, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
@@ -21,7 +21,9 @@ import {
     loadSessions,
     saveSessions,
     touchSessionActivity,
-    closeSession
+    closeSession,
+    createSession,
+    startSession
 } from '../../core/sessions/sessionStore';
 import type { Session as LiveSession } from '../../core/sessions/types';
 import type { PeerProfile } from '../../core/peers/types';
@@ -323,19 +325,20 @@ export default function ChamberLayout() {
         }
     }, [currentSession, selectedChatPeerIds, registryPeers, createHardenedEvent]);
 
-    const handleClearChat = useCallback(() => {
+    const handleBeginNewChat = useCallback(() => {
         if (!currentSession) return;
-        if (!window.confirm('Clear artifact dialogue? History is preserved in the append-only ledger, but the chat view will reset. (Local-only session clear)')) {
+        if (!window.confirm('Begin a new chat session? This starts a fresh session branch.')) {
             return;
         }
 
-        setGoverningEvents(prev => {
-            const ev = createHardenedEvent('SESSION_CLEARED', {
-                reason: 'User manual clear'
-            });
-            return [...prev, ev];
-        });
-    }, [currentSession, createHardenedEvent]);
+        const allSessions = loadSessions();
+        const { sessions: nextSessions, session: draft } = createSession(allSessions, currentSession.artifactId || 'current-artifact');
+        const { sessions: finalSessions, session: active } = startSession(nextSessions, draft.id);
+        saveSessions(finalSessions);
+
+        navigate('/chamber', { state: { sessionId: active.id }, replace: true });
+        window.location.reload();
+    }, [currentSession, navigate]);
 
     const handleAcknowledge = useCallback((peerId: string) => {
         setGoverningEvents(prev => {
@@ -552,9 +555,10 @@ export default function ChamberLayout() {
                                         Artifact Dialogue
                                     </h3>
                                     <button
-                                        onClick={handleClearChat}
-                                        className="p-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive transition-all text-muted-foreground"
-                                        title="Clear chat view"
+                                        onClick={handleBeginNewChat}
+                                        className="p-1.5 rounded-md hover:bg-primary/10 hover:text-primary transition-all text-muted-foreground"
+                                        title="Begin New Chat"
+                                        data-testid="begin-new-chat"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>

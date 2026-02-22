@@ -14,7 +14,7 @@ interface IDSContextType {
     canvasNodes: NodeOption[];
     focusNodeId: string | null;
     addCard: (type: IDSCard['type'], content: string) => void;
-    clearStream: () => void;
+    beginNewChat: () => void;
     attachNode: (cardId: string, nodeId: string) => void;
     removeAttachment: (cardId: string, attachmentId: string) => void;
     setNodes: (nodes: NodeOption[]) => void;
@@ -40,7 +40,7 @@ export function IDSProvider({ children }: { children: ReactNode }) {
         setIdsCards(prev => [newCard, ...prev]);
     }, []);
 
-    const clearStream = useCallback(() => {
+    const beginNewChat = useCallback(() => {
         setIdsCards([]);
     }, []);
 
@@ -85,7 +85,7 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             canvasNodes,
             focusNodeId,
             addCard,
-            clearStream,
+            beginNewChat,
             attachNode,
             removeAttachment,
             setNodes,

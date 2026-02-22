@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, Book, Layout, Lock, Cpu } from 'lucide-react';
+import { Book, Layout, Lock, Cpu } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { PublicHeader } from '../components/layout/PublicHeader';
 
 export default function FrameworkPage() {
     const { hash } = useLocation();
@@ -17,29 +18,7 @@ export default function FrameworkPage() {
 
     return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#111921] text-slate-900 dark:text-slate-100 font-display transition-colors">
-            <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-[#111921]/80">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-12">
-                    <div className="flex items-center gap-3">
-                        <Link to="/" className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded bg-[#197fe6] text-white">
-                                <Shield className="w-5 h-5" />
-                            </div>
-                            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
-                        </Link>
-                    </div>
-                    <nav className="hidden md:flex items-center gap-10">
-                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
-                        <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
-                    </nav>
-                    <div className="flex items-center gap-4">
-                        <Link to="/commons">
-                            <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-6">
-                                Enter the Commons
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            <PublicHeader />
 
             <main className="py-20 lg:py-32">
                 <div className="mx-auto max-w-5xl px-6">
@@ -77,7 +56,7 @@ export default function FrameworkPage() {
                         <h2 className="text-3xl font-bold">Ready to participate?</h2>
                         <Link to="/commons">
                             <Button size="lg" className="h-16 px-12 text-lg bg-[#197fe6] hover:bg-[#197fe6]/90 font-bold">
-                                Enter the Commons
+                                Enter Commons Workshop
                             </Button>
                         </Link>
                     </div>

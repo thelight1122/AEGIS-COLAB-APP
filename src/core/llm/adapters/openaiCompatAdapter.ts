@@ -20,6 +20,9 @@ export const openaiCompatAdapter: LLMAdapter = {
 
         if (!response.ok) {
             const err = await response.text();
+            if (response.status === 401) {
+                throw new Error('Authentication failed (401): Invalid or missing API key.');
+            }
             throw new Error(`OpenAI Compat error: ${response.status} ${err}`);
         }
 

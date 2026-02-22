@@ -1,9 +1,16 @@
+"use client";
 import { useState } from 'react';
 import { useCommons } from '../../hooks/useCommons';
 import type { ModelProvider, ConnectedModel } from '../../types/commons';
-import { Shield, Check, AlertCircle, Loader2, Globe, Cpu } from 'lucide-react';
+import {
+    Shield, Check, AlertCircle, Loader2, Globe,
+    Cpu, Lock, Unlock, Settings as SettingsIcon
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+import { useKeyring } from '../../contexts/KeyringContext';
+import { useNavigate } from 'react-router-dom';
+import { UnlockModal } from '../security/UnlockModal';
 
 const MODEL_OPTIONS: { provider: ModelProvider, label: string, defaultModel: string }[] = [
     { provider: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o' },
@@ -18,16 +25,24 @@ const LOCAL_OPTIONS: { provider: ModelProvider, label: string, defaultEndpoint: 
 ];
 
 export function SessionInit() {
+    const navigate = useNavigate();
     const { connectedModels, addModel, validateModel, enterWorkshop } = useCommons();
+    const { status, keys } = useKeyring();
+
+    const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
     const [inputs, setInputs] = useState<Record<string, string>>({});
     const [localInputs, setLocalInputs] = useState<Record<string, { endpoint: string, model: string, apiKey?: string }>>({
         lmstudio: { endpoint: 'http://localhost:1234/v1', model: '', apiKey: '' },
         ollama: { endpoint: 'http://localhost:11434', model: '', apiKey: '' }
     });
 
+    const isLocked = status === 'locked';
+    const isUnlocked = status === 'unlocked';
+
     const handleAddHosted = (provider: ModelProvider, model: string) => {
-        const key = inputs[provider];
+        const key = inputs[provider] || keys[provider];
         if (!key) return;
+
         addModel({ provider, model, apiKey: key, type: 'hosted' });
         setInputs(prev => ({ ...prev, [provider]: '' }));
     };
@@ -35,10 +50,13 @@ export function SessionInit() {
     const handleAddLocal = (provider: ModelProvider) => {
         const config = localInputs[provider as keyof typeof localInputs];
         if (!config.endpoint || !config.model) return;
+
+        const key = config.apiKey || keys[provider];
+
         addModel({
             provider,
             model: config.model,
-            apiKey: config.apiKey,
+            apiKey: key,
             endpointUrl: config.endpoint,
             type: 'local'
         });
@@ -48,26 +66,37 @@ export function SessionInit() {
 
     const ModelCard = ({ opt, type }: { opt: { provider: ModelProvider, label: string, defaultModel?: string, defaultEndpoint?: string }, type: 'hosted' | 'local' }) => {
         const existing = connectedModels.find((m: ConnectedModel) => m.provider === opt.provider);
+        const hasSavedKey = !!keys[opt.provider];
+
         return (
             <div key={opt.provider} className="bg-[#1a242e] border border-slate-800 rounded-xl p-6 space-y-6 flex flex-col transition-all hover:border-slate-700">
                 <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-white">{opt.label}</h3>
                     {existing?.status === 'Connected' && <Check className="w-5 h-5 text-green-500" />}
                     {existing?.status === 'Not Connected' && <AlertCircle className="w-5 h-5 text-yellow-500" />}
+                    {isLocked && <Lock className="w-4 h-4 text-amber-500/50" />}
                 </div>
 
                 <div className="flex-1 space-y-4">
                     {type === 'hosted' ? (
                         <>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">API KEY</label>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between">
+                                    API KEY
+                                    {hasSavedKey && isUnlocked && (
+                                        <span className="text-green-500 flex items-center gap-1">
+                                            <Shield className="w-3 h-3" />
+                                            Vault Key Ready
+                                        </span>
+                                    )}
+                                </label>
                                 <input
                                     type="password"
                                     className="w-full bg-[#111921] border border-slate-800 rounded px-3 py-2 text-sm text-white focus:border-[#197fe6] outline-none transition-colors"
-                                    placeholder="sk-..."
+                                    placeholder={hasSavedKey && isUnlocked ? "Using key from vault..." : "sk-..."}
                                     value={inputs[opt.provider] || ''}
                                     onChange={(e) => setInputs(prev => ({ ...prev, [opt.provider]: e.target.value }))}
-                                    disabled={!!existing}
+                                    disabled={!!existing || (hasSavedKey && isUnlocked)}
                                 />
                             </div>
                             <div className="text-[10px] text-slate-500 font-mono">
@@ -111,28 +140,37 @@ export function SessionInit() {
                                 <input
                                     type="password"
                                     className="w-full bg-[#111921] border border-slate-800 rounded px-3 py-2 text-sm text-white focus:border-[#197fe6] outline-none transition-colors"
-                                    placeholder="Required if local auth enabled"
+                                    placeholder={hasSavedKey && isUnlocked ? "Using key from vault..." : "Optional local auth"}
                                     value={localInputs[opt.provider as keyof typeof localInputs]?.apiKey || ''}
                                     onChange={(e) => setLocalInputs(prev => ({
                                         ...prev,
                                         [opt.provider]: { ...prev[opt.provider as keyof typeof localInputs], apiKey: e.target.value }
                                     }))}
-                                    disabled={!!existing}
+                                    disabled={!!existing || (hasSavedKey && isUnlocked)}
                                 />
-                                <p className="text-[9px] text-slate-500 italic">Only required if LM Studio authentication is enabled.</p>
                             </div>
                         </>
                     )}
                 </div>
 
                 {!existing ? (
-                    <Button
-                        onClick={() => type === 'hosted' ? handleAddHosted(opt.provider, opt.defaultModel || '') : handleAddLocal(opt.provider)}
-                        className="w-full bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold"
-                        disabled={type === 'hosted' ? !inputs[opt.provider] : (!localInputs[opt.provider as keyof typeof localInputs]?.endpoint || !localInputs[opt.provider as keyof typeof localInputs]?.model)}
-                    >
-                        Connect Model
-                    </Button>
+                    isLocked ? (
+                        <Button
+                            onClick={() => setIsUnlockModalOpen(true)}
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+                        >
+                            <Unlock className="w-4 h-4" />
+                            Unlock Keys to Connect
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={() => type === 'hosted' ? handleAddHosted(opt.provider, opt.defaultModel || '') : handleAddLocal(opt.provider)}
+                            className="w-full bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold"
+                            disabled={type === 'hosted' ? (!inputs[opt.provider] && !hasSavedKey) : (!localInputs[opt.provider as keyof typeof localInputs]?.endpoint || !localInputs[opt.provider as keyof typeof localInputs]?.model)}
+                        >
+                            {hasSavedKey && isUnlocked ? 'Connect with Vault Key' : 'Connect Model'}
+                        </Button>
+                    )
                 ) : (
                     <Button
                         onClick={() => validateModel(existing.id)}
@@ -153,7 +191,12 @@ export function SessionInit() {
     };
 
     return (
-        <div className="min-h-full py-20 px-6 bg-[#111921] overflow-y-auto">
+        <div className="py-20 px-6">
+            <UnlockModal
+                isOpen={isUnlockModalOpen}
+                onClose={() => setIsUnlockModalOpen(false)}
+            />
+
             <div className="max-w-6xl mx-auto space-y-16">
                 <div className="text-center space-y-4">
                     <div className="mx-auto w-16 h-16 bg-[#197fe6]/10 rounded-xl flex items-center justify-center text-[#197fe6] mb-6">
@@ -163,8 +206,18 @@ export function SessionInit() {
                         Initialize Your Commons Session
                     </h1>
                     <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                        You assemble your peer panel. API keys remain in your browser. We do not store or proxy them.
+                        Assemble your peer panel. Keys are stored encrypted on this device {isUnlocked ? 'and unlocked' : 'but protected'}.
                     </p>
+
+                    {isLocked && (
+                        <div className="inline-flex items-center gap-3 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-500 text-sm font-medium animate-in fade-in zoom-in-95">
+                            <Lock className="w-4 h-4" />
+                            Vault is locked. Unlock to use saved keys.
+                            <Button variant="link" size="sm" onClick={() => setIsUnlockModalOpen(true)} className="text-amber-500 h-auto p-0 font-bold underline ml-2">
+                                Unlock Now
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-8">
@@ -193,7 +246,7 @@ export function SessionInit() {
                     </div>
                 </div>
 
-                <div className="flex justify-center pt-8">
+                <div className="flex flex-col items-center gap-6 pt-8 text-center">
                     <Button
                         size="lg"
                         className={cn(
@@ -203,10 +256,26 @@ export function SessionInit() {
                                 : "bg-slate-800 text-slate-500 cursor-not-allowed"
                         )}
                         disabled={!hasConnected}
-                        onClick={enterWorkshop}
+                        onClick={() => enterWorkshop()}
                     >
                         Enter Commons Workshop
                     </Button>
+
+                    <div className="flex flex-col items-center gap-2">
+                        <p className="text-xs text-slate-500 flex items-center gap-2">
+                            <Shield className="w-3 h-3" />
+                            API keys are not sent to our servers.
+                        </p>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate('/settings')}
+                            className="text-slate-500 hover:text-white gap-2"
+                        >
+                            <SettingsIcon className="w-4 h-4" />
+                            Full Vault Management in Settings
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
