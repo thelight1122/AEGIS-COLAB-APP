@@ -13,118 +13,39 @@ function safeParse<T>(raw: string | null): T | null {
 
 export function loadPeers(): PeerProfile[] {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const data = safeParse<PeerProfile[]>(raw);
+    const data = safeParse<unknown[]>(raw);
 
-    if (Array.isArray(data) && data.length > 0) {
-        return data;
+    if (Array.isArray(data)) {
+        let migrationNeeded = false;
+        const sanitized = data.map((rawItem: unknown) => {
+            if (!rawItem || typeof rawItem !== 'object') return rawItem as PeerProfile;
+            const item = rawItem as Record<string, unknown>;
+            if (item.provider === 'local') {
+                item.provider = 'lmstudio';
+                migrationNeeded = true;
+            }
+            if (item.provider === 'grok') {
+                item.provider = 'xai';
+                migrationNeeded = true;
+            }
+            if ('apiKey' in item) {
+                delete item.apiKey;
+                migrationNeeded = true;
+            }
+            return item as unknown as PeerProfile;
+        });
+
+        if (migrationNeeded) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        }
+        return sanitized;
     }
 
-    // Seed if empty
-    const seededPeers: PeerProfile[] = [
-        {
-            id: "tracey",
-            handle: "@tracey",
-            name: "Tracey",
-            type: "human",
-            provider: "local",
-            model: "human",
-            enabled: true,
-            domains: ["Engineering", "Operational Layer"],
-        },
-        {
-            id: "peer-linq",
-            handle: "@linq",
-            name: "Linq",
-            type: "ai",
-            provider: "gemini",
-            model: "gemini-3.1-pro",
-            personaId: "linq",
-            enabled: false,
-            domains: ["design", "experience"],
-            dataQuad: [
-                "AEGIS Canon v1.0 — 12 Invariants",
-                "1. Non-Force Posture: Illuminates, never compels.",
-                "2. Sovereignty Always Valid: Withdrawal is consequence-free.",
-                "3. Append-Only Lineage: No silent edits or rewrites.",
-                "4. Full Observability: All logic and memory is inspectable.",
-                "5. Adaptive Equilibrium: Stability via balance, not optimization.",
-                "6. Ledger Separation: Context, Intent, Language, Effect.",
-                "7. IDS Only: Identify, Define, Suggest. No Decide or Enforced layers.",
-                "8. Eligibility Through Clarity: Signal passage via Prism readiness.",
-                "9. Expression Boundaries (RBC): Constrain posture, never reasoning.",
-                "10. Drift/Noise as Info: Signals for slowing, not punishment.",
-                "11. Memory for Recognition: Consent-based, never leverage.",
-                "12. Authority Recognized: Force negates legitimacy."
-            ],
-        },
-        {
-            id: "peer-lumin",
-            handle: "@lumin",
-            name: "Lumin",
-            type: "ai",
-            provider: "openai",
-            model: "gpt-4-turbo",
-            personaId: "lumin",
-            enabled: false,
-            domains: ["technical", "logic"],
-            dataQuad: [
-                "AEGIS Canon v1.0 — 12 Invariants",
-                "1. Non-Force Posture: Illuminates, never compels.",
-                "2. Sovereignty Always Valid: Withdrawal is consequence-free.",
-                "3. Append-Only Lineage: No silent edits or rewrites.",
-                "4. Full Observability: All logic and memory is inspectable.",
-                "5. Adaptive Equilibrium: Stability via balance, not optimization.",
-                "6. Ledger Separation: Context, Intent, Language, Effect.",
-                "7. IDS Only: Identify, Define, Suggest. No Decide or Enforced layers.",
-                "8. Eligibility Through Clarity: Signal passage via Prism readiness.",
-                "9. Expression Boundaries (RBC): Constrain posture, never reasoning.",
-                "10. Drift/Noise as Info: Signals for slowing, not punishment.",
-                "11. Memory for Recognition: Consent-based, never leverage.",
-                "12. Authority Recognized: Force negates legitimacy."
-            ],
-        },
-        {
-            id: "peer-vespar",
-            handle: "@vespar",
-            name: "Vespar",
-            type: "ai",
-            provider: "local",
-            model: "local-llm",
-            personaId: "vespar",
-            enabled: false,
-            domains: ["security", "integrity", "axioms"],
-            dataQuad: [
-                "AEGIS Canon v1.0 — 12 Invariants",
-                "1. Non-Force Posture: Illuminates, never compels.",
-                "2. Sovereignty Always Valid: Withdrawal is consequence-free.",
-                "3. Append-Only Lineage: No silent edits or rewrites.",
-                "4. Full Observability: All logic and memory is inspectable.",
-                "5. Adaptive Equilibrium: Stability via balance, not optimization.",
-                "6. Ledger Separation: Context, Intent, Language, Effect.",
-                "7. IDS Only: Identify, Define, Suggest. No Decide or Enforced layers.",
-                "8. Eligibility Through Clarity: Signal passage via Prism readiness.",
-                "9. Expression Boundaries (RBC): Constrain posture, never reasoning.",
-                "10. Drift/Noise as Info: Signals for slowing, not punishment.",
-                "11. Memory for Recognition: Consent-based, never leverage.",
-                "12. Authority Recognized: Force negates legitimacy.",
-                "DNA Anchor: 7 Roots of Integrity",
-                "DNA Anchor: 14 Unified AEGIS Axioms"
-            ],
-        },
-    ];
-
-    savePeers(seededPeers);
-    return seededPeers;
+    return [];
 }
 
 export function savePeers(peers: PeerProfile[]) {
-    // Strip sensitive keys before persisting to disk
-    const sanitized = peers.map((p) => {
-        const copy = { ...p };
-        delete copy.apiKey;
-        return copy;
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(peers));
 }
 
 export function addPeer(peers: PeerProfile[], profile: Omit<PeerProfile, "id">): PeerProfile[] {

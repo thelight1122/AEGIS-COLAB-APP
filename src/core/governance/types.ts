@@ -38,7 +38,7 @@ export interface BaseGovernanceEvent {
 
 export type GovernanceEvent =
     | ({ type: "AWARENESS_ACK"; peerId: string } & BaseGovernanceEvent)
-    | ({ type: "CONTRIBUTION"; peerId: string; lensId?: string } & BaseGovernanceEvent)
+    | ({ type: "CONTRIBUTION"; peerId: string; lensId?: string; contentSummary?: string } & BaseGovernanceEvent)
     | ({ type: "PROXY_REVIEW"; lensId: string } & BaseGovernanceEvent)
     | ({ type: "DEFER_LENS"; lensId: string; rationale: string } & BaseGovernanceEvent)
     | ({ type: "lens_deferral_with_rationale"; lensId: string; rationale: string } & BaseGovernanceEvent)

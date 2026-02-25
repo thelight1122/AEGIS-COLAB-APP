@@ -5,7 +5,7 @@
  * Decrypted keys exist only in reactive memory during the session.
  */
 
-export type VaultProviderId = 'openai' | 'gemini' | 'anthropic' | 'grok' | 'lmstudio' | 'ollama';
+export type VaultProviderId = 'openai' | 'gemini' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
 
 export type VaultRecord = {
     providerId: VaultProviderId;
@@ -78,6 +78,11 @@ async function deriveKey(passphrase: string, salt: ArrayBuffer): Promise<CryptoK
 
 export function hasVault(): boolean {
     return !!localStorage.getItem(STORAGE_KEY);
+}
+
+export function hasEncryptedKey(providerId: VaultProviderId): boolean {
+    const vault = getVault();
+    return vault.records.some(r => r.providerId === providerId);
 }
 
 export function wipeVault(): void {

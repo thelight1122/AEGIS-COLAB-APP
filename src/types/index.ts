@@ -74,30 +74,19 @@ export interface TelemetryData {
 // Lock threshold constants
 export const LOCK_INCLUSION_THRESHOLD = 75;
 
-const ENABLE_DEMO = import.meta.env.VITE_ENABLE_DEMO_SEEDS === "true";
 
 // Dummy Data
 export const MOCK_PEERS: Peer[] = [];
 
-export const MOCK_IDS_FEED: IDSCard[] = ENABLE_DEMO ? [
-    { id: 'c1', type: 'identification', content: 'Potential drift in user retention logic identified.', authorId: 'p2', timestamp: '10:42 AM' },
-    { id: 'c2', type: 'definition', content: 'Defining "Coherence" as state synchronization across all peers.', authorId: 'p1', timestamp: '10:45 AM' },
-    { id: 'c3', type: 'suggestion', content: 'We should visualize the drift metric more prominently.', authorId: 'p3', timestamp: '10:48 AM' },
-] : [];
+export const MOCK_IDS_FEED: IDSCard[] = [];
 
 export const MOCK_TELEMETRY: TelemetryData = {
-    inclusionScore: ENABLE_DEMO ? 78 : 0,
-    drift: ENABLE_DEMO ? 12 : 0,
-    convergence: ENABLE_DEMO ? 45 : 0,
-    lenses: ENABLE_DEMO ? [
-        { name: 'Product', status: 'active', domains: ['Product'] },
-        { name: 'Engineering', status: 'active', domains: ['Engineering'] },
-        { name: 'Design', status: 'active', domains: ['Design'] },
-        { name: 'Security', status: 'missing', domains: ['Security'] },
-        { name: 'Legal', status: 'missing', domains: ['Legal'] },
-    ] : [],
+    inclusionScore: 0,
+    drift: 0,
+    convergence: 0,
+    lenses: [],
     lockAvailable: false,
-    activeDomains: ENABLE_DEMO ? ['Operational Layer', 'Canon Integrity'] : [],
+    activeDomains: [],
 };
 
 // --- Artifact Archive Types ---
@@ -130,33 +119,11 @@ export interface ConsiderationEntry {
     note: string;
 }
 
-export const MOCK_VERSIONS: ArtifactVersion[] = ENABLE_DEMO ? [
-    { id: 'v1', label: 'v0.1 — Initial Draft', timestamp: '2026-02-10 09:00', status: 'archived', inclusionScore: 55, proposalIds: ['pr1'], domains: ['Engineering'] },
-    { id: 'v2', label: 'v0.2 — Peer Review', timestamp: '2026-02-12 14:30', status: 'archived', inclusionScore: 72, proposalIds: ['pr2', 'pr3'], domains: ['Product', 'Engineering'] },
-    { id: 'v3', label: 'v0.3 — Current', timestamp: '2026-02-14 11:15', status: 'locked', inclusionScore: 91, proposalIds: ['pr4', 'pr5', 'pr6'], domains: ['Design', 'UX'] },
-    { id: 'v4', label: 'v0.4 — Working', timestamp: '2026-02-15 08:00', status: 'draft', inclusionScore: 78, proposalIds: ['pr7'], domains: ['Operational Layer', 'Canon Integrity'] },
-] : [];
+export const MOCK_VERSIONS: ArtifactVersion[] = [];
 
-export const MOCK_PROPOSALS: Proposal[] = ENABLE_DEMO ? [
-    { id: 'pr1', title: 'Initial RAG Pipeline Sketch', author: 'User', status: 'accepted', summary: 'Rough vector search integration with 500ms latency budget.', versionId: 'v1' },
-    { id: 'pr2', title: 'Add Caching Layer', author: 'Atlas (AI)', status: 'accepted', summary: 'Redis-based embedding cache to reduce repeat lookups by 60%.', versionId: 'v2' },
-    { id: 'pr3', title: 'Switch to Pinecone', author: 'Sarah', status: 'rejected', summary: 'Migrate from pgvector to Pinecone for managed scaling.', versionId: 'v2' },
-    { id: 'pr4', title: 'Streaming Responses', author: 'User', status: 'accepted', summary: 'Server-sent events for real-time token streaming.', versionId: 'v3' },
-    { id: 'pr5', title: 'Rate Limiting Middleware', author: 'Critique (AI)', status: 'accepted', summary: 'Token-bucket rate limiter at 100 req/min per user.', versionId: 'v3' },
-    { id: 'pr6', title: 'A/B Test Framework', author: 'Sarah', status: 'pending', summary: 'Feature flag system for controlled rollouts.', versionId: 'v3' },
-    { id: 'pr7', title: 'Multi-modal Input Support', author: 'Atlas (AI)', status: 'pending', summary: 'Accept image and audio inputs alongside text.', versionId: 'v4' },
-] : [];
+export const MOCK_PROPOSALS: Proposal[] = [];
 
-export const MOCK_CONSIDERATIONS: ConsiderationEntry[] = ENABLE_DEMO ? [
-    { id: 'ce1', proposalId: 'pr4', peerName: 'Atlas (AI)', lens: 'Systems', verdict: 'support', note: 'SSE is lightweight and well-suited for our architecture.' },
-    { id: 'ce2', proposalId: 'pr4', peerName: 'Sarah', lens: 'Product', verdict: 'support', note: 'Users expect real-time feedback.' },
-    { id: 'ce3', proposalId: 'pr5', peerName: 'User', lens: 'Facilitator', verdict: 'support', note: 'Essential for production stability.' },
-    { id: 'ce4', proposalId: 'pr5', peerName: 'Critique (AI)', lens: 'Risks', verdict: 'support', note: 'Prevents abuse, protects infrastructure.' },
-    { id: 'ce5', proposalId: 'pr6', peerName: 'Atlas (AI)', lens: 'Systems', verdict: 'abstain', note: 'Need more detail on implementation.' },
-    { id: 'ce6', proposalId: 'pr6', peerName: 'Critique (AI)', lens: 'Risks', verdict: 'oppose', note: 'Adds complexity without clear ROI at this stage.' },
-    { id: 'ce7', proposalId: 'pr3', peerName: 'Atlas (AI)', lens: 'Systems', verdict: 'oppose', note: 'Vendor lock-in risk; pgvector is sufficient for current scale.' },
-    { id: 'ce8', proposalId: 'pr3', peerName: 'User', lens: 'Facilitator', verdict: 'oppose', note: 'Cost implications not justified.' },
-] : [];
+export const MOCK_CONSIDERATIONS: ConsiderationEntry[] = [];
 
 // --- Session History Types ---
 
@@ -177,35 +144,4 @@ export interface HistoricalSession {
     };
 }
 
-export const MOCK_SESSIONS: HistoricalSession[] = ENABLE_DEMO ? [
-    {
-        id: 's1',
-        name: 'RAG Architecture Sync',
-        date: '2026-02-14',
-        duration: '45m',
-        participants: { human: 2, ai: 2 },
-        summary: 'Finalized the transition to server-sent events for streaming and established the initial rate-limiting parameters.',
-        finalInclusionScore: 91,
-        outcomes: { artifactsCount: 1, proposalsCount: 3 }
-    },
-    {
-        id: 's2',
-        name: 'UI Design Review',
-        date: '2026-02-12',
-        duration: '1h 10m',
-        participants: { human: 3, ai: 1 },
-        summary: 'Evaluated the new dark mode aesthetics and verified responsiveness across the sidebar and telemetry panels.',
-        finalInclusionScore: 84,
-        outcomes: { artifactsCount: 2, proposalsCount: 5 }
-    },
-    {
-        id: 's3',
-        name: 'Security Audit - Phase 1',
-        date: '2026-02-10',
-        duration: '35m',
-        participants: { human: 1, ai: 2 },
-        summary: 'Initial identification of risk factors in the persistence layer. Deferred deep-dive on encryption to next session.',
-        finalInclusionScore: 78,
-        outcomes: { artifactsCount: 1, proposalsCount: 2 }
-    }
-] : [];
+export const MOCK_SESSIONS: HistoricalSession[] = [];

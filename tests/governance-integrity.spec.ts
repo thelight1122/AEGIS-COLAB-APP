@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Governance Integrity Validation', () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('http://localhost:5173/?e2e=1');
+        await page.goto('http://localhost:5173/chamber?e2e=1');
         // Use the E2E harness for deterministic seeding
         await page.evaluate(() => {
             if (window.__AEGIS_E2E__) {

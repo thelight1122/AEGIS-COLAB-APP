@@ -1,7 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { type IDSCard, type Attachment, MOCK_IDS_FEED } from '../types';
-import { isE2E } from '../lib/e2e';
+import { type IDSCard, type Attachment } from '../types';
 
 interface NodeOption {
     id: string;
@@ -19,12 +18,13 @@ interface IDSContextType {
     removeAttachment: (cardId: string, attachmentId: string) => void;
     setNodes: (nodes: NodeOption[]) => void;
     setFocusNode: (nodeId: string | null) => void;
+    setIdsCards: (cards: IDSCard[]) => void;
 }
 
 const IDSContext = createContext<IDSContextType | undefined>(undefined);
 
 export function IDSProvider({ children }: { children: ReactNode }) {
-    const [idsCards, setIdsCards] = useState<IDSCard[]>(isE2E() ? [] : MOCK_IDS_FEED);
+    const [idsCards, setIdsCards] = useState<IDSCard[]>([]);
     const [canvasNodes, setCanvasNodes] = useState<NodeOption[]>([]);
     const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
 
@@ -33,11 +33,15 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             id: `c-${Date.now()}`,
             type,
             content,
-            authorId: 'p1', // Current User
+            authorId: 'p1', // Current User Fallback
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             attachments: []
         };
         setIdsCards(prev => [newCard, ...prev]);
+
+        // Broadcast for observers (like ChamberLayout) to record governance
+        const event = new CustomEvent('ids-card-added', { detail: { type, content, card: newCard } });
+        window.dispatchEvent(event);
     }, []);
 
     const beginNewChat = useCallback(() => {
@@ -89,7 +93,8 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             attachNode,
             removeAttachment,
             setNodes,
-            setFocusNode
+            setFocusNode,
+            setIdsCards
         }}>
             {children}
         </IDSContext.Provider>

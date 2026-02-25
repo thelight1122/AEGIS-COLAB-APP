@@ -11,9 +11,10 @@ import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as Go
 import { MOCK_TELEMETRY, type TelemetryData } from '../../types';
 import { IDSStream } from './IDSStream';
 import { computeInclusionState, canLock } from '../../core/governance/inclusionState';
-import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS } from '../../core/governance/systemLenses';
+import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS, DEFAULT_DOMAIN_LENSES } from '../../core/governance/systemLenses';
 import { callGateway } from '../../core/llm/gatewayClient';
 import { deriveChatThread } from '../../core/governance/chatDerivation';
+import { useKeyring } from '../../contexts/KeyringContext';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isE2E } from '../../lib/e2e';
@@ -28,7 +29,9 @@ import {
 import type { Session as LiveSession } from '../../core/sessions/types';
 import type { PeerProfile } from '../../core/peers/types';
 import { loadPeers as loadRegistryPeers } from '../../core/peers/peerRegistryStore';
-import type { Peer } from '../../types';
+import { loadActiveTeam } from '../../core/peers/activeTeamStore';
+import { HUMAN_PEER } from '../../core/peers/humanPeer';
+import type { Peer, IDSCard } from '../../types';
 
 const LOG_STORAGE_KEY = 'aegis_events_current-artifact';
 const METADATA_KEY = 'aegis_metadata_current-artifact';
@@ -44,6 +47,7 @@ const defaultMetadata = {
 export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { keys: vaultKeys } = useKeyring();
     const [sessions] = useState<LiveSession[]>(() => loadSessions());
 
     const sessionId = location.state?.sessionId;
@@ -61,7 +65,8 @@ export default function ChamberLayout() {
         addCard,
         attachNode,
         removeAttachment,
-        setFocusNode
+        setFocusNode,
+        setIdsCards
     } = useIDS();
 
     const [displacedSnapshot, setDisplacedSnapshot] = useState<{ time: string, events: GovernanceEvent[] } | null>(null);
@@ -145,11 +150,9 @@ export default function ChamberLayout() {
 
     const registryPeers = useMemo<PeerProfile[]>(() => {
         const rawPeers = loadRegistryPeers();
-        const circleOfFour = ['@tracey', '@linq', '@lumin', '@vespar'];
-        if (isE2E()) {
-            circleOfFour.push('@user', '@sarah');
-        }
-        return rawPeers.filter(p => circleOfFour.includes(p.handle) && p.enabled);
+        const activeTeam = loadActiveTeam();
+        const aiPeers = rawPeers.filter(p => p.enabled && activeTeam.selectedPeerIds.includes(p.id));
+        return [HUMAN_PEER, ...aiPeers];
     }, []);
 
     useEffect(() => {
@@ -182,11 +185,7 @@ export default function ChamberLayout() {
         }));
 
         const governLenses: GovernanceLens[] = [
-            ...MOCK_TELEMETRY.lenses.map(l => ({
-                id: l.name,
-                domains: l.domains,
-                autoReview: false
-            })),
+            ...DEFAULT_DOMAIN_LENSES,
             { id: RATIONAL_SYNTHESIS_LENS, domains: [], autoReview: false },
             { id: AFFECTIVE_SYNTHESIS_LENS, domains: [], autoReview: false }
         ];
@@ -223,7 +222,7 @@ export default function ChamberLayout() {
             name: p.name || p.handle,
             type: p.type,
             role: p.notes?.slice(0, 30) || (p.type === 'ai' ? 'AI Assistant' : 'Human Member'),
-            status: p.enabled ? 'online' : 'offline',
+            status: 'online', // They are online if they are in the registryPeers list, which means they are in active team
             acknowledged: acks.has(p.id),
             domains: p.domains
         }));
@@ -248,7 +247,7 @@ export default function ChamberLayout() {
             { id: artifactId, domainTags: artifactMetadata.domains, status: 'Active' },
             registryPeers.map(p => ({ id: p.id, type: p.type, domains: p.domains })),
             [
-                ...MOCK_TELEMETRY.lenses.map(l => ({ id: l.name, domains: l.domains, autoReview: false })),
+                ...DEFAULT_DOMAIN_LENSES,
                 { id: RATIONAL_SYNTHESIS_LENS, domains: [], autoReview: false },
                 { id: AFFECTIVE_SYNTHESIS_LENS, domains: [], autoReview: false }
             ],
@@ -266,6 +265,50 @@ export default function ChamberLayout() {
             lens_acknowledgments
         } as GovernanceEvent;
     }, [telemetry, currentSession, governingEvents, artifactId, artifactMetadata.domains, registryPeers]);
+
+    // Reconstruct IDS cards from eventLog
+    useEffect(() => {
+        if (!governingEvents.length) {
+            setIdsCards([]);
+            return;
+        }
+
+        const cards = governingEvents
+            .filter(e => e.type === 'CONTRIBUTION')
+            .map((e, idx) => {
+                const contribution = e as Extract<GovernanceEvent, { type: 'CONTRIBUTION' }>;
+                return {
+                    id: `ids-${contribution.timestamp}-${idx}`,
+                    type: (contribution.lensId as IDSCard['type']) || 'freeform',
+                    content: contribution.contentSummary || 'Contribution recorded.',
+                    authorId: contribution.peerId,
+                    timestamp: new Date(contribution.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    attachments: []
+                };
+            })
+            .reverse();
+
+        setIdsCards(cards);
+    }, [governingEvents, setIdsCards]);
+
+    useEffect(() => {
+        const handleIdsAdded = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (!detail) return;
+            const { type, content } = detail;
+            setGoverningEvents(prev => {
+                const ev = createHardenedEvent('CONTRIBUTION', {
+                    peerId: 'p1', // Current Human User ID
+                    lensId: type,
+                    contentSummary: content
+                });
+                return [...prev, ev];
+            });
+        };
+
+        window.addEventListener('ids-card-added', handleIdsAdded);
+        return () => window.removeEventListener('ids-card-added', handleIdsAdded);
+    }, [createHardenedEvent]);
 
     const handleChat = useCallback(async (text: string) => {
         if (!currentSession) return;
@@ -292,7 +335,7 @@ export default function ChamberLayout() {
                     const response = await callGateway({
                         provider: peer.provider,
                         model: peer.model,
-                        apiKey: peer.apiKey,
+                        apiKey: vaultKeys[peer.provider as string],
                         baseURL: peer.baseURL,
                         messages: [
                             { role: 'system', content: 'You are an AEGIS peer. Be concise.' },
@@ -323,7 +366,7 @@ export default function ChamberLayout() {
         } finally {
             setIsChatting(false);
         }
-    }, [currentSession, selectedChatPeerIds, registryPeers, createHardenedEvent]);
+    }, [currentSession, selectedChatPeerIds, registryPeers, createHardenedEvent, vaultKeys]);
 
     const handleBeginNewChat = useCallback(() => {
         if (!currentSession) return;

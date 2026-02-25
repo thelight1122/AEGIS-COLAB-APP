@@ -1,4 +1,4 @@
-export type ModelProvider = 'openai' | 'gemini' | 'anthropic' | 'grok' | 'lmstudio' | 'ollama';
+export type ModelProvider = 'openai' | 'gemini' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
 
 export interface ConnectedModel {
     id: string;

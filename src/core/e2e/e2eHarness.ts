@@ -16,6 +16,7 @@ export const e2eHarness = {
         localStorage.removeItem('aegis_events_current-artifact');
         localStorage.removeItem('aegis_metadata_current-artifact');
         localStorage.removeItem('aegis_ops_current-artifact');
+        sessionStorage.removeItem('aegis.activeTeam.session.v1');
         console.log('[E2E] App state reset performed.');
     },
 
@@ -28,25 +29,29 @@ export const e2eHarness = {
             {
                 id: 'p1',
                 handle: '@user',
-                name: 'User',
-                type: 'human',
+                name: 'User AI',
+                type: 'ai',
                 enabled: true,
                 domains: ['Engineering', 'Operational Layer'],
                 provider: 'openai', // mock
-                model: 'human'
+                model: 'gpt-4'
             },
             {
                 id: 'p3',
                 handle: '@sarah',
-                name: 'Sarah',
-                type: 'human',
+                name: 'Sarah AI',
+                type: 'ai',
                 enabled: true,
                 domains: ['Product'],
                 provider: 'openai', // mock
-                model: 'human'
+                model: 'gpt-4'
             },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
+        sessionStorage.setItem('aegis.activeTeam.session.v1', JSON.stringify({
+            selectedPeerIds: ['p1', 'p3'],
+            loadedPresetId: null
+        }));
 
         localStorage.setItem("aegis_metadata_current-artifact", JSON.stringify({
             title: "Operational Layer — Prism Refract Behavior",
@@ -67,16 +72,20 @@ export const e2eHarness = {
         const e2ePeers = [
             {
                 id: 'p1',
-                handle: '@user',
-                name: 'User',
-                type: 'human',
+                handle: '@eng',
+                name: 'User AI',
+                type: 'ai',
                 enabled: true,
                 domains: ['Engineering'],
                 provider: 'openai',
-                model: 'human'
+                model: 'gpt-4'
             },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
+        sessionStorage.setItem('aegis.activeTeam.session.v1', JSON.stringify({
+            selectedPeerIds: ['p1'],
+            loadedPresetId: null
+        }));
 
         const lockableEvents = [
             { type: 'AWARENESS_ACK', peerId: 'p1', timestamp: Date.now(), timestamp_utc: new Date().toISOString() },

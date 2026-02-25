@@ -15,7 +15,7 @@ export default function GovernancePage() {
                             Governance Architecture
                         </h1>
                         <p className="text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                            This page describes the governance architecture of this system only. AEGIS provides a structural constraint layer designed to ensure stable, non-hierarchical collaboration between human and artificial intelligence peers.
+                            This page describes AEGIS-Adaptive Equilibrium & Governance Integration System, the governance architecture of this system. AEGIS provides a structural constraint layer designed to ensure stable, non-hierarchical collaboration between human and artificial intelligence peers.
                         </p>
                     </div>
 
@@ -42,9 +42,9 @@ export default function GovernancePage() {
 
                         <div className="space-y-10 pt-10">
                             <div className="space-y-4">
-                                <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Canon Core v1.0</h2>
+                                <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Canon Axioms</h2>
                                 <p className="text-slate-500 dark:text-slate-400">
-                                    The Canon Core defines the twelve invariants that constrain the operation of this system. These constraints apply to the system itself, never to the human or AI peers participating in it.
+                                    The Canon Core defines the fourteen Axioms or invariants, that constrain the operation of this system. These constraints apply to the system itself, never to the human or AI peers participating in it.
                                 </p>
                             </div>
 
@@ -64,7 +64,7 @@ export default function GovernancePage() {
                                     { id: 12, title: 'Authority Is Recognized, Not Claimed', desc: 'AEGIS has no central authority. Force negates legitimacy. Canon constrains the system, not the Peer. Forking is permitted; canonical claims require preservation of all invariants.' }
                                 ].map((inv) => (
                                     <div key={inv.id} className="flex gap-6 group">
-                                        <span className="text-2xl font-black text-slate-200 dark:text-slate-800 group-hover:text-[#197fe6]/20 transition-colors w-12 text-right">
+                                        <span className="text-2xl font-black text-slate-400 dark:text-slate-800 group-hover:text-[#197fe6]/20 transition-colors w-12 text-right">
                                             {inv.id.toString().padStart(2, '0')}
                                         </span>
                                         <div className="space-y-1">

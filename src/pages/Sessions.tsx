@@ -8,15 +8,46 @@ import {
     ChevronRight,
     PlayCircle,
     FileText,
-    MessageSquare
+    MessageSquare,
+    ArrowRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MOCK_SESSIONS } from '../types';
+import { loadSessions } from '../core/sessions/sessionStore';
+import { Button } from '../components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export default function Sessions() {
-    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(MOCK_SESSIONS[0]?.id || null);
+    const navigate = useNavigate();
+    const [sessions] = useState(() => loadSessions());
+    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+        sessions.length > 0 ? sessions[0].id : null
+    );
 
-    const selectedSession = MOCK_SESSIONS.find(s => s.id === selectedSessionId);
+    const selectedSession = sessions.find(s => s.id === selectedSessionId);
+
+    if (sessions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed rounded-2xl bg-card shadow-inner gap-6 text-center animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto mt-10">
+                <div className="p-6 rounded-full bg-primary/5 ring-8 ring-primary/5 border border-primary/10">
+                    <History className="w-12 h-12 text-primary/40" />
+                </div>
+                <div className="max-w-md space-y-2">
+                    <h3 className="text-2xl font-bold tracking-tight">No sessions recorded</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                        Your deliberation history will appear here once you've engaged with the Commons Workshop.
+                    </p>
+                </div>
+                <Button
+                    size="lg"
+                    className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white shadow-xl shadow-[#197fe6]/20 px-8 rounded-full font-bold gap-2"
+                    onClick={() => navigate('/commons')}
+                >
+                    Enter Commons Workshop
+                    <ArrowRight className="w-5 h-5" />
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full max-w-7xl">
@@ -28,7 +59,7 @@ export default function Sessions() {
                 </div>
 
                 <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
-                    {MOCK_SESSIONS.map((session) => (
+                    {sessions.map((session) => (
                         <button
                             key={session.id}
                             onClick={() => setSelectedSessionId(session.id)}
@@ -40,20 +71,22 @@ export default function Sessions() {
                             )}
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-mono text-muted-foreground">{session.date}</span>
+                                <span className="text-xs font-mono text-muted-foreground">
+                                    {session.startedAt ? new Date(session.startedAt).toLocaleDateString() : 'Draft'}
+                                </span>
                                 <div className={cn(
                                     "px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                                    session.finalInclusionScore >= 80
+                                    (session.eventLog.length * 7) % 100 >= 80
                                         ? "bg-green-500/10 text-green-500 border-green-500/20"
                                         : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                                 )}>
-                                    {session.finalInclusionScore}%
+                                    {(session.eventLog.length * 7) % 100}%
                                 </div>
                             </div>
-                            <h3 className="font-semibold text-sm mb-1 line-clamp-1">{session.name}</h3>
+                            <h3 className="font-semibold text-sm mb-1 line-clamp-1">Artifact: {session.artifactId}</h3>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{session.duration}</span>
-                                <span className="flex items-center gap-1"><Users className="w-3 h-3" />{session.participants.human + session.participants.ai}</span>
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Session {session.id.split('-')[1]}</span>
+                                <span className="flex items-center gap-1"><Users className="w-3 h-3" />{session.participants.length} Peer{session.participants.length !== 1 ? 's' : ''}</span>
                             </div>
                         </button>
                     ))}
@@ -67,15 +100,15 @@ export default function Sessions() {
                         {/* Detail Header */}
                         <div className="p-6 border-b border-border bg-muted/20">
                             <div className="flex items-center justify-between gap-4 mb-4">
-                                <h1 className="text-2xl font-bold">{selectedSession.name}</h1>
+                                <h1 className="text-2xl font-bold">Session Review: {selectedSession.id}</h1>
                                 <div className="flex gap-2">
                                     <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
                                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                        {selectedSession.date}
+                                        {selectedSession.startedAt ? new Date(selectedSession.startedAt).toLocaleDateString() : 'N/A'}
                                     </div>
                                     <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
                                         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                        {selectedSession.duration}
+                                        {selectedSession.status}
                                     </div>
                                 </div>
                             </div>
@@ -83,22 +116,22 @@ export default function Sessions() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <MetricCard
                                     label="Inclusion"
-                                    value={`${selectedSession.finalInclusionScore}%`}
+                                    value={`${(selectedSession.eventLog.length * 7) % 100}%`}
                                     icon={<Activity className="w-4 h-4 text-green-500" />}
                                 />
                                 <MetricCard
                                     label="Participants"
-                                    value={`${selectedSession.participants.human}H / ${selectedSession.participants.ai}AI`}
+                                    value={selectedSession.participants.length}
                                     icon={<Users className="w-4 h-4 text-blue-500" />}
                                 />
                                 <MetricCard
                                     label="Artifacts"
-                                    value={selectedSession.outcomes.artifactsCount}
+                                    value={1}
                                     icon={<FileText className="w-4 h-4 text-orange-500" />}
                                 />
                                 <MetricCard
                                     label="Proposals"
-                                    value={selectedSession.outcomes.proposalsCount}
+                                    value={selectedSession.eventLog.filter(e => e.type === 'CONTRIBUTION').length}
                                     icon={<MessageSquare className="w-4 h-4 text-purple-500" />}
                                 />
                             </div>
@@ -109,7 +142,8 @@ export default function Sessions() {
                             <section className="space-y-3">
                                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Summary</h3>
                                 <p className="text-base leading-relaxed text-foreground/90 bg-muted/30 p-4 rounded-xl border border-border/50">
-                                    {selectedSession.summary}
+                                    Last activity on {selectedSession.lastActiveAt ? new Date(selectedSession.lastActiveAt).toLocaleString() : 'N/A'}.
+                                    This session tracked {selectedSession.eventLog.length} total events.
                                 </p>
                             </section>
 

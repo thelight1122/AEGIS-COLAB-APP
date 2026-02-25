@@ -1,9 +1,11 @@
 "use client";
+import { useRef, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { AuthStatus } from '../ui';
 import { useKeyring } from '../../contexts/KeyringContext';
 import { Button } from '../ui/button';
 import { Lock, ShieldCheck } from 'lucide-react';
+import { useCoherencePercent } from '../../hooks/useCoherencePercent';
 
 interface HeaderProps {
     className?: string;
@@ -13,6 +15,14 @@ interface HeaderProps {
 export function Header({ className, title = "AEGIS Coherence Chamber" }: HeaderProps) {
     const { status, lock } = useKeyring();
     const isUnlocked = status === 'unlocked';
+    const coherencePercent = useCoherencePercent();
+    const barRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (barRef.current && coherencePercent !== null) {
+            barRef.current.style.width = `${coherencePercent}%`;
+        }
+    }, [coherencePercent]);
 
     return (
         <header className={cn("h-14 border-b border-border bg-card flex items-center px-6 justify-between", className)}>
@@ -51,14 +61,29 @@ export function Header({ className, title = "AEGIS Coherence Chamber" }: HeaderP
                     </div>
                 )}
 
-                {/* Placeholder for Coverage Bar */}
-                <div className="h-2 w-32 bg-muted rounded-full overflow-hidden flex">
-                    <div className="h-full bg-blue-500 w-[40%]" />
-                    <div className="h-full bg-purple-500 w-[30%]" />
-                    <div className="h-full bg-transparent w-[30%]" />
-                </div>
-                <span className="text-xs text-muted-foreground">70% Coherence</span>
-                <div className="h-4 w-px bg-border mx-1" />
+                {coherencePercent !== null && (
+                    <div className="flex items-center gap-3 animate-in fade-in duration-500">
+                        <div className="flex flex-col items-end gap-1">
+                            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest leading-none">
+                                Coherence
+                            </span>
+                            <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden flex">
+                                <div
+                                    ref={barRef}
+                                    className={cn(
+                                        "h-full transition-all duration-1000 ease-in-out",
+                                        coherencePercent > 80 ? "bg-green-500" :
+                                            coherencePercent > 50 ? "bg-amber-500" : "bg-red-500"
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        <span className="text-xs font-black tabular-nums text-foreground/80">
+                            {coherencePercent}% Coherence
+                        </span>
+                        <div className="h-4 w-px bg-border mx-1" />
+                    </div>
+                )}
                 <AuthStatus />
             </div>
         </header>

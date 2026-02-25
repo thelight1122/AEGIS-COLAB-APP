@@ -13,6 +13,7 @@ interface KeyringContextType {
     lock: () => void;
     forget: () => void;
     setProviderSecret: (providerId: VaultProviderId, secret: string, passphrase?: string) => Promise<void>;
+    hasEncryptedKey: (providerId: VaultProviderId) => boolean;
 }
 
 const KeyringContext = createContext<KeyringContextType | undefined>(undefined);
@@ -102,7 +103,8 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
             unlock,
             lock,
             forget,
-            setProviderSecret
+            setProviderSecret,
+            hasEncryptedKey: KeyVault.hasEncryptedKey
         }}>
             {children}
         </KeyringContext.Provider>

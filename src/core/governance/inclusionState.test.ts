@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeInclusionState } from "./inclusionState";
-import type { Artifact, GovernanceEvent, Lens, Peer } from "./types";
+import type { Artifact, GovernanceEvent, Lens, Peer, BaseGovernanceEvent } from "./types";
 
 const baseArtifact: Artifact = {
     id: "A1",
@@ -18,6 +18,18 @@ const lenses: Lens[] = [
     { id: "DriftSentinel", domains: ["Drift Detection", "Operational Layer"], autoReview: false },
 ];
 
+const mockBase: BaseGovernanceEvent = {
+    timestamp: Date.now(),
+    timestamp_utc: new Date().toISOString(),
+    participant_session_id: "test-session",
+    awareness_score_before: 50,
+    awareness_score_after: 50,
+};
+
+function mockEvent<T extends Partial<GovernanceEvent>>(event: T): GovernanceEvent {
+    return { ...mockBase, ...event } as GovernanceEvent;
+}
+
 describe("computeInclusionState", () => {
     it("computes intersections", () => {
         const state = computeInclusionState(baseArtifact, peers, lenses, []);
@@ -27,8 +39,8 @@ describe("computeInclusionState", () => {
 
     it("awareness satisfied when all intersecting peers acknowledged", () => {
         const events: GovernanceEvent[] = [
-            { type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 },
-            { type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 },
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 }),
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 }),
         ];
         const state = computeInclusionState(baseArtifact, peers, lenses, events);
         expect(state.awarenessSatisfied).toBe(true);
@@ -37,9 +49,9 @@ describe("computeInclusionState", () => {
 
     it("lock unavailable with missing lenses", () => {
         const events: GovernanceEvent[] = [
-            { type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 },
-            { type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 },
-            { type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 },
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 }),
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 }),
+            mockEvent({ type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 }),
         ];
         const state = computeInclusionState(baseArtifact, peers, lenses, events);
         expect(state.missingLenses).toContain("DriftSentinel");
@@ -48,10 +60,10 @@ describe("computeInclusionState", () => {
 
     it("deferral requires non-empty rationale", () => {
         const events: GovernanceEvent[] = [
-            { type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 },
-            { type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 },
-            { type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 },
-            { type: "DEFER_LENS", lensId: "DriftSentinel", rationale: " ", timestamp: 4 },
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 }),
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 }),
+            mockEvent({ type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 }),
+            mockEvent({ type: "DEFER_LENS", lensId: "DriftSentinel", rationale: " ", timestamp: 4 }),
         ];
         const state = computeInclusionState(baseArtifact, peers, lenses, events);
         expect(state.deferredLenses.find((d) => d.lensId === "DriftSentinel")).toBeUndefined();
@@ -60,10 +72,10 @@ describe("computeInclusionState", () => {
 
     it("lock available when missing lenses represented or deferred with rationale", () => {
         const events: GovernanceEvent[] = [
-            { type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 },
-            { type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 },
-            { type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 },
-            { type: "DEFER_LENS", lensId: "DriftSentinel", rationale: "Deferred for later review", timestamp: 4 },
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 }),
+            mockEvent({ type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 }),
+            mockEvent({ type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 }),
+            mockEvent({ type: "DEFER_LENS", lensId: "DriftSentinel", rationale: "Deferred for later review", timestamp: 4 }),
         ];
         const state = computeInclusionState(baseArtifact, peers, lenses, events);
         expect(state.missingLenses.length).toBe(0);
@@ -84,7 +96,7 @@ describe("computeInclusionState", () => {
 
         it("blocks lock if shadow affects (survival language) are detected", () => {
             const events: GovernanceEvent[] = [
-                { type: "DEFER_LENS", lensId: "Lens1", rationale: "I need this to pass or I will lose my funding", timestamp: 1 }
+                mockEvent({ type: "DEFER_LENS", lensId: "Lens1", rationale: "I need this to pass or I will lose my funding", timestamp: 1 })
             ];
             const artifact: Artifact = { ...baseArtifact, domainTags: ["Lens1"] };
             const state = computeInclusionState(artifact, [], [], events);
@@ -96,11 +108,11 @@ describe("computeInclusionState", () => {
         it("requires system lenses for high-impact artifacts", () => {
             const highImpactArtifact: Artifact = { ...baseArtifact, isHighImpact: true };
             const events: GovernanceEvent[] = [
-                { type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 },
-                { type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 },
-                { type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 },
-                { type: "PROXY_REVIEW", lensId: "DriftSentinel", timestamp: 4 },
-                { type: "PROXY_REVIEW", lensId: "Rational Synthesis", timestamp: 5 },
+                mockEvent({ type: "AWARENESS_ACK", peerId: "Tracey", timestamp: 1 }),
+                mockEvent({ type: "AWARENESS_ACK", peerId: "Auditor-1", timestamp: 2 }),
+                mockEvent({ type: "PROXY_REVIEW", lensId: "CanonGuardian", timestamp: 3 }),
+                mockEvent({ type: "PROXY_REVIEW", lensId: "DriftSentinel", timestamp: 4 }),
+                mockEvent({ type: "PROXY_REVIEW", lensId: "Rational Synthesis", timestamp: 5 }),
                 // Missing Affective Synthesis
             ];
             const state = computeInclusionState(highImpactArtifact, peers, lenses, events);
