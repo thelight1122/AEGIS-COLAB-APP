@@ -1,5 +1,5 @@
 import { ToolCard } from './ToolCard';
-import { Cpu, Activity } from 'lucide-react';
+import { Cpu, Activity, Wrench } from 'lucide-react';
 
 interface Tool {
     id: string;
@@ -10,6 +10,13 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+    {
+        id: 'buildmaster',
+        title: 'Buildmaster Agent',
+        description: 'Sovereign Agent Runner Workshop from the AEGIS Kernel.',
+        icon: <Wrench className="w-5 h-5" />,
+        status: 'DEV',
+    },
     {
         id: 'simulator',
         title: 'AI Simulator',

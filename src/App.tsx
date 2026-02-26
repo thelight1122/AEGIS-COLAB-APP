@@ -12,6 +12,7 @@ import CommonsRoute from './pages/CommonsRoute';
 import LandingPage from './pages/LandingPage';
 import FrameworkPage from './pages/FrameworkPage';
 import GovernancePage from './pages/GovernancePage';
+import BuildmasterWorkshop from './pages/BuildmasterWorkshop';
 import { ToolsRoute } from './routes/ToolsRoute';
 
 import { IDSProvider } from './contexts/IDSContext';
@@ -30,6 +31,7 @@ function App() {
               <Route path="/framework" element={<FrameworkPage />} />
               <Route path="/governance" element={<GovernancePage />} />
               <Route path="/commons" element={<AppShell><CommonsRoute /></AppShell>} />
+              <Route path="/buildmaster" element={<AppShell><BuildmasterWorkshop /></AppShell>} />
               <Route path="/artifacts" element={<AppShell><Artifacts /></AppShell>} />
 
               {/* Dashboard Pages */}

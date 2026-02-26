@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ToolList } from '../../features/tools/components/ToolList';
 import SimulatorPanel from './panels/SimulatorPanel';
 import GatewayStatusPanel from './panels/GatewayStatusPanel';
+import BuildmasterPanel from './panels/BuildmasterPanel';
 import { Wrench } from 'lucide-react';
 
 export default function ToolsPage() {
@@ -21,6 +22,7 @@ export default function ToolsPage() {
 
             {/* Right Column: Rendering Panel */}
             <div className="flex-1 min-w-0">
+                {activeToolId === 'buildmaster' && <BuildmasterPanel />}
                 {activeToolId === 'simulator' && <SimulatorPanel />}
                 {activeToolId === 'gateway' && <GatewayStatusPanel />}
 

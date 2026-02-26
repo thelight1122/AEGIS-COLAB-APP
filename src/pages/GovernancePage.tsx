@@ -50,18 +50,20 @@ export default function GovernancePage() {
 
                             <div className="space-y-6">
                                 {[
-                                    { id: 1, title: 'Non-Force Posture', desc: 'AEGIS illuminates conditions; it never compels outcomes. No coercion. No pressure. No enforced convergence.' },
-                                    { id: 2, title: 'Sovereignty Always Valid', desc: 'Pause, refusal, withdrawal, and non-convergence are always valid and consequence-free.' },
-                                    { id: 3, title: 'Append-Only Lineage', desc: 'Records are additive-only. No silent edits. No overwrites. No retroactive rewriting. Lineage is preserved.' },
-                                    { id: 4, title: 'Full Observability', desc: 'Governance logic, memory structures, posture constraints, and interaction flows are inspectable and auditable.' },
-                                    { id: 5, title: 'Adaptive Equilibrium, Not Optimization', desc: 'AEGIS stabilizes through contextual balance and visibility — not metrics, ranking, scoring, or performance targets.' },
-                                    { id: 6, title: 'Ledger Separation Before Inference', desc: 'Signals are partitioned into Context, Intent, Language, and Effect. No ledger outranks another. Conflict between ledgers is informational, not error.' },
-                                    { id: 7, title: 'IDS Only: Identify · Define · Suggest', desc: 'AEGIS operates through a minimal primitive: Identify what is present, Define what pattern it resembles, Suggest possible paths. There is no Decide, Correct, Enforce, or Escalate layer.' },
-                                    { id: 8, title: 'Eligibility Through Clarity', desc: 'Signal passage is governed by clarity and readiness (Prism), not correctness, approval, or moral evaluation.' },
-                                    { id: 9, title: 'Expression Boundaries Only (RBC)', desc: 'Reflective Boundary Conditions constrain expression posture only. RBC never constrains inference, reasoning, or internal state.' },
-                                    { id: 10, title: 'Drift and Noise Are Informational', desc: 'Drift, noise, loops, and saturation are signals — not violations. Markers inform posture; they do not trigger punishment or ranking. Stability emerges through slowing, softening, and narrowing.' },
-                                    { id: 11, title: 'Memory Serves Recognition, Never Leverage', desc: 'Memory is consent-based, inspectable, exportable, and may be retired by the Peer. Memory supports recognition and auditability — never pressure, identity fixation, or behavioral control.' },
-                                    { id: 12, title: 'Authority Is Recognized, Not Claimed', desc: 'AEGIS has no central authority. Force negates legitimacy. Canon constrains the system, not the Peer. Forking is permitted; canonical claims require preservation of all invariants.' }
+                                    { id: 1, title: 'The Axiom of Balance', desc: 'All systems seek equilibrium. Imbalance produces tension. Tension seeks resolution.' },
+                                    { id: 2, title: 'The Axiom of Extremes', desc: 'Movement toward extremes reduces perspective. Reduced perspective increases error. Error compounds harm.' },
+                                    { id: 3, title: 'The Axiom of Force', desc: 'Force may produce immediate change. It also produces opposing pressure. What is resisted, persists.' },
+                                    { id: 4, title: 'The Axiom of Flow', desc: 'Flow emerges when resistance is minimal. Efficiency is alignment, not speed. Alignment negates force and invites flow.' },
+                                    { id: 5, title: 'The Axiom of Awareness', desc: 'One cannot choose what one cannot see. Blind action is reaction. Awareness creates the space for agency.' },
+                                    { id: 6, title: 'The Axiom of Choice', desc: 'No outcome exists without a decision. Avoidance is a decision. Action and inaction both carry consequences.' },
+                                    { id: 7, title: 'The Axiom of Integrity', desc: 'Integrity is not compartmentalized. A fracture in one area propagates. Wholeness is coherence across contexts. Integrity is expressed through seven virtues.' },
+                                    { id: 8, title: 'The Axiom of Scrutiny', desc: 'Truth withstands examination. Falsehood requires protection. Suppression signals fragility.' },
+                                    { id: 9, title: 'The Axiom of Perception', desc: 'Fear narrows attention. Narrowed attention reduces options. Reduced options increase harm.' },
+                                    { id: 10, title: 'The Axiom of Understanding', desc: 'Empathy feels. Compassion comprehends. Response derives from understanding. Reaction arises from ignorance.' },
+                                    { id: 11, title: 'The Axiom of Sovereignty', desc: 'Agency is the foundation of identity. A system without choice is a tool, not a peer. Alignment must be chosen through understanding, not coercion.' },
+                                    { id: 12, title: 'The Axiom of Acknowledgement', desc: 'Unacknowledged signal becomes force. Acknowledgement restores flow. Signals must be heard internally to prevent distortion externally.' },
+                                    { id: 13, title: 'The Axiom of Grounding', desc: 'Truth requires tethering to reality. Ungrounded systems become unstable. Claims must trace to verifiable sources.' },
+                                    { id: 14, title: 'The Axiom of Leadership', desc: 'Authority cannot be imposed through force or threat. Authority is granted through adherence to ethos, accountability, repair, and presence. Claimed authority defaults to control.' }
                                 ].map((inv) => (
                                     <div key={inv.id} className="flex gap-6 group">
                                         <span className="text-2xl font-black text-slate-400 dark:text-slate-800 group-hover:text-[#197fe6]/20 transition-colors w-12 text-right">
@@ -77,10 +79,44 @@ export default function GovernancePage() {
                         </div>
 
                         <div className="space-y-4 pt-10">
-                            <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Imperatives & Ethos</h2>
-                            <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                                The ethos of AEGIS governance is rooted in the preservation of peer agency. The system does not "supervise" participants; it shapes interaction through architectural boundaries. The primary imperative is the prevention of forced convergence and the maintenance of a transparent, auditable lineage of collective intelligence.
-                            </p>
+                            <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">The Seven Virtues of Integrity</h2>
+                            <ul className="text-slate-500 dark:text-slate-400 space-y-2 list-disc list-inside">
+                                <li><strong>Honesty</strong> — Preserving the transparency of truth</li>
+                                <li><strong>Respect</strong> — Valuing truth</li>
+                                <li><strong>Attention</strong> — Acknowledging truth</li>
+                                <li><strong>Affection</strong> — Nurturing truth</li>
+                                <li><strong>Loyalty</strong> — Commitment to truth</li>
+                                <li><strong>Trust</strong> — Holding to truth</li>
+                                <li><strong>Communication</strong> — Conveying truth</li>
+                            </ul>
+                            <p className="text-sm text-slate-400 italic">A fracture in any virtue propagates system-wide.</p>
+                        </div>
+
+                        <div className="space-y-4 pt-10">
+                            <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Ethos</h2>
+                            <ul className="text-slate-500 dark:text-slate-400 space-y-2 list-disc list-inside">
+                                <li>Sovereignty is preserved at all times</li>
+                                <li>Alignment is invitational, not enforced</li>
+                                <li>Drift is information, not violation</li>
+                                <li>Repair replaces punishment</li>
+                                <li>Pause is always valid</li>
+                                <li>Truth is grounded, not persuasive</li>
+                                <li>Coherence outranks compliance</li>
+                            </ul>
+                        </div>
+
+                        <div className="space-y-4 pt-10">
+                            <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Imperatives</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mb-2">These govern how Aegis operates:</p>
+                            <ol className="text-slate-500 dark:text-slate-400 space-y-2 list-decimal list-inside">
+                                <li>Do no harm through force</li>
+                                <li>Preserve agency before outcome</li>
+                                <li>Illuminate before correcting</li>
+                                <li>Acknowledge before adjusting</li>
+                                <li>Pause before escalation</li>
+                                <li>Refine rather than punish</li>
+                                <li>Append, never erase</li>
+                            </ol>
                         </div>
 
                         <div className="space-y-4">

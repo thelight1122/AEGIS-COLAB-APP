@@ -18,6 +18,7 @@ export function PublicHeader() {
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/artifacts">Artifacts</Link>
+                    <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/buildmaster">Buildmaster Workshop</Link>
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/commons">Commons</Link>
                 </nav>
                 <div className="flex items-center gap-4">
