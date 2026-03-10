@@ -41,6 +41,9 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        .material-symbols-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+        }
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -78,7 +81,7 @@
 <span class="text-sm font-medium">Artifacts</span>
 </a>
 <a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary border-l-2 border-primary" href="#">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="material-symbols-outlined material-symbols-filled">history</span>
 <span class="text-sm font-medium">Sessions</span>
 </a>
 <a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-primary transition-colors" href="#">
@@ -98,7 +101,7 @@
 </nav>
 <div class="p-4 border-t border-neutral-border">
 <div class="flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer transition-colors">
-<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent-amber" data-alt="User profile avatar with teal gradient"></div>
+<div title="A. VANCE Avatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent-amber" data-alt="User profile avatar with teal gradient"></div>
 <div class="flex-1 overflow-hidden">
 <p class="text-xs font-bold truncate">A. VANCE</p>
 <p class="text-[10px] text-white/40 uppercase">Senior Architect</p>
@@ -116,7 +119,7 @@
 <div class="flex items-center gap-2">
 <span class="text-[10px] font-bold text-primary uppercase">Inclusion Coverage:</span>
 <div class="w-32 h-1 bg-neutral-border rounded-full overflow-hidden">
-<div class="h-full bg-primary" style="width: 94%"></div>
+<div class="h-full bg-primary" title="Inclusion Coverage 94%" style="--coverage-width: 94%; width: var(--coverage-width)"></div>
 </div>
 <span class="text-[10px] font-mono text-primary">94%</span>
 </div>
@@ -152,11 +155,11 @@
 <p class="text-[10px] text-white/40 mb-3 uppercase">AUG 12, 2024 • 09:42 UTC</p>
 <div class="flex items-center justify-between">
 <div class="flex -space-x-1.5">
-<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" data-alt="Monochrome human user avatar"></div>
-<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-600 flex items-center justify-center overflow-hidden" data-alt="AI module avatar with geometric teal pattern">
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" title="Human Participant 1" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-600 flex items-center justify-center overflow-hidden" title="AI Module A1" data-alt="AI module avatar with geometric teal pattern">
 <span class="text-[8px] font-bold">A1</span>
 </div>
-<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-500" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-500" title="Human Participant 2" data-alt="Monochrome human user avatar"></div>
 </div>
 <div class="text-[10px] text-primary/80 font-mono">8/8 Lenses</div>
 </div>
@@ -171,8 +174,8 @@
 <p class="text-[10px] text-white/40 mb-3 uppercase">AUG 11, 2024 • 22:15 UTC</p>
 <div class="flex items-center justify-between">
 <div class="flex -space-x-1.5">
-<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" data-alt="Monochrome human user avatar"></div>
-<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-700 flex items-center justify-center overflow-hidden" data-alt="AI module avatar with geometric teal pattern">
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-400" title="Human Participant 3" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-teal-700 flex items-center justify-center overflow-hidden" title="AI Module A3" data-alt="AI module avatar with geometric teal pattern">
 <span class="text-[8px] font-bold">A3</span>
 </div>
 </div>
@@ -189,8 +192,8 @@
 <p class="text-[10px] text-white/40 mb-3 uppercase">AUG 11, 2024 • 14:02 UTC</p>
 <div class="flex items-center justify-between">
 <div class="flex -space-x-1.5">
-<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-600" data-alt="Monochrome human user avatar"></div>
-<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-300" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-600" title="Human Participant 4" data-alt="Monochrome human user avatar"></div>
+<div class="w-5 h-5 rounded-full border border-background-dark bg-slate-300" title="Human Participant 5" data-alt="Monochrome human user avatar"></div>
 </div>
 <div class="text-[10px] text-primary/80 font-mono">8/8 Lenses</div>
 </div>
@@ -225,7 +228,7 @@
 <p class="text-[10px] font-bold text-white/40 uppercase mb-2">Inclusion Awareness</p>
 <div class="text-xl font-black text-primary">98.4%</div>
 <div class="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-primary" style="width: 98.4%"></div>
+<div class="h-full bg-primary" title="Inclusion Awareness 98.4%" style="--awareness-width: 98.4%; width: var(--awareness-width)"></div>
 </div>
 </div>
 <div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
@@ -312,7 +315,7 @@
 <!-- ID Card -->
 <div class="p-3 bg-neutral-dark/40 border-l-2 border-primary/50 flex gap-4 rounded-r-lg">
 <div class="flex flex-col items-center gap-1 shrink-0">
-<div class="w-6 h-6 rounded-full bg-slate-400" data-alt="Human participant avatar"></div>
+<div class="w-6 h-6 rounded-full bg-slate-400" title="Vance Avatar" data-alt="Human participant avatar"></div>
 <span class="text-[7px] font-bold text-white/40 uppercase">Vance</span>
 </div>
 <div>
@@ -326,7 +329,7 @@
 <!-- DEFINE Card -->
 <div class="p-3 bg-neutral-dark/40 border-l-2 border-primary/80 flex gap-4 rounded-r-lg">
 <div class="flex flex-col items-center gap-1 shrink-0">
-<div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center overflow-hidden" data-alt="AI module avatar">
+<div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center overflow-hidden" title="Aegis-1 Avatar" data-alt="AI module avatar">
 <span class="text-[8px] font-bold">A1</span>
 </div>
 <span class="text-[7px] font-bold text-white/40 uppercase">Aegis-1</span>
@@ -342,7 +345,7 @@
 <!-- SUGGEST Card -->
 <div class="p-3 bg-neutral-dark/40 border-l-2 border-accent-amber flex gap-4 rounded-r-lg">
 <div class="flex flex-col items-center gap-1 shrink-0">
-<div class="w-6 h-6 rounded-full bg-slate-500" data-alt="Human participant avatar"></div>
+<div class="w-6 h-6 rounded-full bg-slate-500" title="Morgan Avatar" data-alt="Human participant avatar"></div>
 <span class="text-[7px] font-bold text-white/40 uppercase">Morgan</span>
 </div>
 <div>

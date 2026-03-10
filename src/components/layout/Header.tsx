@@ -32,8 +32,10 @@ export function Header({ className }: HeaderProps) {
                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                         <div 
                             className="h-full bg-primary shadow-[0_0_10px_#13ecda] transition-all duration-1000 ease-in-out" 
-                            style={{ width: `${coherencePercent}%` }}
-                        ></div>
+                            style={{ '--coherence-width': `${coherencePercent}%` } as React.CSSProperties}
+                        >
+                            <div className="w-[var(--coherence-width)] h-full bg-inherit" />
+                        </div>
                     </div>
                 </div>
             </div>

@@ -96,7 +96,7 @@
 <span class="text-white">82%</span>
 </div>
 <div class="h-1.5 w-full bg-surface-dark rounded-full overflow-hidden">
-<div class="h-full bg-primary" style="width: 82%"></div>
+<div class="h-full bg-primary" style="--width: 82%; width: var(--width)"></div>
 </div>
 <div class="flex justify-between items-center mt-1">
 <span class="text-[10px] text-slate-400 uppercase tracking-widest">Lens Coverage: 4/5</span>
@@ -205,9 +205,9 @@
 <span class="text-primary">Stance Distribution</span>
 </div>
 <div class="h-1.5 w-full bg-surface-dark flex rounded-full overflow-hidden">
-<div class="h-full bg-primary" style="width: 70%" title="Align"></div>
-<div class="h-full bg-accent-amber" style="width: 20%" title="Concern"></div>
-<div class="h-full bg-slate-600" style="width: 10%" title="Alternative"></div>
+<div class="h-full bg-primary" style="--width: 70%; width: var(--width)" title="Align"></div>
+<div class="h-full bg-accent-amber" style="--width: 20%; width: var(--width)" title="Concern"></div>
+<div class="h-full bg-slate-600" style="--width: 10%; width: var(--width)" title="Alternative"></div>
 </div>
 <div class="flex justify-between text-[8px] text-slate-500 font-medium">
 <span>70% Align</span>
@@ -255,7 +255,7 @@
 <div class="md:col-span-1 space-y-3">
 <div>
 <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Input Signal Type</label>
-<select class="w-full bg-surface-dark border-border-dark rounded text-xs text-white focus:ring-primary focus:border-primary">
+<select title="Input Signal Type" class="w-full bg-surface-dark border-border-dark rounded text-xs text-white focus:ring-primary focus:border-primary">
 <option>Thermal Gradient</option>
 <option>Acoustic Resonance</option>
 <option>Kinetic Flux</option>
