@@ -467,7 +467,7 @@ export default function ChamberLayout() {
                             />
                             <Button
                                 title="Save Title"
-                                size="xs"
+                                size="sm"
                                 className="h-6 w-6"
                                 onClick={() => { setArtifactMetadata(tempMetadata); setIsEditingMetadata(false); }}
                             >
@@ -575,13 +575,19 @@ export default function ChamberLayout() {
                                                     <div className="text-xs text-white/80 leading-relaxed font-inter">
                                                         {event.type === 'LOCK_REQUEST' ? (
                                                             <pre className="whitespace-pre-wrap font-mono text-primary/80 bg-primary/5 p-4 rounded-lg border border-primary/10">
-                                                                {event.rationale}
+                                                                {event.rationale || 'Stability Marker Locked.'}
                                                             </pre>
                                                         ) : (
                                                             <div className="p-3 bg-white/5 rounded-lg border border-white/5 group-hover:bg-white/10 transition-colors">
                                                                 <p className="text-white/60 mb-1">
-                                                                    <span className="font-bold text-white/80 mr-2">{event.peerId}:</span>
-                                                                    {event.contentSummary || (event as any).prompt || (event as any).responseText || (event as any).error || 'Marker synchronized.'}
+                                                                    {('peerId' in event && event.peerId) && (
+                                                                        <span className="font-bold text-white/80 mr-2">{event.peerId}:</span>
+                                                                    )}
+                                                                    {'contentSummary' in event ? event.contentSummary : 
+                                                                     'prompt' in event ? event.prompt : 
+                                                                     'responseText' in event ? event.responseText : 
+                                                                     'error' in event ? event.error : 
+                                                                     'Marker synchronized.'}
                                                                 </p>
                                                             </div>
                                                         )}
