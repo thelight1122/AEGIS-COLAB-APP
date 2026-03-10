@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import { AuthStatus } from '../ui';
 import { useKeyring } from '../../contexts/KeyringContext';
 import { useCoherencePercent } from '../../hooks/useCoherencePercent';
+import { useRef, useEffect } from 'react';
 
 interface HeaderProps {
     className?: string;
@@ -13,6 +14,13 @@ export function Header({ className }: HeaderProps) {
     const { status } = useKeyring();
     const isUnlocked = status === 'unlocked';
     const coherencePercent = useCoherencePercent() || 82; // Default for demo if null
+    const barRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (barRef.current) {
+            barRef.current.style.width = `${coherencePercent}%`;
+        }
+    }, [coherencePercent]);
 
     return (
         <header className={cn("h-14 border-b border-white/10 glass-panel flex items-center justify-between px-6 sticky top-0 z-50 shrink-0", className)}>
@@ -31,10 +39,9 @@ export function Header({ className }: HeaderProps) {
                     <span className="text-[10px] font-bold text-primary whitespace-nowrap tabular-nums">COHERENCE {coherencePercent}%</span>
                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                         <div 
+                            ref={barRef}
                             className="h-full bg-primary shadow-[0_0_10px_#13ecda] transition-all duration-1000 ease-in-out" 
-                            style={{ '--coherence-width': `${coherencePercent}%` } as React.CSSProperties}
                         >
-                            <div className="w-[var(--coherence-width)] h-full bg-inherit" />
                         </div>
                     </div>
                 </div>

@@ -56,6 +56,12 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #13ecda;
         }
+        .session-grid {
+            background-size: 20px 20px;
+            background-image: radial-gradient(circle, #234845 1px, transparent 1px);
+        }
+        .coverage-bar { width: 94%; }
+        .awareness-bar { width: 98.4%; }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-white font-display overflow-hidden">
@@ -119,7 +125,7 @@
 <div class="flex items-center gap-2">
 <span class="text-[10px] font-bold text-primary uppercase">Inclusion Coverage:</span>
 <div class="w-32 h-1 bg-neutral-border rounded-full overflow-hidden">
-<div class="h-full bg-primary" title="Inclusion Coverage 94%" style="--coverage-width: 94%; width: var(--coverage-width)"></div>
+<div class="h-full bg-primary coverage-bar" title="Inclusion Coverage 94%"></div>
 </div>
 <span class="text-[10px] font-mono text-primary">94%</span>
 </div>
@@ -228,7 +234,7 @@
 <p class="text-[10px] font-bold text-white/40 uppercase mb-2">Inclusion Awareness</p>
 <div class="text-xl font-black text-primary">98.4%</div>
 <div class="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
-<div class="h-full bg-primary" title="Inclusion Awareness 98.4%" style="--awareness-width: 98.4%; width: var(--awareness-width)"></div>
+<div class="h-full bg-primary awareness-bar" title="Inclusion Awareness 98.4%"></div>
 </div>
 </div>
 <div class="bg-neutral-dark/50 border border-neutral-border p-3 rounded-lg">
