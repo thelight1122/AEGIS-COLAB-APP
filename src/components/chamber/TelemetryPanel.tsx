@@ -2,6 +2,7 @@ import { Activity, Lock, PieChart, CheckCircle2, Circle, Zap, MinusCircle, Users
 import { type TelemetryData, type Peer, LOCK_INCLUSION_THRESHOLD } from '../../types';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+import './TelemetryPanel.css';
 
 import { useState, useRef, useLayoutEffect } from 'react';
 
@@ -153,6 +154,26 @@ export function TelemetryPanel({ telemetry, peers, onInvokeLens, onDeferLens, on
                             height="100%"
                             width={`${drift}%`}
                             className={cn("transition-all duration-500", drift < 10 ? "fill-green-500" : "fill-red-500")}
+                        />
+                    </svg>
+                </div>
+            </div>
+
+            {/* Convergence Performance — Synthesized state metric */}
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                    <span>Convergence Rate</span>
+                    <span className={cn(
+                        "font-medium",
+                        telemetry.convergence > 80 ? "text-primary" : "text-muted-foreground"
+                    )}>{telemetry.convergence}%</span>
+                </div>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <svg className="w-full h-full">
+                        <rect
+                            height="100%"
+                            width={`${telemetry.convergence}%`}
+                            className={cn("transition-all duration-700 fill-primary/40")}
                         />
                     </svg>
                 </div>

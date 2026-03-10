@@ -1,10 +1,7 @@
 "use client";
-import { useRef, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { AuthStatus } from '../ui';
 import { useKeyring } from '../../contexts/KeyringContext';
-import { Button } from '../ui/button';
-import { Lock, ShieldCheck } from 'lucide-react';
 import { useCoherencePercent } from '../../hooks/useCoherencePercent';
 
 interface HeaderProps {
@@ -12,79 +9,46 @@ interface HeaderProps {
     title?: string;
 }
 
-export function Header({ className, title = "AEGIS Coherence Chamber" }: HeaderProps) {
-    const { status, lock } = useKeyring();
+export function Header({ className }: HeaderProps) {
+    const { status } = useKeyring();
     const isUnlocked = status === 'unlocked';
-    const coherencePercent = useCoherencePercent();
-    const barRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (barRef.current && coherencePercent !== null) {
-            barRef.current.style.width = `${coherencePercent}%`;
-        }
-    }, [coherencePercent]);
+    const coherencePercent = useCoherencePercent() || 82; // Default for demo if null
 
     return (
-        <header className={cn("h-14 border-b border-border bg-card flex items-center px-6 justify-between", className)}>
+        <header className={cn("h-14 border-b border-white/10 glass-panel flex items-center justify-between px-6 sticky top-0 z-50 shrink-0", className)}>
             <div className="flex items-center gap-4">
-                <h1 className="font-semibold text-lg">{title}</h1>
-
-                <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
-                        v0.1.0-alpha
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                        Online
-                    </span>
+                <div className="text-primary">
+                    <span className="material-symbols-outlined text-3xl">hub</span>
+                </div>
+                <div>
+                    <h2 className="text-sm font-bold tracking-tight uppercase leading-none">System Core Protocol</h2>
+                    <p className="text-[10px] text-primary/70 font-mono uppercase">AEGIS COHERENCE CHAMBER</p>
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                {isUnlocked && (
-                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 border border-green-500/20 rounded-md text-[10px] font-bold text-green-600 uppercase tracking-wider">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            Vault Active
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={lock}
-                            className="h-8 px-3 gap-2 text-xs font-semibold hover:bg-amber-500/10 hover:text-amber-600 hover:border-amber-500/20"
-                            title="Clear decrypted keys from memory"
-                        >
-                            <Lock className="w-3.5 h-3.5" />
-                            Lock Keys
-                        </Button>
-                        <div className="h-4 w-px bg-border mx-1" />
+            <div className="flex-1 max-w-xl px-12">
+                <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold text-primary whitespace-nowrap tabular-nums">COHERENCE {coherencePercent}%</span>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div 
+                            className="h-full bg-primary shadow-[0_0_10px_#13ecda] transition-all duration-1000 ease-in-out" 
+                            style={{ width: `${coherencePercent}%` }}
+                        ></div>
                     </div>
-                )}
+                </div>
+            </div>
 
-                {coherencePercent !== null && (
-                    <div className="flex items-center gap-3 animate-in fade-in duration-500">
-                        <div className="flex flex-col items-end gap-1">
-                            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest leading-none">
-                                Coherence
-                            </span>
-                            <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden flex">
-                                <div
-                                    ref={barRef}
-                                    className={cn(
-                                        "h-full transition-all duration-1000 ease-in-out",
-                                        coherencePercent > 80 ? "bg-green-500" :
-                                            coherencePercent > 50 ? "bg-amber-500" : "bg-red-500"
-                                    )}
-                                />
-                            </div>
-                        </div>
-                        <span className="text-xs font-black tabular-nums text-foreground/80">
-                            {coherencePercent}% Coherence
-                        </span>
-                        <div className="h-4 w-px bg-border mx-1" />
-                    </div>
-                )}
-                <AuthStatus />
+            <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                    {isUnlocked && (
+                        <span className="material-symbols-outlined text-green-500 text-sm" title="Vault Unlocked">shield_check</span>
+                    )}
+                    <span className="text-[10px] font-mono text-white/40">v0.8-alpha</span>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                    <AuthStatus />
+                </div>
             </div>
         </header>
     );

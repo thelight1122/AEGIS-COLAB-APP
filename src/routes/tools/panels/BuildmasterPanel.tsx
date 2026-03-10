@@ -38,7 +38,7 @@ export default function BuildmasterPanel() {
                         src="http://localhost:5174/buildmasters"
                         className="w-full h-full border-0"
                         title="Buildmaster Agent UI"
-                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"
                     />
                 </div>
             </div>

@@ -23,16 +23,14 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex flex-col h-screen w-full bg-background text-foreground overflow-hidden">
+        <div className="flex flex-col h-screen w-full bg-background-dark text-white overflow-hidden font-display">
             <ConfigStatus />
+            <Header />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <Header />
-                    <main className="flex-1 overflow-auto p-6 relative">
-                        {children}
-                    </main>
-                </div>
+                <main className="flex-1 relative overflow-auto">
+                    {children}
+                </main>
             </div>
         </div>
     );

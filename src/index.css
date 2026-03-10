@@ -1,41 +1,40 @@
+/* Typography: Inter + Material Symbols */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 @import "tailwindcss";
 
 @theme {
-  --color-border: hsl(216 34% 17%);
-  --color-input: hsl(216 34% 17%);
-  --color-ring: hsl(216 34% 17%);
-  --color-background: hsl(224 71% 4%);
-  --color-foreground: hsl(213 31% 91%);
+  /* Stitch Design Tokens */
+  --color-primary: #13ecda;
+  --color-accent-amber: #ffbf00;
+  --color-background-light: #f6f8f8;
+  --color-background-dark: #102220;
+  --color-neutral-dark: #1a2e2c;
+  --color-neutral-border: #234845;
 
-  --color-primary: hsl(210 40% 98%);
-  --color-primary-foreground: hsl(222.2 47.4% 11.2%);
+  /* Semantic Overrides */
+  --color-background: var(--color-background-dark);
+  --color-foreground: #ffffff;
+  --color-border: var(--color-neutral-border);
+  --color-card: var(--color-neutral-dark);
+  --color-muted: #1a2e2c;
+  --color-muted-foreground: rgba(255, 255, 255, 0.4);
 
-  --color-secondary: hsl(222.2 47.4% 11.2%);
-  --color-secondary-foreground: hsl(210 40% 98%);
+  /* Typography */
+  --font-display: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
 
-  --color-destructive: hsl(0 63% 31%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-
-  --color-muted: hsl(223 47% 11%);
-  --color-muted-foreground: hsl(215.4 16.3% 56.9%);
-
-  --color-accent: hsl(216 34% 17%);
-  --color-accent-foreground: hsl(210 40% 98%);
-
-  --color-popover: hsl(224 71% 4%);
-  --color-popover-foreground: hsl(213 31% 91%);
-
-  --color-card: hsl(224 71% 4%);
-  --color-card-foreground: hsl(213 31% 91%);
-
-  --radius-lg: 0.5rem;
-  --radius-md: calc(0.5rem - 2px);
-  --radius-sm: calc(0.5rem - 4px);
+  /* Sharp Geometric Radii */
+  --radius-lg: 0.25rem;
+  --radius-md: 0.125rem;
+  --radius-sm: 0.05rem;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+    font-family: var(--font-sans);
   }
 
   html,
@@ -43,96 +42,93 @@
   #root {
     height: 100%;
     margin: 0;
+    overflow: hidden;
+    background-color: var(--color-background-dark);
+    color: white;
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
+  /* Premium Scrollbars */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-background-dark);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-neutral-border);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+  }
+
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined' !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 }
 
-/* Custom React Flow Styles (Premium Overrides) */
+/* Custom React Flow Styles (Stitch Adaptive) */
 .react-flow__controls {
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--color-neutral-border) !important;
+  border-radius: var(--radius-lg) !important;
   overflow: hidden !important;
-  background: var(--color-card) !important;
-  margin: 10px !important;
+  background: var(--color-background-dark) !important;
 }
 
 .react-flow__controls-button {
-  background: var(--color-card) !important;
-  border-bottom: 1px solid var(--color-border) !important;
-  color: var(--color-foreground) !important;
-  fill: var(--color-foreground) !important;
-  width: 28px !important;
-  height: 28px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background-color 0.2s !important;
-}
-
-.react-flow__controls-button:last-child {
-  border-bottom: none !important;
+  background: var(--color-background-dark) !important;
+  border-bottom: 1px solid var(--color-neutral-border) !important;
+  color: white !important;
+  fill: white !important;
 }
 
 .react-flow__controls-button:hover {
-  background: var(--color-accent) !important;
-}
-
-.react-flow__controls-button svg {
-  width: 14px !important;
-  height: 14px !important;
-  fill: var(--color-foreground) !important;
+  background: var(--color-neutral-dark) !important;
+  color: var(--color-primary) !important;
 }
 
 .react-flow__minimap {
-  background-color: var(--color-card) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-background-dark) !important;
+  border: 1px solid var(--color-neutral-border) !important;
   border-radius: var(--radius-lg) !important;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4) !important;
-  overflow: hidden !important;
-  margin: 10px !important;
-}
-
-.react-flow__minimap-mask {
-  fill: var(--color-muted) !important;
-  fill-opacity: 0.6 !important;
-}
-
-.react-flow__minimap-node {
-  fill: var(--color-muted-foreground) !important;
-  fill-opacity: 0.3 !important;
-  stroke: none !important;
-  border-radius: 2px !important;
-}
-
-.react-flow__attribution {
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.react-flow__attribution a {
-  color: var(--color-muted-foreground) !important;
-  opacity: 0.3 !important;
-  font-size: 8px !important;
-  text-decoration: none !important;
-}
-
-.react-flow__background {
-  background-color: transparent !important;
 }
 
 .react-flow__edge-path {
-  stroke: var(--color-muted-foreground) !important;
-  stroke-width: 2 !important;
-  opacity: 0.4 !important;
+  stroke: var(--color-primary) !important;
+  stroke-width: 1 !important;
+  opacity: 0.3 !important;
 }
 
-.telemetry-panel-container {
-  background: var(--telemetry-bg, hsl(var(--card)));
+.react-flow__background {
+  background-image: radial-gradient(var(--color-neutral-border) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* Glassmorphism & Effects */
+.glass-panel {
+  background: rgba(16, 34, 32, 0.8);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-neutral-border);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px var(--color-primary);
 }
