@@ -1,0 +1,34 @@
+﻿
+Running 1 test using 1 worker
+
+  Γ£ÿ  1 [chromium] ΓÇ║ tests\ids_stream.spec.ts:4:5 ΓÇ║ IDS Stream Verification ΓÇ║ IDS Stream layout and clear action (533ms)
+
+
+  1) [chromium] ΓÇ║ tests\ids_stream.spec.ts:4:5 ΓÇ║ IDS Stream Verification ΓÇ║ IDS Stream layout and clear action 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeCloseTo[2m([22m[32mexpected[39m[2m, [22mprecision[2m)[22m
+
+    Expected: [32m320[39m
+    Received: [31m319[39m
+
+    Expected precision:    1
+    Expected difference: < [32m0.05[39m
+    Received difference:   [31m1[39m
+
+       9 |         const bottomRail = page.locator('div:has(> h3:text("IDS Stream"))').locator('..');
+      10 |         const box = await bottomRail.boundingBox();
+    > 11 |         expect(box?.height).toBeCloseTo(320, 1);
+         |                             ^
+      12 |
+      13 |         // 2. Verify cards are visible
+      14 |         const firstCard = page.locator('div:has-text("IDS Stream")').locator('..').locator('.flex-1.overflow-x-auto p').first();
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\ids_stream.spec.ts:11:29
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\ids_stream-IDS-Stream-Veri-8002c-eam-layout-and-clear-action-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\ids_stream-IDS-Stream-Veri-8002c-eam-layout-and-clear-action-chromium\error-context.md
+
+  1 failed
+    [chromium] ΓÇ║ tests\ids_stream.spec.ts:4:5 ΓÇ║ IDS Stream Verification ΓÇ║ IDS Stream layout and clear action 
