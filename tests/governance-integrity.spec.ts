@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Governance Integrity Validation', () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('http://localhost:5173/chamber?e2e=1');
+        await page.goto('/chamber?e2e=1');
         // Use the E2E harness for deterministic seeding
         await page.evaluate(() => {
             if (window.__AEGIS_E2E__) {
@@ -40,7 +40,7 @@ test.describe('Governance Integrity Validation', () => {
 
         // Wait for the UI to reflect the intersection
         const awarenessPercent = page.getByTestId('awareness-percent');
-        await expect(awarenessPercent).toBeVisible({ timeout: 10000 });
+        await expect(awarenessPercent).toBeVisible();
 
         // 3. Acknowledge necessary peer (Sarah for Product - p3)
         const sarahAck = page.getByTestId('peer-ack-p3');
@@ -58,10 +58,10 @@ test.describe('Governance Integrity Validation', () => {
         await productInvoke.click();
 
         // 6. Lock button appears after criteria are met
-        await expect(lockButton).toBeVisible({ timeout: 15000 });
+        await expect(lockButton).toBeVisible();
     });
 
-    test('BM-QA-01: Deferral Requires Rationale', async ({ page }) => {
+    test('BM-QA-02: Deferral Requires Rationale', async ({ page }) => {
         // 1. Initial State: Product lens should be missing (guaranteed by e2eHarness seed)
         await expect(page.getByTestId('missing-lens-Product')).toBeVisible();
         await expect(page.getByTestId('lock-button')).not.toBeAttached();
@@ -99,13 +99,13 @@ test.describe('Governance Integrity Validation', () => {
 
         // Assert: Product lens moved to active-lenses/deferred state
         await expect(page.getByTestId('missing-lens-Product')).not.toBeVisible();
-        await expect(page.getByTestId('lens-deferred-Product')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByTestId('lens-deferred-Product')).toBeVisible();
 
         // Assert: Lock button becomes attached
-        await expect(page.getByTestId('lock-button')).toBeVisible({ timeout: 15000 });
+        await expect(page.getByTestId('lock-button')).toBeVisible();
     });
 
-    test('BM-QA-01: Ledger Snapshot Integrity', async ({ page }) => {
+    test('BM-QA-03: Ledger Snapshot Integrity', async ({ page }) => {
         // Setup Engineering domain
         await page.getByTestId('edit-metadata').click();
         await page.locator('input[aria-label="Target Domains"]').fill('Engineering');
@@ -124,7 +124,7 @@ test.describe('Governance Integrity Validation', () => {
         await engInvoke.click();
 
         const lockButton = page.getByTestId('lock-button');
-        await expect(lockButton).toBeVisible({ timeout: 10000 });
+        await expect(lockButton).toBeVisible();
 
         // Verify alert contents
         page.once('dialog', async dialog => {
@@ -140,7 +140,7 @@ test.describe('Governance Integrity Validation', () => {
         await lockButton.click();
     });
 
-    test('BM-QA-BMs: Weighted Intersection & Shadow Affect Detection', async ({ page }) => {
+    test('BM-QA-04: Weighted Intersection & Shadow Affect Detection', async ({ page }) => {
         // 1. Setup multi-domain artifact
         await page.getByTestId('edit-metadata').click();
         await page.locator('input[aria-label="Target Domains"]').fill('Product, Engineering');
@@ -180,7 +180,7 @@ test.describe('Governance Integrity Validation', () => {
         await expect(page.getByTestId('eligibility-details')).toContainText('Shadow Affects detected');
     });
 
-    test('BM-QA-BMs: Love Vibe Frequency Visualization', async ({ page }) => {
+    test('BM-QA-05: Love Vibe Frequency Visualization', async ({ page }) => {
         // 1. Initial state check
         // We check for the exclusion score increment via data-score
 

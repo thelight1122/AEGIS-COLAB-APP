@@ -2,86 +2,70 @@
 
 Welcome to the **AEGIS Chamber**, a high-fidelity collaborative environment designed for rapid synthesis, tension resolution, and multi-peer intelligence coordination.
 
-## 1. The Chamber Workspace
+---
 
-The Chamber is your primary theater of operations. It consists of three main zones:
+## 1. Workspaces
 
-### Whiteboard Area
-  
-The central graph-based canvas where collective intelligence is mapped.
+### The Chamber Dashboard
 
-- **Nodes**: Create nodes by clicking anywhere. Use different types:
-  - **Proposal**: |Proposal| - Strategic initiatives or theories.
-  - **Tension**: |Tension| - Points of friction or unresolved questions.
-  - **Evidence**: |Evidence| - Data points and validation results.
+The **Chamber** is your primary theater of operations. It is a visual canvas where collective intelligence is mapped.
+
+- **Nodes**: Create nodes to map concepts (Proposals, Tensions, Evidence).
 - **Links**: Connect nodes to establish relationships and logic flow.
-
-![AEGIS Chamber Workspace](../stitch_assets/aegis_chamber_primary_workspace.png)
-
-### IDS Stream (Intelligence Definition System)
-  
-A real-time card feed on the right side of the Chamber.
-
-- **Cards**: Represent snapshots of intelligence.
-- **Attachment**: Use the "Attach" action to link an IDS card directly to a node on the whiteboard for enhanced context.
-
-### Telemetry Panel
-  
-Monitor the health of your collaborative session.
-
-- **Drift Sentinel**: Tracks divergence from core objectives.
-- **Canon Guardian**: Ensures alignment with established "ground truth" or project canons.
+- **IDS Stream (Intelligence Definition System)**: A real-time card feed representing snapshots of intelligence that can be attached to workspace nodes for context.
+- **Telemetry Panel**: Monitor the health of your collaborative session via **Drift** and **Inclusion** metrics.
 
 ---
 
-## 2. Peer Registry & AI Integration
+## 2. Navigation & Views
 
-Collaboration in the Chamber involves both **Human** and **AI** Peers.
+Access these areas via the sidebar or workspace navigation:
+
+### Workspace Streams
+
+- **LandingPage**: Workspace entry and general posture greeting.
+- **Peers**: View and configure Human and AI Peers (e.g., active triggers).
+- **Lenses**: Manage perspective filters applied to the workspace views.
+- **Sessions**: Review active cycle history and synchronization benchmarks.
+- **Artifacts**: Access the locked "Golden Version" archives of previous boards.
+
+### System Control
+
+- **FrameworkPage**: Overview of the governing rulesets and triggers.
+- **GovernancePage**: Direct inspection of the append-only event ledger stream.
+- **TeamSetup**: Interface for initializing peer participation matrices.
+- **Settings**: Centralized configuration for AI Peer keys.
+
+---
+
+## 3. Peer Integration & AI
+
+Collaboration in the Chamber recognizes **Human** and **AI** Peers equally.
 
 ### Managing Peers
-  
-- Access the **Peers** page to view, add, or edit participants.
-- **AI Peers**: Specialized agents (e.g., "Sentinel-1", "Canon-X") that provide automated insights.
+
+- Access the **Peers** page to manage participants.
+- **AI Peers**: Specialized agents (e.g., Drift Sentinel, Canon Guardian) that provide automated insights.
 
 ### Empowering AI
-  
-AI Peers require configuration to function.
 
-- Go to the **Settings** page.
-- Enter your API keys for **Gemini**, **OpenAI**, **Grok**, or **LM Studio**.
-- Once saved, AI Peers in the Registry will show an **"API Configured"** status, indicating they are ready for interaction.
-
-![Peers Registry Status](../stitch_assets/peers_registry.png)
-
----
-
-## 3. Lenses & Perspectives
-
-Lenses allow you to filter and transform your view of the workspace.
-
-- **Sorting**: Organize lenses by impact, type, or activation status.
-- **Activation**: Toggle lenses to apply specific logic or visual filters to the Chamber.
-
-![Lenses Configuration](../stitch_assets/lenses_configuration.png)
+1. Go to the **Settings** page.
+2. Enter your API keys (e.g., OpenAI, Gemini, local).
+3. Once active, status indicators update inside workspace grids.
 
 ---
 
 ## 4. Sessions & Archiving
 
-Every moment in the Chamber is captured.
-
-- **Session History**: Review previous collaboration cycles.
-- **Artifact Archive**: Locked "Golden Versions" of your whiteboard state can be archived for permanent record.
-- **Replay**: (Coming Soon) Visualize the evolution of a whiteboard over time.
+- **Session Cycles**: Every cycle in the Chamber corresponds to a frame.
+- **Lock Availability**: Once threshold inclusion conditions are met structurally, the version can be archived for permanent sync.
 
 ---
 
-## 5. System Settings
+## 5. System Integrity
 
-Customize your global experience.
-
-- **AI Configuration**: Centralized management for all model integrations.
-- **Security**: All API keys are stored strictly in your browser's local storage. They are never transmitted to our servers.
+- All API keys are preserved strictly inside your local client environment. They are never transmitted outwards for decision extraction.
+- Supports local setups for offline Peer interaction with **LM Studio**.
 
 > [!TIP]
-> Use **LM Studio** for local, offline AI interaction if you prefer not to use cloud-based API keys.
+> Use local nodes to test prompts before submitting to the wider ledger sync to conserve resources.

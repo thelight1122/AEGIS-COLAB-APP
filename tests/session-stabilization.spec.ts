@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Session Stabilization Integrity', () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('http://localhost:5173/artifacts?e2e=1');
+        await page.goto('/artifacts?e2e=1');
         // Use harness for reset
         await page.evaluate(() => {
             if (window.__AEGIS_E2E__) {
@@ -58,7 +58,7 @@ test.describe('Session Stabilization Integrity', () => {
 
         // 2. Open second tab
         const page2 = await context.newPage();
-        await page2.goto('http://localhost:5173/artifacts?e2e=1');
+        await page2.goto('/artifacts?e2e=1');
 
         // 3. Verify "Join Active Session" is visible, "Start Session" is hidden
         await expect(page2.getByRole('button', { name: /Join Active Session/i })).toBeVisible();
