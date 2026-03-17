@@ -610,6 +610,11 @@ export default function ChamberLayout() {
                             onRemoveAttachment={removeAttachment}
                             onFocusNode={setFocusNode}
                             onSend={handleChatFromStream}
+                            onBeginNewChat={() => {
+                                if (window.confirm('Are you sure you want to clear the IDS Stream?')) {
+                                    setIdsCardsFromStore([]);
+                                }
+                            }}
                         />
                     </div>
                 </div>
