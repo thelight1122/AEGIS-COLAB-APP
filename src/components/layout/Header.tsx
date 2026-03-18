@@ -13,7 +13,8 @@ interface HeaderProps {
 export function Header({ className }: HeaderProps) {
     const { status } = useKeyring();
     const isUnlocked = status === 'unlocked';
-    const coherencePercent = useCoherencePercent() || 82; // Default for demo if null
+    const coherence = useCoherencePercent();
+    const coherencePercent = coherence.percent;
     const barRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -30,13 +31,15 @@ export function Header({ className }: HeaderProps) {
                 </div>
                 <div>
                     <h2 className="text-sm font-bold tracking-tight uppercase leading-none">System Core Protocol</h2>
-                    <p className="text-[10px] text-primary/70 font-mono uppercase">AEGIS COHERENCE CHAMBER</p>
+                    <p className="text-[10px] text-primary/70 font-mono uppercase truncate max-w-[200px]" title={coherence.reason}>
+                        {coherence.reason}
+                    </p>
                 </div>
             </div>
 
             <div className="flex-1 max-w-xl px-12">
                 <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-bold text-primary whitespace-nowrap tabular-nums">COHERENCE {coherencePercent}%</span>
+                    <span className="text-[10px] font-bold text-primary whitespace-nowrap tabular-nums" title={coherence.reason}>COHERENCE {coherencePercent}%</span>
                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                         <div 
                             ref={barRef}

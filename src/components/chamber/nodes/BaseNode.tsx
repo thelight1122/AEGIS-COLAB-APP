@@ -7,9 +7,10 @@ export interface BaseNodeProps {
     className?: string;
     label?: string;
     selected?: boolean;
+    noPadding?: boolean;
 }
 
-export function BaseNode({ children, className, selected, label }: BaseNodeProps) {
+export function BaseNode({ children, className, selected, label, noPadding }: BaseNodeProps) {
     return (
         <div className={cn(
             "min-w-[150px] shadow-sm rounded-md bg-card border border-border transition-shadow",
@@ -26,7 +27,7 @@ export function BaseNode({ children, className, selected, label }: BaseNodeProps
                 </div>
             )}
 
-            <div className="p-3">
+            <div className={cn(!noPadding && "p-3")}>
                 {children}
             </div>
 

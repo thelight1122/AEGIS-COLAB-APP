@@ -30,7 +30,7 @@ export function Sidebar({ className }: SidebarProps) {
     };
 
     return (
-        <aside className={cn("w-16 lg:w-64 border-r border-white/10 bg-background-dark/50 flex flex-col shrink-0", className)}>
+        <aside className={cn("w-16 lg:w-64 border-r border-white/10 bg-background-dark/50 flex flex-col shrink-0 overflow-y-auto", className)}>
             {/* Navigation */}
             <nav className="p-2 space-y-1">
                 {navItems.map((item) => (

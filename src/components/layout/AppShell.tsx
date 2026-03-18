@@ -3,6 +3,7 @@ import { loadSessions, saveSessions, applyAbandonment } from '../../core/session
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ConfigStatus } from '../ui/ConfigStatus';
+import { AIAdvisor } from './AIAdvisor';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -32,6 +33,7 @@ export function AppShell({ children }: AppShellProps) {
                     {children}
                 </main>
             </div>
+            <AIAdvisor />
         </div>
     );
 }

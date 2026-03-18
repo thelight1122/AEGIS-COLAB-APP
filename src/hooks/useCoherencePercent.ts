@@ -2,16 +2,18 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { loadSessions } from '../core/sessions/sessionStore';
 
+export interface CoherenceResult {
+    percent: number;
+    reason: string;
+}
+
 /**
  * useCoherencePercent
  * 
- * Computes a real coherence number derived from the active session's eventLog.
- * If there is no active session or too little signal (< 5 events), returns null.
- * 
- * Constructive (Weight 1.0): AWARENESS_ACK, CONTRIBUTION, PROXY_REVIEW, LOCK_REQUEST, AI_CHAT_COMPLETED
- * Friction: AI_CHAT_FAILED (1.0), DEFER_LENS (0.5), lens_deferral_with_rationale (0.5), SESSION_CLEARED (1.0)
+ * Computes a real coherence number derived from the active session's eventLog,
+ * or aggregates all session histories if no active session requires computation.
  */
-export function useCoherencePercent() {
+export function useCoherencePercent(): CoherenceResult {
     const location = useLocation();
 
     return useMemo(() => {
@@ -22,11 +24,25 @@ export function useCoherencePercent() {
             ? sessions.find(s => s.id === sessionId)
             : sessions.find(s => s.status === 'Active');
 
-        if (!currentSession || !currentSession.eventLog || currentSession.eventLog.length < 5) {
-            return null;
+        // Identify appropriate log context
+        let log = currentSession?.eventLog || [];
+        let isAggregate = false;
+
+        if (log.length < 5) {
+            // Aggregate all log histories across sessions for a more substantial reading
+            const allLogs = sessions.flatMap(s => s.eventLog || []);
+            if (allLogs.length > log.length) {
+                log = allLogs;
+                isAggregate = true;
+            }
         }
 
-        const log = currentSession.eventLog;
+        if (log.length === 0) {
+            return { 
+                percent: 100, 
+                reason: "Perfect coherence. No requirement conflicts or friction logged in blank slate." 
+            };
+        }
 
         const constructiveTypes = [
             'AWARENESS_ACK',
@@ -48,9 +64,19 @@ export function useCoherencePercent() {
         });
 
         const totalWeight = constructiveCount + frictionWeight;
-        if (totalWeight === 0) return 0;
+        if (totalWeight === 0) {
+            return { 
+                percent: 100, 
+                reason: `Balanced baseline alignment. No explicit friction logged across ${isAggregate ? 'aggregate history' : 'active session'}.` 
+            };
+        }
 
         const raw = constructiveCount / totalWeight;
-        return Math.min(100, Math.max(0, Math.round(raw * 100)));
+        const percent = Math.min(100, Math.max(0, Math.round(raw * 100)));
+
+        return {
+            percent,
+            reason: `${percent}% aggregate alignment (${constructiveCount} constructive vs ${frictionWeight} friction weighs)`
+        };
     }, [location.state?.sessionId]);
 }
