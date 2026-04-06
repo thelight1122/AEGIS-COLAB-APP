@@ -47,10 +47,13 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
 
 
 
+    const SESSION_KEY = 'aegis_vault_session';
+
     const lock = useCallback(() => {
         setKeys({});
         setCurrentPassphrase(null);
         clearRuntimeKeys();
+        sessionStorage.removeItem(SESSION_KEY);
         if (KeyVault.hasVault()) {
             setStatus('locked');
         } else {
@@ -63,6 +66,7 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
         setKeys({});
         setCurrentPassphrase(null);
         clearRuntimeKeys();
+        sessionStorage.removeItem(SESSION_KEY);
         setStatus('empty');
     }, []);
 
@@ -71,8 +75,19 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
         setKeys(decryptedKeys);
         setRuntimeKeys(decryptedKeys);
         setCurrentPassphrase(passphrase);
+        sessionStorage.setItem(SESSION_KEY, passphrase);
         setStatus('unlocked');
     }, []);
+
+    // Auto-restore vault unlock across page navigations within the same tab session
+    useEffect(() => {
+        const sessionPassphrase = sessionStorage.getItem(SESSION_KEY);
+        if (sessionPassphrase && KeyVault.hasVault()) {
+            unlock(sessionPassphrase).catch(() => {
+                sessionStorage.removeItem(SESSION_KEY);
+            });
+        }
+    }, [unlock]);
 
     const setProviderSecret = useCallback(async (
         providerId: VaultProviderId,

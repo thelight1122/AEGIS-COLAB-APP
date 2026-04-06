@@ -13,6 +13,7 @@ import { computeInclusionState, canLock } from '../../core/governance/inclusionS
 import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS, DEFAULT_DOMAIN_LENSES } from '../../core/governance/systemLenses';
 import { callGateway } from '../../core/llm/gatewayClient';
 import { useKeyring } from '../../contexts/KeyringContext';
+import { useDataQuad } from '../../contexts/DataQuadContext';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isE2E } from '../../lib/e2e';
@@ -44,6 +45,7 @@ export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
+    const { seedChamberPeers, recordMessage, recordContrib, finalizeSession } = useDataQuad();
     const [sessions] = useState<LiveSession[]>(() => loadSessions());
 
     const sessionId = location.state?.sessionId;
@@ -151,6 +153,15 @@ export default function ChamberLayout() {
         const aiPeers = rawPeers.filter(p => p.enabled && activeTeam.selectedPeerIds.includes(p.id));
         return [HUMAN_PEER, ...aiPeers];
     }, []);
+
+    // ── DataQuad: Seed peers on Chamber entry ─────────────────────────────────
+    // This is the birth moment — every peer present in this Chamber session
+    // seeds their SSSP into Firebase and records a session_join lineage entry.
+    useEffect(() => {
+        if (registryPeers.length > 0 && currentSession?.id) {
+            seedChamberPeers(registryPeers, currentSession.id);
+        }
+    }, [registryPeers, currentSession?.id, seedChamberPeers]);
 
     useEffect(() => {
         if (isE2E()) {
@@ -303,6 +314,15 @@ export default function ChamberLayout() {
                 });
                 return [...prev, ev];
             });
+            // ── DataQuad: write IDS contribution to Q3 lineage ───────────────
+            if (currentSession?.id) {
+                recordContrib(
+                    HUMAN_PEER.handle,
+                    `[${type}] ${content}`,
+                    currentSession.id,
+                    registryPeers.map(p => p.handle)
+                );
+            }
         };
 
         window.addEventListener('ids-card-added', handleIdsAdded);
@@ -345,6 +365,13 @@ export default function ChamberLayout() {
                         });
                         return [...prev, ev];
                     });
+                    // ── DataQuad: write AI response to Q3 lineage ────────────
+                    recordMessage(
+                        peer.handle,
+                        response.text,
+                        currentSession.id,
+                        registryPeers.map(p => p.handle)
+                    );
                 } catch (err) {
                     console.error('Model call failed:', err);
                     setGoverningEvents(prev => {
@@ -394,11 +421,17 @@ export default function ChamberLayout() {
 
     const handleCloseSession = useCallback(() => {
         if (!currentSession) return;
+        // ── DataQuad: seal the session with a coherence snapshot ─────────────
+        finalizeSession(currentSession.id, {
+            inclusion_score:  telemetry.inclusionScore,
+            drift_signal:     telemetry.drift,
+            convergence_rate: telemetry.convergence,
+        });
         const allSessions = loadSessions();
         const nextSessions = closeSession(allSessions, currentSession.id);
         saveSessions(nextSessions);
         navigate('/artifacts');
-    }, [currentSession, navigate]);
+    }, [currentSession, navigate, finalizeSession, telemetry]);
 
     const handleLockVersion = useCallback(() => {
         if (isLocked) return;

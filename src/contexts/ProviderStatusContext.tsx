@@ -49,7 +49,7 @@ export function ProviderStatusProvider({ children }: { children: ReactNode }) {
 
             clearTimeout(timeoutId);
 
-            const status: HealthStatus = res.ok ? 'ok' : 'fail';
+            const status: HealthStatus = (res.ok || res.status === 401) ? 'ok' : 'fail';
             healthCache.set(baseURL, { status, timestamp: now });
             setProviderHealth(prev => ({ ...prev, [baseURL]: status }));
             return status;

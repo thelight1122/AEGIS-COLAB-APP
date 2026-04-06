@@ -18,12 +18,14 @@ import { ToolsRoute } from './routes/ToolsRoute';
 import { IDSProvider } from './contexts/IDSContext';
 import { KeyringProvider } from './contexts/KeyringContext';
 import { ProviderStatusProvider } from './contexts/ProviderStatusContext';
+import { DataQuadProvider } from './contexts/DataQuadContext';
 
 function App() {
   return (
     <BrowserRouter>
       <KeyringProvider>
         <ProviderStatusProvider>
+          <DataQuadProvider>
           <IDSProvider>
             <Routes>
               {/* Public Full-Screen Pages */}
@@ -47,6 +49,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </IDSProvider>
+          </DataQuadProvider>
         </ProviderStatusProvider>
       </KeyringProvider>
     </BrowserRouter>
