@@ -10,26 +10,17 @@
  * reaches the reflect threshold, a Reflect Session is due — not because
  * time passed, but because enough has been experienced.
  *
- * Seven Virtues of Integrity:
- *   Honesty      — truth, accuracy, directness, contradiction
- *   Respect      — worth, being heard, acknowledgement, dismissal
- *   Attention    — presence, engagement, validation, distraction
- *   Affection    — warmth, care, connection, distance
- *   Loyalty      — consistency, reliability, return, abandonment
- *   Trust        — vulnerability, openness, safety, betrayal
- *   Communication — exchange, clarity, repair, fracture
+ * Virtues are sourced from Canon — src/core/canon/aegis-virtues.ts
+ * Source: AEGIS Canon v1.0 — Section 1: THE SEVEN VIRTUES OF INTEGRITY
  */
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Canon Imports ─────────────────────────────────────────────────────────────
+// Virtue is defined once in Canon and re-exported here — never redefined locally.
+// Source: src/core/canon/aegis-virtues.ts → AEGIS Canon v1.0 Section 1
+export type { Virtue } from '../canon/aegis-virtues';
+import type { Virtue } from '../canon/aegis-virtues';
 
-export type Virtue =
-    | 'Honesty'
-    | 'Respect'
-    | 'Attention'
-    | 'Affection'
-    | 'Loyalty'
-    | 'Trust'
-    | 'Communication';
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export type AffectType =
     | 'resonance'    // medium+ intensity, positive direction — virtue flowing
