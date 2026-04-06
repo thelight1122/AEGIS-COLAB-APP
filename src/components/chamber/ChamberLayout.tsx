@@ -21,7 +21,9 @@ import {
     loadSessions,
     saveSessions,
     touchSessionActivity,
-    closeSession
+    closeSession,
+    createSession,
+    startSession
 } from '../../core/sessions/sessionStore';
 import type { Session as LiveSession } from '../../core/sessions/types';
 import type { PeerProfile } from '../../core/peers/types';
@@ -46,7 +48,15 @@ export default function ChamberLayout() {
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
     const { seedChamberPeers, recordMessage, recordContrib, finalizeSession } = useDataQuad();
-    const [sessions] = useState<LiveSession[]>(() => loadSessions());
+    const [sessions, setSessions] = useState<LiveSession[]>(() => {
+        const existing = loadSessions();
+        const hasActive = existing.some(s => s.status === 'Active');
+        if (hasActive) return existing;
+        const { sessions: withNew, session: newSession } = createSession(existing, 'current-artifact');
+        const { sessions: withStarted } = startSession(withNew, newSession.id);
+        saveSessions(withStarted);
+        return withStarted;
+    });
 
     const sessionId = location.state?.sessionId;
     const currentSession = useMemo(() => {
