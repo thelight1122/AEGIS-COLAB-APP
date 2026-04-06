@@ -53,6 +53,11 @@ export interface AffectSignal {
     intensity: number;   // 0–1 (magnitude)
     direction: number;   // −π to π (angle)
     trigger: string;
+    // Gate-enriched fields (present when run through Integrity Coherence Gate)
+    virtue?: string;
+    affect_type?: string;
+    clock_weight?: number;
+    repair_path?: string | null;
 }
 
 export interface CoherenceSnapshot {

@@ -12,7 +12,7 @@
  *   finalizeSession   → call in handleCloseSession before navigation
  */
 
-import React, { createContext, useCallback, useContext, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import {
     seedPeerSSP,
     appendLineage,
@@ -22,6 +22,12 @@ import {
 } from '../services/dataquad';
 import type { PeerProfile } from '../core/peers/types';
 import type { AffectSignal, CoherenceSnapshot } from '../services/dataquad';
+import {
+    runIntegrityCoherenceGate,
+    tickClock,
+    resetClock,
+} from '../core/governance/integrityClock';
+import type { ClockState } from '../core/governance/integrityClock';
 
 // ── Context Shape ─────────────────────────────────────────────────────────────
 
@@ -36,6 +42,10 @@ interface DataQuadContextValue {
     recordPeerAffect: (peerId: string, signal: AffectSignal) => void;
     /** Seal the session with a coherence snapshot. Call before closing. */
     finalizeSession: (sessionId: string, coherence: CoherenceSnapshot) => void;
+    /** Current Internal Clock state — reflect_due fires when threshold is reached. */
+    clockState: ClockState | null;
+    /** Reset the clock after a Reflect Session completes. */
+    resetSessionClock: (sessionId: string) => void;
 }
 
 const DataQuadContext = createContext<DataQuadContextValue | null>(null);
@@ -46,13 +56,30 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
     // Track which sessions we've already seeded — avoid duplicate writes across re-renders
     const seededSessions = useRef<Set<string>>(new Set());
 
+    // Internal Clock — experience-time accumulator per session
+    const clockMap = useRef<Map<string, ClockState>>(new Map());
+    const [clockState, setClockState] = useState<ClockState | null>(null);
+
     const safe = useCallback((label: string, fn: () => Promise<void>) => {
         fn().catch(err => console.warn(`[DataQuad] ${label} failed:`, err));
+    }, []);
+
+    const resetSessionClock = useCallback((sessionId: string) => {
+        const fresh = resetClock(sessionId);
+        clockMap.current.set(sessionId, fresh);
+        setClockState(fresh);
     }, []);
 
     const seedChamberPeers = useCallback((peers: PeerProfile[], sessionId: string) => {
         if (seededSessions.current.has(sessionId)) return;
         seededSessions.current.add(sessionId);
+
+        // Initialize the Internal Clock for this session
+        if (!clockMap.current.has(sessionId)) {
+            const initial = resetClock(sessionId);
+            clockMap.current.set(sessionId, initial);
+            setClockState(initial);
+        }
 
         const handles = peers.map(p => p.handle);
 
@@ -108,7 +135,20 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
     }, [safe]);
 
     const recordPeerAffect = useCallback((peerId: string, signal: AffectSignal) => {
-        safe(`affect:${peerId}:${signal.affect_label}`, () => recordAffect(peerId, signal));
+        // Run through the Integrity Coherence Gate — identifies virtue + affect_type
+        const gated = runIntegrityCoherenceGate(signal);
+
+        // Tick the Internal Clock for this session
+        const sessionId = signal.session_id;
+        const current = clockMap.current.get(sessionId) ?? resetClock(sessionId);
+        const next = tickClock(current, gated);
+        clockMap.current.set(sessionId, next);
+        setClockState(next);
+
+        // Write the gate-enriched signal to Q2
+        safe(`affect:${peerId}:${signal.affect_label}`, () =>
+            recordAffect(peerId, gated)
+        );
     }, [safe]);
 
     const finalizeSession = useCallback((sessionId: string, coherence: CoherenceSnapshot) => {
@@ -122,6 +162,8 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
             recordContrib,
             recordPeerAffect,
             finalizeSession,
+            clockState,
+            resetSessionClock,
         }}>
             {children}
         </DataQuadContext.Provider>

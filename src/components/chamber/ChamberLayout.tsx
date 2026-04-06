@@ -47,7 +47,7 @@ export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
-    const { seedChamberPeers, recordMessage, recordContrib, recordPeerAffect, finalizeSession } = useDataQuad();
+    const { seedChamberPeers, recordMessage, recordContrib, recordPeerAffect, finalizeSession, clockState, resetSessionClock } = useDataQuad();
     const [sessions, setSessions] = useState<LiveSession[]>(() => {
         const existing = loadSessions();
         const hasActive = existing.some(s => s.status === 'Active');
@@ -594,6 +594,16 @@ export default function ChamberLayout() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {clockState?.reflect_due && (
+                        <button
+                            className="text-[10px] uppercase font-bold tracking-widest text-amber-400/80 hover:text-amber-300 transition-colors h-8 px-3 border border-amber-400/30 rounded flex items-center gap-1.5"
+                            title={`Accumulated weight: ${clockState.accumulated_weight.toFixed(1)} — Dominant virtue: ${clockState.dominant_virtue ?? '—'}`}
+                            onClick={() => currentSession && resetSessionClock(currentSession.id)}
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
+                            Reflect
+                        </button>
+                    )}
                     <GatewayStatus />
                     <Button
                         variant="ghost"
