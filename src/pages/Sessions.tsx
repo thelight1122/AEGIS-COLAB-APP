@@ -9,12 +9,14 @@ import {
     PlayCircle,
     FileText,
     MessageSquare,
-    ArrowRight
+    ArrowRight,
+    Zap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { loadSessions } from '../core/sessions/sessionStore';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import type { SessionStatus } from '../core/sessions/types';
 
 export default function Sessions() {
     const navigate = useNavigate();
@@ -40,9 +42,9 @@ export default function Sessions() {
                 <Button
                     size="lg"
                     className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white shadow-xl shadow-[#197fe6]/20 px-8 rounded-full font-bold gap-2"
-                    onClick={() => navigate('/commons')}
+                    onClick={() => navigate('/chamber')}
                 >
-                    Enter Commons Workshop
+                    Start a Session
                     <ArrowRight className="w-5 h-5" />
                 </Button>
             </div>
@@ -74,14 +76,7 @@ export default function Sessions() {
                                 <span className="text-xs font-mono text-muted-foreground">
                                     {session.startedAt ? new Date(session.startedAt).toLocaleDateString() : 'Draft'}
                                 </span>
-                                <div className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                                    (session.eventLog.length * 7) % 100 >= 80
-                                        ? "bg-green-500/10 text-green-500 border-green-500/20"
-                                        : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                )}>
-                                    {(session.eventLog.length * 7) % 100}%
-                                </div>
+                                <StatusBadge status={session.status} />
                             </div>
                             <h3 className="font-semibold text-sm mb-1 line-clamp-1">Artifact: {session.artifactId}</h3>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -100,23 +95,30 @@ export default function Sessions() {
                         {/* Detail Header */}
                         <div className="p-6 border-b border-border bg-muted/20">
                             <div className="flex items-center justify-between gap-4 mb-4">
-                                <h1 className="text-2xl font-bold">Session Review: {selectedSession.id}</h1>
-                                <div className="flex gap-2">
+                                <h1 className="text-2xl font-bold">Session: {selectedSession.id.slice(0, 12)}</h1>
+                                <div className="flex gap-2 items-center">
                                     <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
                                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                                         {selectedSession.startedAt ? new Date(selectedSession.startedAt).toLocaleDateString() : 'N/A'}
                                     </div>
-                                    <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                        {selectedSession.status}
-                                    </div>
+                                    <StatusBadge status={selectedSession.status} />
+                                    {selectedSession.status === 'Active' && (
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white gap-1.5 rounded-full font-bold shadow-md shadow-[#197fe6]/20"
+                                            onClick={() => navigate('/chamber')}
+                                        >
+                                            <Zap className="w-3.5 h-3.5" />
+                                            Resume
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <MetricCard
-                                    label="Inclusion"
-                                    value={`${(selectedSession.eventLog.length * 7) % 100}%`}
+                                    label="Events"
+                                    value={selectedSession.eventLog.length}
                                     icon={<Activity className="w-4 h-4 text-green-500" />}
                                 />
                                 <MetricCard
@@ -172,6 +174,21 @@ export default function Sessions() {
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+const STATUS_STYLES: Record<SessionStatus, string> = {
+    Active: "bg-green-500/10 text-green-500 border-green-500/20",
+    Closed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    Draft: "bg-muted text-muted-foreground border-border",
+    Abandoned: "bg-red-500/10 text-red-400 border-red-500/20",
+};
+
+function StatusBadge({ status }: { status: SessionStatus }) {
+    return (
+        <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border", STATUS_STYLES[status])}>
+            {status}
         </div>
     );
 }
