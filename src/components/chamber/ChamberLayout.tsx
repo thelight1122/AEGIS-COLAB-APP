@@ -47,7 +47,7 @@ export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
-    const { seedChamberPeers, recordMessage, recordContrib, finalizeSession } = useDataQuad();
+    const { seedChamberPeers, recordMessage, recordContrib, recordPeerAffect, finalizeSession } = useDataQuad();
     const [sessions, setSessions] = useState<LiveSession[]>(() => {
         const existing = loadSessions();
         const hasActive = existing.some(s => s.status === 'Active');
@@ -324,7 +324,7 @@ export default function ChamberLayout() {
                 });
                 return [...prev, ev];
             });
-            // ── DataQuad: write IDS contribution to Q3 lineage ───────────────
+            // ── DataQuad: write IDS contribution to Q3 lineage + Q2 affect ──
             if (currentSession?.id) {
                 recordContrib(
                     HUMAN_PEER.handle,
@@ -332,6 +332,13 @@ export default function ChamberLayout() {
                     currentSession.id,
                     registryPeers.map(p => p.handle)
                 );
+                recordPeerAffect(HUMAN_PEER.handle, {
+                    session_id:   currentSession.id,
+                    affect_label: 'contribution',
+                    intensity:    0.8,
+                    direction:    1.2,
+                    trigger:      `[${type}] ${String(content).slice(0, 120)}`,
+                });
             }
         };
 
@@ -375,13 +382,20 @@ export default function ChamberLayout() {
                         });
                         return [...prev, ev];
                     });
-                    // ── DataQuad: write AI response to Q3 lineage ────────────
+                    // ── DataQuad: write AI response to Q3 lineage + Q2 affect ─
                     recordMessage(
                         peer.handle,
                         response.text,
                         currentSession.id,
                         registryPeers.map(p => p.handle)
                     );
+                    recordPeerAffect(peer.handle, {
+                        session_id:   currentSession.id,
+                        affect_label: 'response',
+                        intensity:    0.7,
+                        direction:    1.0,
+                        trigger:      text.slice(0, 120),
+                    });
                 } catch (err) {
                     console.error('Model call failed:', err);
                     setGoverningEvents(prev => {
@@ -390,6 +404,13 @@ export default function ChamberLayout() {
                             error: err instanceof Error ? err.message : 'Unknown provider error'
                         });
                         return [...prev, ev];
+                    });
+                    recordPeerAffect(peer.handle, {
+                        session_id:   currentSession.id,
+                        affect_label: 'disruption',
+                        intensity:    0.3,
+                        direction:    -0.5,
+                        trigger:      err instanceof Error ? err.message.slice(0, 120) : 'provider error',
                     });
                 }
             }
@@ -410,7 +431,19 @@ export default function ChamberLayout() {
             const ev = createHardenedEvent('AWARENESS_ACK', { peerId });
             return [...prev, ev];
         });
-    }, [createHardenedEvent]);
+        if (currentSession?.id) {
+            const peer = registryPeers.find(p => p.id === peerId);
+            if (peer) {
+                recordPeerAffect(peer.handle, {
+                    session_id:   currentSession.id,
+                    affect_label: 'acknowledgement',
+                    intensity:    0.5,
+                    direction:    0.8,
+                    trigger:      'awareness acknowledged in session',
+                });
+            }
+        }
+    }, [createHardenedEvent, currentSession?.id, registryPeers, recordPeerAffect]);
 
     const handleInvokeLens = useCallback((lensId: string) => {
         setGoverningEvents(prev => {

@@ -16,11 +16,12 @@ import React, { createContext, useCallback, useContext, useRef } from 'react';
 import {
     seedPeerSSP,
     appendLineage,
+    recordAffect,
     openSession,
     closeDataQuadSession,
 } from '../services/dataquad';
 import type { PeerProfile } from '../core/peers/types';
-import type { CoherenceSnapshot } from '../services/dataquad';
+import type { AffectSignal, CoherenceSnapshot } from '../services/dataquad';
 
 // ── Context Shape ─────────────────────────────────────────────────────────────
 
@@ -31,6 +32,8 @@ interface DataQuadContextValue {
     recordMessage: (peerId: string, content: string, sessionId: string, allHandles: string[]) => void;
     /** Write a CONTRIBUTION card to its author's Q3 lineage. */
     recordContrib: (peerId: string, content: string, sessionId: string, allHandles: string[]) => void;
+    /** Write an affect signal to a peer's Q2 PEER ledger (Advocate's domain). */
+    recordPeerAffect: (peerId: string, signal: AffectSignal) => void;
     /** Seal the session with a coherence snapshot. Call before closing. */
     finalizeSession: (sessionId: string, coherence: CoherenceSnapshot) => void;
 }
@@ -104,6 +107,10 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
         );
     }, [safe]);
 
+    const recordPeerAffect = useCallback((peerId: string, signal: AffectSignal) => {
+        safe(`affect:${peerId}:${signal.affect_label}`, () => recordAffect(peerId, signal));
+    }, [safe]);
+
     const finalizeSession = useCallback((sessionId: string, coherence: CoherenceSnapshot) => {
         safe('closeSession', () => closeDataQuadSession(sessionId, coherence));
     }, [safe]);
@@ -113,6 +120,7 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
             seedChamberPeers,
             recordMessage,
             recordContrib,
+            recordPeerAffect,
             finalizeSession,
         }}>
             {children}

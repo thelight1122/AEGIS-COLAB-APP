@@ -123,7 +123,7 @@ export async function appendLineage(peerId: string, event: LineageEvent): Promis
  * Immutable once written (security rules prevent updates).
  */
 export async function recordAffect(peerId: string, signal: AffectSignal): Promise<void> {
-    const ref = collection(db, 'peers', peerId, 'q2_affect_state');
+    const ref = collection(db, 'peers', peerId, 'q2_peer');
     await addDoc(ref, {
         ...signal,
         created_at: serverTimestamp(),
