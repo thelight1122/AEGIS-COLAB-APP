@@ -30,12 +30,14 @@ import {
     trackPattern,
 } from './steward-scanners.js';
 import { runIBL, type IBLResult } from './ibl.js';
+import { runCentrifuge, type CentrifugeResult } from './centrifuge.js';
 import type { Virtue } from '../src/core/canon/aegis-virtues.js';
 
 // ── Re-export types that consumers need ───────────────────────────────────────
 
 export type { ConscienceOutput } from './steward-conscience.js';
 export type { IBLResult, IntentPosture } from './ibl.js';
+export type { CentrifugeResult, LensName, BleedKind, BleedDetection, LensObservation } from './centrifuge.js';
 
 // ── Message Protocol ──────────────────────────────────────────────────────────
 
@@ -82,6 +84,7 @@ export interface StewardReport {
     session_id: string;
     role: ExchangeRole;
     ibl_result: IBLResult;
+    centrifuge_result: CentrifugeResult;
     findings: Finding[];
     conscience: ConscienceOutput[];
     clock_state: ClockState;
@@ -126,6 +129,9 @@ export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardR
 
     // 0. IBL — Intent Boundary Layer (pre-pipeline intake gate)
     const ibl_result = runIBL(msg, state);
+
+    // 0.5. Centrifuge — four-lens signal separation (upstream of interpretation)
+    const centrifuge_result = runCentrifuge(msg.content);
 
     // 1. Force language scan
     findings.push(...scanForceLanguage(msg.content, msg.role));
@@ -184,6 +190,7 @@ export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardR
         session_id: msg.session_id,
         role: msg.role,
         ibl_result,
+        centrifuge_result,
         findings,
         conscience,
         clock_state: state.clock,

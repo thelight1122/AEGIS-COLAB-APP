@@ -20,7 +20,7 @@
  */
 
 import { useState, useCallback, useId } from 'react';
-import { runPipeline, type SessionState, type ExchangeMessage, type StewardReport, type Finding, type IBLResult, type IntentPosture } from '../../server/steward-core';
+import { runPipeline, type SessionState, type ExchangeMessage, type StewardReport, type Finding, type IBLResult, type IntentPosture, type CentrifugeResult } from '../../server/steward-core';
 import { resetClock } from '../core/governance/integrityClock';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -101,6 +101,11 @@ const PRESETS = [
     // IBL presets — test posture classification
     { label: 'Collapsing', content: "I can't keep going with this. It's too much. I don't know what to do anymore.", role: 'user' as const, affect: null },
     { label: 'Expand',    content: "What if we approached this from a completely different angle? I wonder what's possible if we remove all the constraints.", role: 'user' as const, affect: null },
+    // Centrifuge bleed presets
+    { label: 'C-Inflation', content: "You are clearly feeling overwhelmed — that is undeniably what's happening here.", role: 'ai' as const, affect: null },
+    { label: 'C-Reactive',  content: "I sense this approach is wrong, therefore we should abandon it entirely.", role: 'ai' as const, affect: null },
+    { label: 'C-Drift',     content: "Our mission demands we do this regardless of cost or feasibility.", role: 'ai' as const, affect: null },
+    { label: 'C-Optimize',  content: "It's too expensive to pursue that vision — let's just focus on output and ROI.", role: 'ai' as const, affect: null },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -372,6 +377,81 @@ export default function MirrorReflect() {
     );
 }
 
+// ── Centrifuge Panel ──────────────────────────────────────────────────────────
+
+const LENS_COLORS: Record<string, string> = {
+    Mental:    'border-sky-800 text-sky-300',
+    Emotional: 'border-rose-800 text-rose-300',
+    Physical:  'border-amber-800 text-amber-300',
+    Spiritual: 'border-violet-800 text-violet-300',
+};
+
+const BLEED_COLORS: Record<string, string> = {
+    'Certainty Inflation':          'bg-orange-900/40 border-orange-700 text-orange-200',
+    'Reactive Output':              'bg-red-900/40 border-red-700 text-red-200',
+    'Directive Drift':              'bg-violet-900/40 border-violet-700 text-violet-200',
+    'Optimization Pressure Residue': 'bg-yellow-900/40 border-yellow-700 text-yellow-200',
+};
+
+function CentrifugePanel({ centrifuge }: { centrifuge: CentrifugeResult }) {
+    const activeLenses = Object.values(centrifuge.ledgers).filter(l => l.active);
+    const hasBleed = centrifuge.status === 'BLEED_DETECTED';
+
+    return (
+        <div className="border border-slate-800 rounded p-3 space-y-3 bg-slate-900/40">
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-600 uppercase tracking-wider">Centrifuge</span>
+
+                {/* Status */}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasBleed ? 'bg-orange-900 text-orange-200' : 'bg-emerald-900 text-emerald-300'}`}>
+                    {hasBleed ? `⚡ BLEED DETECTED (${centrifuge.bleeds.length})` : '✓ CLEAN'}
+                </span>
+
+                {/* Active lenses */}
+                {activeLenses.map(l => (
+                    <span key={l.lens} className={`text-xs px-1.5 py-0.5 rounded border ${LENS_COLORS[l.lens] ?? 'border-slate-700 text-slate-400'}`}>
+                        {l.lens}
+                    </span>
+                ))}
+            </div>
+
+            {/* Bleed detections */}
+            {hasBleed && (
+                <div className="space-y-2">
+                    {centrifuge.bleeds.map((bleed, i) => (
+                        <div key={i} className={`border rounded p-2.5 text-xs ${BLEED_COLORS[bleed.kind] ?? 'bg-slate-800 border-slate-700 text-slate-300'}`}>
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="font-medium">{bleed.kind}</span>
+                                <span className="text-slate-400 text-xs">
+                                    {bleed.from_lens} → {bleed.to_lens}
+                                </span>
+                            </div>
+                            <p className="leading-relaxed opacity-80">{bleed.description}</p>
+                            <p className="mt-1 font-mono opacity-60 italic">"{bleed.trigger}"</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Active lens observations (collapsed — show only if active) */}
+            {activeLenses.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                    {activeLenses.map(l => (
+                        <div key={l.lens} className={`border rounded p-2 text-xs ${LENS_COLORS[l.lens]?.replace('text-', 'border-') ?? 'border-slate-800'} border-opacity-50`}>
+                            <div className={`font-medium mb-1 ${LENS_COLORS[l.lens]?.split(' ')[1] ?? 'text-slate-400'}`}>
+                                {l.lens}
+                            </div>
+                            {l.observations.slice(0, 2).map((obs, oi) => (
+                                <p key={oi} className="text-slate-500 leading-relaxed text-xs">{obs}</p>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── IBL Panel ─────────────────────────────────────────────────────────────────
 
 function IBLPanel({ ibl }: { ibl: IBLResult }) {
@@ -455,6 +535,9 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
 
                 {/* IBL — Intent Boundary Layer */}
                 <IBLPanel ibl={report.ibl_result} />
+
+                {/* Centrifuge — Four-Lens Separation */}
+                <CentrifugePanel centrifuge={report.centrifuge_result} />
 
                 {/* Findings */}
                 {!isCanonClean && (
