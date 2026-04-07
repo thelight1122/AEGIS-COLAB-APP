@@ -29,7 +29,7 @@
  * It asks the question that already contains the answer.
  */
 
-import type { Finding, FindingKind } from './steward.js';
+import type { Finding, FindingKind } from './steward-core.js';
 import type { Virtue } from '../src/core/canon/aegis-virtues.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
