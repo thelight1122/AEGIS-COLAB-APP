@@ -13,6 +13,7 @@ import LandingPage from './pages/LandingPage';
 import FrameworkPage from './pages/FrameworkPage';
 import GovernancePage from './pages/GovernancePage';
 import BuildmasterWorkshop from './pages/BuildmasterWorkshop';
+import MirrorReflect from './pages/MirrorReflect';
 import { ToolsRoute } from './routes/ToolsRoute';
 
 import { IDSProvider } from './contexts/IDSContext';
@@ -28,6 +29,9 @@ function App() {
           <DataQuadProvider>
           <IDSProvider>
             <Routes>
+              {/* Diagnostic Tools — no AppShell, no auth */}
+              <Route path="/mirror" element={<MirrorReflect />} />
+
               {/* Public Full-Screen Pages */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/framework" element={<FrameworkPage />} />
