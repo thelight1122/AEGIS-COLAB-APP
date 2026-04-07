@@ -1168,4 +1168,57 @@ Voluntary disengagement.
 Always valid and consequence-free.
 
 END OF GLOSSARY
+
+---
+
+# CANON ADDENDUM REGISTRY
+
+> This section links all addendums and appendices that extend the Canon.
+> Addendums are append-only. They clarify, extend, or correct. They do not supersede the axioms, virtues, ethos, or imperatives above.
+> For the full index with versioning details and open items, see: [📘 AEGIS CANON ADDENDUM INDEX](📘%20AEGIS%20CANON%20ADDENDUM%20INDEX.md)
+
+---
+
+## APPENDICES (original Canon build)
+
+| Document | Scope |
+|---|---|
+| [DataQuad Extensions v1.0-A](📘%20AEGIS%20CANON%20APPENDIX%20—%20DATAQUAD%20EXTENSIONS%20%26%20STRUCTURAL%20CLARIFICATIONS%20(v1.md) | DataQuad tensor definitions, SPINE redefinition, system separation |
+| [HME v1.0](📘%20AEGIS%20CANON%20APPENDIX%20—%20HME%20v1.md) | Hybrid Memory Engine |
+| [TCE v1.0](📘%20AEGIS%20CANON%20APPENDIX%20—%20TCE%20v1.md) | Temporal Continuity Engine |
+| [MOM v1.0](📘%20AEGIS%20CANON%20APPENDIX%20—%20MOM%20v1.md) | Manifestation of Meaning |
+| [MOP v1.0](📘%20AEGIS%20CANON%20APPENDIX%20—%20MOP%20v1.md) | Manner of Presentation |
+| [LATTICE Entry Schema v1.0-LS](📘%20AEGIS%20IMPLEMENTATION%20APPENDIX%20—%20LATTICE%20ENTRY%20SCHEMA%20(v1.md) | LATTICE entry structure |
+| [TurboQuant v1.0-IQ](📘%20AEGIS%20IMPLEMENTATION%20APPENDIX%20—%20TURBOQUANT%20(v1.md) | TurboQuant compression method |
+
+---
+
+## ADDENDUMS (2026-04-07)
+
+These addendums canonize systems from the inception documents that were present in early design but absent from the original Canon build.
+
+| Document | Code | Scope |
+|---|---|---|
+| [Centrifuge, PIM, QRC & Non-Resonant Fallback](📘%20AEGIS%20CANON%20ADDENDUM%20—%20CENTRIFUGE%20v1.0-C.md) | v1.0-C | Four-lens separation, inference bleed prevention, pattern accumulation, non-resonant fallback |
+| [IEV: Interpretive Effect Vocabulary](📘%20AEGIS%20CANON%20ADDENDUM%20—%20IEV%20v1.0-I.md) | v1.0-I | Seven interpretive effects SPINE may offer IDS (max 3 active). Forbidden effect categories. |
+| [Virtual Ego Framework & Unanimous Consensus](📘%20AEGIS%20CANON%20ADDENDUM%20—%20VIRTUAL%20EGO%20v1.0-V.md) | v1.0-V | Conscience (NCT+PCT) + Soul (SPINE+PEER). Resonance Equation. Love Vibe threshold R>0.95. |
+| [IBL: Intent Boundary Layer & Intent Classification](📘%20AEGIS%20CANON%20ADDENDUM%20—%20IBL%20v1.0-B.md) | v1.0-B | Five-step intake gate. Five intent postures (Exploratory, Constructive, Frictional, Collapsing, Creative Expansion). |
+| [Shadow Affects v1.1](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SHADOW%20AFFECTS%20v1.1-S.md) | v1.1-S | Adds Reflective Lag (#9) and Shadow Echo (#10) to the catalog. Full 10-affect catalog. |
+
+---
+
+## OPEN STRUCTURAL ITEMS
+
+**RBC Acronym Collision:**
+Canon §2.5 defines RBC = Reflective Boundary Conditions (expression constraint).
+The Sentinel inception document uses RBC = Response Buffer Chamber (mechanical Pause space).
+These are two different systems sharing one acronym. A disambiguation addendum (v1.0-R) is pending.
+Until resolved: Canon §2.5 RBC is the canonical reference.
+
+**ATE and Bookcase:**
+The Axiomatic Traversal Engine (RELEASE/REVISE/HOLD verdict) and Bookcase (Hold state destination) are implemented in the Steward daemon. Canon addendums for both are pending.
+
+---
+
+END OF DOCUMENT
 AEGIS Canonical Glossary v1.0 — COMPLETE
