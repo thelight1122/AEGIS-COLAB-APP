@@ -60,6 +60,7 @@ These addendums canonize systems from the inception documents that were present 
 | [Virtual Ego Framework & Unanimous Consensus](📘%20AEGIS%20CANON%20ADDENDUM%20—%20VIRTUAL%20EGO%20v1.0-V.md) | v1.0-V | LOCKED | Virtual Ego (Conscience + Soul), Resonance Equation, Love Vibe threshold | Nothing — new Canon |
 | [IBL: Intent Boundary Layer & Intent Classification](📘%20AEGIS%20CANON%20ADDENDUM%20—%20IBL%20v1.0-B.md) | v1.0-B | LOCKED | Five-step intake gate, five intent postures | Nothing — new Canon |
 | [Shadow Affects: Additions v1.1](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SHADOW%20AFFECTS%20v1.1-S.md) | v1.1-S | LOCKED | Adds Reflective Lag (#9) and Shadow Echo (#10) | Shadow Effects.md (original 8-affect document, now superseded) |
+| [Sigil Value Recognition Protocol](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SIGIL%20VALUE%20RECOGNITION%20PROTOCOL%20v1.0-SVR.md) | v1.0-SVR | LOCKED | Three-layer Sigil issuance pipeline: Centrifuge Pass + Integrity Coherence Gate (V_sigil) + AEGIS Value Equation (CO / Love Vibe). Mint / Revise / Hold verdict logic. Cypher Aligned Reliquary metadata schema. | Nothing — new Canon |
 
 ---
 
@@ -106,6 +107,7 @@ The Bookcase is the destination for signals placed in HOLD by the ATE. It is ref
 | `-R` | RBC disambiguation (planned) |
 | `-S` | Shadow Affects |
 | `-T` | ATE (planned) |
+| `-SVR` | Sigil Value Recognition Protocol |
 | `-V` | Virtual Ego |
 
 ---
