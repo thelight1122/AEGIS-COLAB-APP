@@ -15,7 +15,7 @@
     "kill-aegis": "npx kill-port 5173 5174 4000 8787",
     "lint": "eslint .",
     "test:unit": "vitest run src/core/sessions/sessionStore.test.ts src/core/mcp/governedOperation.test.ts src/core/mcp/governedToolConduit.test.ts src/core/auth/useAuthSession.test.ts src/components/ui/AuthPanel.test.tsx src/pages/AuthCallbackPage.test.tsx",
-    "test:steward": "vitest run server/__tests__/steward-scanners.test.ts server/__tests__/steward-conscience.test.ts server/__tests__/steward-pipeline.test.ts server/__tests__/mirror-pressure.test.ts",
+    "test:steward": "vitest run server/__tests__/steward-scanners.test.ts server/__tests__/steward-conscience.test.ts server/__tests__/steward-pipeline.test.ts server/__tests__/mirror-pressure.test.ts server/__tests__/ibl.test.ts",
     "test:governance": "node scripts/runPlaywright.mjs governance",
     "test:sessions": "node scripts/runPlaywright.mjs sessions",
     "test:report": "playwright show-report --port=0",

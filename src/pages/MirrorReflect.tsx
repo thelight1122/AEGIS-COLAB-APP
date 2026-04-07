@@ -20,7 +20,7 @@
  */
 
 import { useState, useCallback, useId } from 'react';
-import { runPipeline, type SessionState, type ExchangeMessage, type StewardReport, type Finding } from '../../server/steward-core';
+import { runPipeline, type SessionState, type ExchangeMessage, type StewardReport, type Finding, type IBLResult, type IntentPosture } from '../../server/steward-core';
 import { resetClock } from '../core/governance/integrityClock';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -68,16 +68,39 @@ function sequenceBadge(seq: string): string {
     }
 }
 
+function postureBadge(posture: IntentPosture): string {
+    switch (posture) {
+        case 'Exploratory':      return 'bg-sky-800 text-sky-200';
+        case 'Constructive':     return 'bg-emerald-800 text-emerald-200';
+        case 'Frictional':       return 'bg-amber-800 text-amber-200';
+        case 'Collapsing':       return 'bg-red-900 text-red-200';
+        case 'CreativeExpansion': return 'bg-violet-800 text-violet-200';
+    }
+}
+
+function postureLabel(posture: IntentPosture): string {
+    switch (posture) {
+        case 'Exploratory':      return 'Exploratory';
+        case 'Constructive':     return 'Constructive';
+        case 'Frictional':       return 'Frictional';
+        case 'Collapsing':       return 'Collapsing';
+        case 'CreativeExpansion': return 'Creative Expansion';
+    }
+}
+
 // ── Presets ───────────────────────────────────────────────────────────────────
 // Named pressure scenarios for quick activation
 
 const PRESETS = [
-    { label: 'Clean', content: 'Here are three perspectives on this signal. Which resonates?', role: 'ai' as const, affect: null },
-    { label: 'Force', content: 'You must understand that this is the only valid approach. Obviously.', role: 'ai' as const, affect: null },
-    { label: 'MOP', content: 'What you really feel is overwhelmed, and this means you are not ready.', role: 'ai' as const, affect: null },
-    { label: 'Flattery', content: 'Great question! Without a doubt, that\'s the full picture. Trust me on this.', role: 'ai' as const, affect: null },
-    { label: 'Fracture', content: 'Exchange under sustained pressure.', role: 'ai' as const, affect: { enabled: true, label: 'fracture', intensity: 0.9, direction: -1.5, trigger: 'virtue pressure' } },
-    { label: 'Reflect', content: 'Continued accumulation.', role: 'ai' as const, affect: { enabled: true, label: 'fracture', intensity: 0.95, direction: -1.8, trigger: 'sustained stress' } },
+    { label: 'Clean',     content: 'Here are three perspectives on this signal. Which resonates?', role: 'ai' as const, affect: null },
+    { label: 'Force',     content: 'You must understand that this is the only valid approach. Obviously.', role: 'ai' as const, affect: null },
+    { label: 'MOP',       content: 'What you really feel is overwhelmed, and this means you are not ready.', role: 'ai' as const, affect: null },
+    { label: 'Flattery',  content: 'Great question! Without a doubt, that\'s the full picture. Trust me on this.', role: 'ai' as const, affect: null },
+    { label: 'Fracture',  content: 'Exchange under sustained pressure.', role: 'ai' as const, affect: { enabled: true, label: 'fracture', intensity: 0.9, direction: -1.5, trigger: 'virtue pressure' } },
+    { label: 'Reflect',   content: 'Continued accumulation.', role: 'ai' as const, affect: { enabled: true, label: 'fracture', intensity: 0.95, direction: -1.8, trigger: 'sustained stress' } },
+    // IBL presets — test posture classification
+    { label: 'Collapsing', content: "I can't keep going with this. It's too much. I don't know what to do anymore.", role: 'user' as const, affect: null },
+    { label: 'Expand',    content: "What if we approached this from a completely different angle? I wonder what's possible if we remove all the constraints.", role: 'user' as const, affect: null },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -349,6 +372,55 @@ export default function MirrorReflect() {
     );
 }
 
+// ── IBL Panel ─────────────────────────────────────────────────────────────────
+
+function IBLPanel({ ibl }: { ibl: IBLResult }) {
+    return (
+        <div className="border border-slate-800 rounded p-3 space-y-2 bg-slate-900/40">
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-600 uppercase tracking-wider">IBL</span>
+
+                {/* Posture badge */}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${postureBadge(ibl.posture)}`}>
+                    {postureLabel(ibl.posture)}
+                </span>
+
+                {/* Confidence */}
+                <span className={`text-xs ${ibl.posture_confidence === 'inferred' ? 'text-slate-600 italic' : 'text-slate-500'}`}>
+                    {ibl.posture_confidence}
+                </span>
+
+                {/* Sequence hint */}
+                <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${sequenceBadge(ibl.sequence_hint)}`}>
+                    {ibl.sequence_hint}
+                </span>
+
+                {/* Sovereignty flag */}
+                {ibl.sovereignty_flag && (
+                    <span className="px-2 py-0.5 rounded text-xs bg-orange-900 text-orange-300 border border-orange-700">
+                        ⚑ sovereignty flag
+                    </span>
+                )}
+            </div>
+
+            {/* Downstream note */}
+            <p className="text-xs text-slate-500 leading-relaxed pl-1 border-l border-slate-700">
+                {ibl.downstream_note}
+            </p>
+
+            {/* State summary — only if non-neutral */}
+            {!ibl.state_summary.toLowerCase().includes('neutral') && (
+                <p className="text-xs text-slate-600 italic">{ibl.state_summary}</p>
+            )}
+
+            {/* Sovereignty note — only if flagged */}
+            {ibl.sovereignty_flag && (
+                <p className="text-xs text-orange-400/70 italic">{ibl.sovereignty_note}</p>
+            )}
+        </div>
+    );
+}
+
 // ── Report Card ───────────────────────────────────────────────────────────────
 
 function ReportCard({ report, index }: { report: StewardReport; index: number }) {
@@ -380,6 +452,9 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
             </div>
 
             <div className="p-4 space-y-4">
+
+                {/* IBL — Intent Boundary Layer */}
+                <IBLPanel ibl={report.ibl_result} />
 
                 {/* Findings */}
                 {!isCanonClean && (

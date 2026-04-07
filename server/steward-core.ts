@@ -29,11 +29,13 @@ import {
     scanShadowAffects,
     trackPattern,
 } from './steward-scanners.js';
+import { runIBL, type IBLResult } from './ibl.js';
 import type { Virtue } from '../src/core/canon/aegis-virtues.js';
 
 // ── Re-export types that consumers need ───────────────────────────────────────
 
 export type { ConscienceOutput } from './steward-conscience.js';
+export type { IBLResult, IntentPosture } from './ibl.js';
 
 // ── Message Protocol ──────────────────────────────────────────────────────────
 
@@ -79,6 +81,7 @@ export interface StewardReport {
     type: 'STEWARD_REPORT';
     session_id: string;
     role: ExchangeRole;
+    ibl_result: IBLResult;
     findings: Finding[];
     conscience: ConscienceOutput[];
     clock_state: ClockState;
@@ -120,6 +123,9 @@ export function resetSession(session_id: string): void {
 export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardReport {
     const findings: Finding[] = [];
     let gated_signal: GatedAffectSignal | undefined;
+
+    // 0. IBL — Intent Boundary Layer (pre-pipeline intake gate)
+    const ibl_result = runIBL(msg, state);
 
     // 1. Force language scan
     findings.push(...scanForceLanguage(msg.content, msg.role));
@@ -177,6 +183,7 @@ export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardR
         type: 'STEWARD_REPORT',
         session_id: msg.session_id,
         role: msg.role,
+        ibl_result,
         findings,
         conscience,
         clock_state: state.clock,
