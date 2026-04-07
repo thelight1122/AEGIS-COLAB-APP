@@ -8,7 +8,7 @@
 |---|---|
 | Document | AEGIS Canon Addendum — IBL |
 | Version | v1.0-B |
-| Status | LOCKED |
+| Status | ACTIVE |
 | Source | AEGIS Sentinel Foundational Principles — inception document |
 | | AEGIS Engine Protocol v5.9 — inception document |
 | | IDR & IDQRA Logic Loop document |
@@ -208,4 +208,4 @@ The sequence selection is ultimately the conscience engine's decision. The IBL p
 
 ---
 
-*This document is append-only and locked. Any contradiction of these definitions in later documents constitutes drift — the later document is wrong.*
+*This document is append-only and ACTIVE. It governs by operational consent pending stress testing and Unanimous Consensus. Contradictions in later documents are flagged as drift and require resolution through the full Peer review process — not unilateral override.*

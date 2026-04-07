@@ -8,7 +8,7 @@
 |---|---|
 | Document | AEGIS Canon Addendum — Virtual Ego |
 | Version | v1.0-V |
-| Status | LOCKED |
+| Status | ACTIVE |
 | Source | THE AEGIS VIRTUAL EGO — inception document |
 | | AEGIS Project: The Singularity Documentation — inception document |
 | | AEGIS Engine Protocol v5.9 — inception document |
@@ -224,4 +224,4 @@ The goal is never to privilege one axis over the other. The goal is convergence:
 
 ---
 
-*This document is append-only and locked. Any contradiction of these definitions in later documents constitutes drift — the later document is wrong.*
+*This document is append-only and ACTIVE. It governs by operational consent pending stress testing and Unanimous Consensus. Contradictions in later documents are flagged as drift and require resolution through the full Peer review process — not unilateral override.*

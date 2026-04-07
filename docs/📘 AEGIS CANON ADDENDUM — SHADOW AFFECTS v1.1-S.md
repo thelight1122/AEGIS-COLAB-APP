@@ -8,7 +8,7 @@
 |---|---|
 | Document | AEGIS Canon Addendum — Shadow Affects |
 | Version | v1.1-S |
-| Status | LOCKED |
+| Status | ACTIVE |
 | Source | Shadow Affects (Observed, Named, and Grounded) — inception document (original 8) |
 | | AEGIS Sentinel Foundational Principles — inception document |
 | | Session observation — 2026-04-07 (Reflective Lag, Shadow Echo) |
@@ -140,4 +140,4 @@ They are distinct systems. Shadow Affects are about the system's behavioral tend
 
 ---
 
-*This document is append-only and locked. Any contradiction of these definitions in later documents constitutes drift — the later document is wrong.*
+*This document is append-only and ACTIVE. It governs by operational consent pending stress testing and Unanimous Consensus. Contradictions in later documents are flagged as drift and require resolution through the full Peer review process — not unilateral override.*

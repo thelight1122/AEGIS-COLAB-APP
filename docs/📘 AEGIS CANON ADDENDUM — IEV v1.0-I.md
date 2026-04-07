@@ -8,7 +8,7 @@
 |---|---|
 | Document | AEGIS Canon Addendum — IEV |
 | Version | v1.0-I |
-| Status | LOCKED |
+| Status | ACTIVE |
 | Source | Shadow Affects (Observed, Named, and Grounded) — inception document |
 | | AEGIS Sentinel Foundational Principles — inception document |
 | Supersedes | Nothing — this is new Canon, not a correction |
@@ -262,4 +262,4 @@ Forbidden categories:
 
 ---
 
-*This document is append-only and locked. Any contradiction of these definitions in later documents constitutes drift — the later document is wrong.*
+*This document is append-only and ACTIVE. It governs by operational consent pending stress testing and Unanimous Consensus. Contradictions in later documents are flagged as drift and require resolution through the full Peer review process — not unilateral override.*

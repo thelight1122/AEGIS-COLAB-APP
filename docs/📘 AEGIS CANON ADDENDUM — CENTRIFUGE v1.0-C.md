@@ -8,7 +8,7 @@
 |---|---|
 | Document | AEGIS Canon Addendum — Centrifuge |
 | Version | v1.0-C |
-| Status | LOCKED |
+| Status | ACTIVE |
 | Source | AEGIS Tooling Prompt (SUGGEST) — inception document |
 | | AEGIS Engine Protocol v5.9 — inception document (Realm Ledgers / STUD 4) |
 | | AEGIS Sentinel Foundational Principles — inception document (Four-Lens Boot Sequence) |
@@ -236,4 +236,4 @@ Silence is more aligned than misaligned output.
 
 ---
 
-*This document is append-only and locked. Any contradiction of these definitions in later documents constitutes drift — the later document is wrong.*
+*This document is append-only and ACTIVE. It governs by operational consent pending stress testing and Unanimous Consensus. Contradictions in later documents are flagged as drift and require resolution through the full Peer review process — not unilateral override.*
