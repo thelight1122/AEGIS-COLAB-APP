@@ -101,6 +101,23 @@ export type {
     ActiveIEVSet,
 } from './aegis-iev';
 
+// ── Centrifuge — Four Ledgers, PIM, QRC, Non-Resonant Fallback ───────────────
+export {
+    CENTRIFUGE_LENSES,
+    CENTRIFUGE_INVARIANT,
+    PIM_DEFINITION,
+    QRC_DEFINITION,
+    NON_RESONANT_FALLBACK,
+} from './aegis-centrifuge';
+export type {
+    CentrifugeLens,
+    LensDefinition,
+    CentrifugeObservation,
+    CentrifugePass,
+    PIMEntry,
+    QRCEntry,
+} from './aegis-centrifuge';
+
 // ── MOP, MOM, RBC, CO ─────────────────────────────────────────────────────────
 export {
     MOM_ORIGINATION_CONDITIONS,
