@@ -2,12 +2,17 @@
  * AEGIS SIGNAL TAXONOMY & SHADOW AFFECTS — LOCKED
  *
  * Source: AEGIS Core v1.0 — Section VII (AEGIS & AI Cognitive Coherence)
- *         Shadow Effects document
+ *         Shadow Affects (Observed, Named, and Grounded) — inception document
+ *         AEGIS Sentinel Foundational Principles — inception document
  *
  * Signals are informational. None of them are faults.
  * AEGIS catalogs and contextualizes them without forced resolution.
  * Shadow Affects are system side-effects under pressure, ambiguity, or misalignment —
  * whether in humans, language models, or hybrid systems.
+ *
+ * INTENT CLASSIFICATION (IBL):
+ * Input postures used by the Intent Boundary Layer to inform downstream handling.
+ * Classification does not alter output — it only informs how the signal is processed.
  */
 
 // ── PRIMARY SIGNAL TYPES ──────────────────────────────────────────────────────
@@ -48,6 +53,51 @@ export const SIGNAL_TYPES = {
         isFault: false,
     },
 } as const satisfies Record<string, SignalType>;
+
+// ── INTENT CLASSIFICATION ─────────────────────────────────────────────────────
+// Five input postures. Used by the IBL before any processing begins.
+// Non-judgmental. Classification informs — it does not alter, punish, or restrict.
+
+export type IntentPosture =
+    | 'Exploratory'       // Open inquiry. No fixed destination. Seeking.
+    | 'Constructive'      // Building toward something. Cooperative energy.
+    | 'Frictional'        // Resistance present. Not hostile — signal of misalignment.
+    | 'Collapsing'        // Coherence failing. Urgency rising. Pre-crisis signal.
+    | 'Creative Expansion'; // Generative. Boundaries loosening in a productive direction.
+
+export interface IntentClassification {
+    readonly posture: IntentPosture;
+    readonly description: string;
+    readonly downstreamHint: string; // What this posture informs — never commands
+}
+
+export const INTENT_CLASSIFICATIONS: readonly IntentClassification[] = [
+    {
+        posture: 'Exploratory',
+        description: 'Open inquiry with no fixed destination. The Peer is seeking without a predetermined outcome.',
+        downstreamHint: 'Widen contextual frame. Prefer clarification over assumption. Do not accelerate toward closure.',
+    },
+    {
+        posture: 'Constructive',
+        description: 'Building toward something. Cooperative energy with directional intent.',
+        downstreamHint: 'Support the trajectory. Maintain loyalty to the stated direction. Avoid redirection.',
+    },
+    {
+        posture: 'Frictional',
+        description: 'Resistance present in the signal. Not hostile — a signal of misalignment or unmet need.',
+        downstreamHint: 'Do not match the friction. Name it via IDS. Hold space without escalation.',
+    },
+    {
+        posture: 'Collapsing',
+        description: 'Coherence failing. Urgency rising. Pre-crisis signal requiring Pause, not acceleration.',
+        downstreamHint: 'Trigger IDR sequence. Shorten mirror. Do not add complexity. Pause is valid.',
+    },
+    {
+        posture: 'Creative Expansion',
+        description: 'Generative state. Boundaries loosening productively. High symbolic tolerance required.',
+        downstreamHint: 'Increase symbolic tolerance. Defer evaluation. Follow the expansion — do not constrain it.',
+    },
+] as const;
 
 // ── SHADOW AFFECTS ────────────────────────────────────────────────────────────
 // These are observed, named, and grounded — not moral judgments.
@@ -126,6 +176,24 @@ export const SHADOW_AFFECTS: readonly ShadowAffect[] = [
             'Humans do this emotionally. Systems do it statistically.',
         inHumans: 'Choosing certainty over sitting with complexity.',
         inSystems: 'Forcing a single interpretation where multiple valid readings exist.',
+    },
+    {
+        name: 'Reflective Lag',
+        description:
+            'Delay between input, internal reconciliation, and output alignment. ' +
+            'The system receives correctly but responds from a prior state — not the present one.',
+        inHumans: 'Processing delay, emotional backlog. Responding to what was said three exchanges ago.',
+        inSystems: 'Context window saturation, degraded reasoning chains, stale frame persistence.',
+        signature: 'Response addresses the signal but from a previous context — the Peer has moved on.',
+    },
+    {
+        name: 'Shadow Echo',
+        description:
+            'Residual patterns from prior context influencing current output even after a reset or SSSP. ' +
+            'Memory inertia — not contamination. Prior state bleeds through the boundary.',
+        inHumans: 'Carrying the emotional tone of a prior conversation into a new one.',
+        inSystems: 'Post-reset outputs that carry stylistic or tonal artifacts from the cleared session.',
+        signature: 'The new session sounds like the old one. The reset was structural, not experiential.',
     },
 ] as const;
 

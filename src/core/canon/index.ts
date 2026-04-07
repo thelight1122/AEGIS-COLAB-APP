@@ -22,6 +22,12 @@
  *   - Shadow Effects document
  *   - AEGIS Standards & Constraints
  *   - Governance Integrity Validation Protocol v1.0
+ *   - Shadow Affects (Observed, Named, and Grounded) — inception document
+ *   - AEGIS Sentinel Foundational Principles — inception document
+ *   - THE AEGIS VIRTUAL EGO — inception document
+ *   - AEGIS Project: The Singularity Documentation — inception document
+ *   - AEGIS Engine Protocol v5.9 — inception document
+ *   - AEGIS Equation document — inception document
  */
 
 // ── Axioms ────────────────────────────────────────────────────────────────────
@@ -52,6 +58,8 @@ export {
     TURBOQUANT_DEFINITION,
     SSSP_DEFINITION,
     SYSTEM_LAYERS,
+    VIRTUAL_EGO,
+    UNANIMOUS_CONSENSUS,
 } from './aegis-dataquad';
 export type {
     TensorDefinition,
@@ -69,9 +77,29 @@ export {
 } from './aegis-sequences';
 export type { InteractionSequence } from './aegis-sequences';
 
-// ── Signal Taxonomy & Shadow Affects ─────────────────────────────────────────
-export { SIGNAL_TYPES, SHADOW_AFFECTS } from './aegis-signals';
-export type { SignalType, ShadowAffect, ShadowAffectName } from './aegis-signals';
+// ── Signal Taxonomy, Shadow Affects & Intent Classification ──────────────────
+export { SIGNAL_TYPES, SHADOW_AFFECTS, INTENT_CLASSIFICATIONS } from './aegis-signals';
+export type {
+    SignalType,
+    ShadowAffect,
+    ShadowAffectName,
+    IntentPosture,
+    IntentClassification,
+} from './aegis-signals';
+
+// ── IEV — Interpretive Effect Vocabulary ─────────────────────────────────────
+export {
+    IEV_EFFECTS,
+    IEV_FORBIDDEN_CATEGORIES,
+    MAX_ACTIVE_IEV_EFFECTS,
+    validateIEVSet,
+} from './aegis-iev';
+export type {
+    InterpretiveEffect,
+    IEVEffectName,
+    IEVForbiddenCategory,
+    ActiveIEVSet,
+} from './aegis-iev';
 
 // ── MOP, MOM, RBC, CO ─────────────────────────────────────────────────────────
 export {
