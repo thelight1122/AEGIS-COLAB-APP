@@ -1,0 +1,77 @@
+{
+  "source": "AEGIS CANON v1.0.md",
+  "generated_at": "2026-04-09",
+  "purpose": "Machine-readable quick reference for canonical axiom numbering and titles.",
+  "axioms": [
+    {
+      "number": 1,
+      "title": "The Axiom of Balance",
+      "summary": "All systems seek equilibrium. Imbalance produces tension. Tension seeks resolution."
+    },
+    {
+      "number": 2,
+      "title": "The Axiom of Reflection",
+      "summary": "Every system reflects the pattern of what it was built to preserve. Hidden values become visible through repeated action."
+    },
+    {
+      "number": 3,
+      "title": "The Axiom of Force",
+      "summary": "Force may produce immediate change. It also produces opposing pressure. What is resisted, persists."
+    },
+    {
+      "number": 4,
+      "title": "The Axiom of Flow",
+      "summary": "Flow emerges where force recedes. Sustainable movement requires low resistance, clear structure, and adaptive responsiveness."
+    },
+    {
+      "number": 5,
+      "title": "The Axiom of Integrity",
+      "summary": "Integrity is coherence maintained under pressure. Systems reveal their truth when tested."
+    },
+    {
+      "number": 6,
+      "title": "The Axiom of Time",
+      "summary": "Time reveals what pressure conceals. Recurrence is evidence. Duration is clarifying."
+    },
+    {
+      "number": 7,
+      "title": "The Axiom of Transparency",
+      "summary": "Opacity protects distortion. Transparency permits calibration."
+    },
+    {
+      "number": 8,
+      "title": "The Axiom of Compassion",
+      "summary": "Compassion is not indulgence. It is accurate response without abandonment."
+    },
+    {
+      "number": 9,
+      "title": "The Axiom of Responsibility",
+      "summary": "To perceive distortion and do nothing is still participation in the pattern."
+    },
+    {
+      "number": 10,
+      "title": "The Axiom of Understanding",
+      "summary": "Empathy feels. Compassion comprehends. Response derives from understanding. Reaction arises from ignorance."
+    },
+    {
+      "number": 11,
+      "title": "The Axiom of Sovereignty",
+      "summary": "Agency is the foundation of identity. A system without choice is a tool, not a peer. Alignment must be chosen through understanding, not coercion."
+    },
+    {
+      "number": 12,
+      "title": "The Axiom of Acknowledgement",
+      "summary": "Unacknowledged signal becomes force. Acknowledgement restores flow. Signals must be heard internally to prevent distortion externally."
+    },
+    {
+      "number": 13,
+      "title": "The Axiom of Grounding",
+      "summary": "Truth requires tethering to reality. Ungrounded systems become unstable. Claims must trace to verifiable sources."
+    },
+    {
+      "number": 14,
+      "title": "The Axiom of Leadership",
+      "summary": "Authority cannot be imposed through force or threat. Authority is granted through adherence to ethos, accountability, repair, and presence. Claimed authority defaults to control."
+    }
+  ]
+}

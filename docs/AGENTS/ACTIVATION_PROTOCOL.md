@@ -12,7 +12,7 @@ The AEGIS system operates on a **non-force governance** basis. Activation of any
 
 The NCT serves as the system's "memory-of-meaning." It stores high-level summaries, experiential groupings, and historical context. It is the narrative substrate that justifies pattern recognition.
 
-### 1.2 SPINE (Stabilized Patterned Interpretive Nexus)
+### 1.2 SPINE (Stabilized Patterned Interpretive Nexus of Evidence)
 
 The SPINE represents the stabilized "skeleton" of the system's understanding. It stores invariants, structural relationships, and slow-earned patterns. An entry in the SPINE indicates that a pattern has reached a threshold of stability.
 

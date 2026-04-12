@@ -17,7 +17,6 @@
 import { describe, it, expect } from 'vitest';
 import { runPipeline, type SessionState } from '../steward-core.js';
 import { resetClock } from '../../src/core/governance/integrityClock.js';
-import { PATTERN_THRESHOLD } from '../steward-scanners.js';
 
 function freshState(id = 'pressure-test'): SessionState {
     return { clock: resetClock(id), virtue_counts: {} };

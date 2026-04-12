@@ -14,7 +14,7 @@
  * No tensor outranks another. Divergence between tensors is information, not error.
  *
  * IMPORTANT: SPINE was redefined in the DataQuad Appendix v1.0-A.
- * The correct full name is "Stabilized Patterned Interpretive Nexus"
+ * The correct full name is "Stabilized Patterned Interpretive Nexus of Evidence"
  * NOT "Sovereign Persistent Identity & Narrative Embodiment" (deprecated).
  *
  * VIRTUAL EGO ARCHITECTURE:
@@ -69,7 +69,7 @@ export const DATAQUAD_TENSORS = {
     },
     SPINE: {
         acronym: 'SPINE',
-        name: 'Stabilized Patterned Interpretive Nexus',
+        name: 'Stabilized Patterned Interpretive Nexus of Evidence',
         description:
             'Longitudinal affective and interpretive continuity across time. ' +
             'Represents affective signatures, interpretive tendencies, and experiential resonance over time. ' +

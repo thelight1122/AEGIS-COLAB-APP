@@ -51,7 +51,7 @@ The `.data/nct.jsonl` file contains the **Nostalgic Context Tensor** records.
 
 ## 7. SPINE Ledger (Cycle 7)
 
-The `.data/spine.jsonl` file contains the **Stabilized Patterned Interpretive Nexus** records.
+The `.data/spine.jsonl` file contains the **Stabilized Patterned Interpretive Nexus of Evidence** records.
 
 - It records slow-earned patterns, invariants, and structural relationships.
 - It supports `record` entries (patterns) and `link` entries (relationships).

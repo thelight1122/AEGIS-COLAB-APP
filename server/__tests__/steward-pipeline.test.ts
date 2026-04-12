@@ -26,10 +26,11 @@
  *   - SESSION_RESET → fresh state, no bleed
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { runPipeline, type SessionState, type ExchangeMessage } from '../steward-core.js';
 import { resetClock } from '../../src/core/governance/integrityClock.js';
 import { PATTERN_THRESHOLD } from '../steward-scanners.js';
+import type { Virtue } from '../../src/core/canon/aegis-virtues.js';
 
 // ── Fixture builders ──────────────────────────────────────────────────────────
 
@@ -49,6 +50,8 @@ function makeMsg(overrides: Partial<ExchangeMessage>): ExchangeMessage {
         ...overrides,
     };
 }
+
+const ALL_VIRTUES: Virtue[] = ['Honesty', 'Respect', 'Attention', 'Affection', 'Loyalty', 'Trust', 'Communication'];
 
 // ── CANON_CLEAN ───────────────────────────────────────────────────────────────
 
@@ -289,9 +292,8 @@ describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
         // This makes the test deterministic regardless of which virtue the ICG returns.
         // One more stress signal on any virtue will push it over threshold.
         const state = freshState();
-        const allVirtues = ['Honesty', 'Respect', 'Attention', 'Affection', 'Loyalty', 'Trust', 'Communication'];
-        for (const virtue of allVirtues) {
-            state.virtue_counts[virtue as any] = PATTERN_THRESHOLD - 1;
+        for (const virtue of ALL_VIRTUES) {
+            state.virtue_counts[virtue] = PATTERN_THRESHOLD - 1;
         }
 
         const report = runPipeline(
@@ -308,9 +310,8 @@ describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
     it('PATTERN_FORMING produces IDQRA conscience', () => {
         // Same deterministic pre-seed approach.
         const state = freshState();
-        const allVirtues = ['Honesty', 'Respect', 'Attention', 'Affection', 'Loyalty', 'Trust', 'Communication'];
-        for (const virtue of allVirtues) {
-            state.virtue_counts[virtue as any] = PATTERN_THRESHOLD - 1;
+        for (const virtue of ALL_VIRTUES) {
+            state.virtue_counts[virtue] = PATTERN_THRESHOLD - 1;
         }
 
         const report = runPipeline(
@@ -359,7 +360,7 @@ describe('Session isolation — no bleed between sessions', () => {
 
     it('resetting state clears virtue counts', () => {
         const state = freshState();
-        state.virtue_counts['Honesty' as any] = 10;
+        state.virtue_counts.Honesty = 10;
 
         const fresh = freshState();
         expect(fresh.virtue_counts).toEqual({});

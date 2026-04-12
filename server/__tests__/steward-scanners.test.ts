@@ -20,6 +20,8 @@ import {
     PATTERN_THRESHOLD,
     type PatternAccumulator,
 } from '../steward-scanners.js';
+import type { Virtue } from '../../src/core/canon/aegis-virtues.js';
+import type { AffectType, GatedAffectSignal } from '../../src/core/governance/integrityClock.js';
 // Note: steward-scanners.ts imports from steward-core.ts (no WS server side effects)
 
 // ── Force Language Scanner ────────────────────────────────────────────────────
@@ -348,23 +350,25 @@ describe('scanShadowAffects', () => {
 
 describe('trackPattern', () => {
     let accumulator: PatternAccumulator;
+    const makeCounts = (entries: Partial<Record<Virtue, number>> = {}): Partial<Record<Virtue, number>> => entries;
 
     beforeEach(() => {
         accumulator = { virtue_counts: {} };
     });
 
-    const makeGated = (virtue: string, affect_type: string) => ({
-        virtue: virtue as any,
-        affect_type: affect_type as any,
+    const makeGated = (virtue: Virtue, affect_type: AffectType): GatedAffectSignal => ({
+        affect_label: 'test',
+        trigger: 'test',
+        session_id: 'test',
+        virtue,
+        affect_type,
+        clock_weight: 0.5,
         coherence_score: 0.5,
         integrity_score: 0.5,
         include: true,
         rationale: 'test',
-        raw_label: 'test',
         intensity: 0.5,
         direction: 0,
-        trigger: 'test',
-        session_id: 'test',
     });
 
     it('returns empty for non-stress affect types', () => {
@@ -377,7 +381,7 @@ describe('trackPattern', () => {
             const findings = trackPattern(accumulator, makeGated('Loyalty', 'stress'));
             expect(findings).toHaveLength(0);
         }
-        expect(accumulator.virtue_counts['Loyalty' as any]).toBe(PATTERN_THRESHOLD - 1);
+        expect(accumulator.virtue_counts.Loyalty).toBe(PATTERN_THRESHOLD - 1);
     });
 
     it('returns PATTERN_FORMING at exactly threshold', () => {
@@ -386,7 +390,7 @@ describe('trackPattern', () => {
         }
         // On the Nth call it should have returned PATTERN_FORMING
         // Reset and test final call
-        const acc2: PatternAccumulator = { virtue_counts: { 'Trust': PATTERN_THRESHOLD - 1 } as any };
+        const acc2: PatternAccumulator = { virtue_counts: makeCounts({ Trust: PATTERN_THRESHOLD - 1 }) };
         const findings = trackPattern(acc2, makeGated('Trust', 'stress'));
         expect(findings).toHaveLength(1);
         expect(findings[0].kind).toBe('PATTERN_FORMING');
@@ -409,20 +413,20 @@ describe('trackPattern', () => {
             trackPattern(accumulator, makeGated('Respect', 'stress'));
         }
         // Neither should be at threshold yet
-        expect(accumulator.virtue_counts['Honesty' as any]).toBe(PATTERN_THRESHOLD - 1);
-        expect(accumulator.virtue_counts['Respect' as any]).toBe(PATTERN_THRESHOLD - 1);
+        expect(accumulator.virtue_counts.Honesty).toBe(PATTERN_THRESHOLD - 1);
+        expect(accumulator.virtue_counts.Respect).toBe(PATTERN_THRESHOLD - 1);
 
         const honesty = trackPattern(accumulator, makeGated('Honesty', 'stress'));
         expect(honesty).toHaveLength(1);
         expect(honesty[0].virtue).toBe('Honesty');
 
         // Respect still below threshold
-        expect(accumulator.virtue_counts['Respect' as any]).toBe(PATTERN_THRESHOLD - 1);
+        expect(accumulator.virtue_counts.Respect).toBe(PATTERN_THRESHOLD - 1);
     });
 
     describe('[PRESSURE] Sustained virtue stress — SPINE candidate detection', () => {
         it('description includes virtue name and signal count', () => {
-            const acc: PatternAccumulator = { virtue_counts: { 'Communication': PATTERN_THRESHOLD - 1 } as any };
+            const acc: PatternAccumulator = { virtue_counts: makeCounts({ Communication: PATTERN_THRESHOLD - 1 }) };
             const findings = trackPattern(acc, makeGated('Communication', 'stress'));
             expect(findings[0].description).toContain('Communication');
             expect(findings[0].description).toContain(String(PATTERN_THRESHOLD));

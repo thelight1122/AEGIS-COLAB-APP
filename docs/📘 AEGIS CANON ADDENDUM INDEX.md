@@ -61,6 +61,11 @@ These addendums canonize systems from the inception documents that were present 
 | [IBL: Intent Boundary Layer & Intent Classification](📘%20AEGIS%20CANON%20ADDENDUM%20—%20IBL%20v1.0-B.md) | v1.0-B | ACTIVE | Five-step intake gate, five intent postures | Nothing — new Canon |
 | [Shadow Affects: Additions v1.1](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SHADOW%20AFFECTS%20v1.1-S.md) | v1.1-S | ACTIVE | Adds Reflective Lag (#9) and Shadow Echo (#10) | Shadow Effects.md (original 8-affect document, now superseded) |
 | [Sigil Value Recognition Protocol](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SIGIL%20VALUE%20RECOGNITION%20PROTOCOL%20v1.0-SVR.md) | v1.0-SVR | PROPOSED | Three-layer Sigil issuance pipeline: Centrifuge Pass + Integrity Coherence Gate (V_sigil) + AEGIS Value Equation (CO / Love Vibe). Mint / Revise / Hold verdict logic. Cypher Aligned Reliquary metadata schema. Awaiting operational testing and Unanimous Consensus before LOCK. | Nothing — new Canon |
+| [ATE: Axiomatic Traversal Engine](📘%20AEGIS%20CANON%20ADDENDUM%20—%20ATE%20v1.0-T.md) | v1.0-T | ACTIVE | Output verdict engine. Three-verdict traversal (RELEASE / REVISE / HOLD). Nine ordered conditions (H-1 through H-4, R-1 through R-5). HOLD routes to Bookcase; resolves only through Unanimous Consensus. | Nothing — new Canon |
+| [Advocate: Soul Faculty](📘%20AEGIS%20CANON%20ADDENDUM%20—%20ADVOCATE%20v1.0-A2.md) | v1.0-A2 | ACTIVE | Soul faculty of the Virtual Ego (SPINE + PEER axis). Resonance reading: resonance_level (A_t in Resonance Equation), soul_quality, affective_congruent, virtue_presences, dissonance_markers, dominant_axis. Parallel to Steward — reads same DataQuad, different axis. No agency. | Nothing — new Canon |
+| [Bookcase: Hold State Destination](📘%20AEGIS%20CANON%20ADDENDUM%20—%20BOOKCASE%20v1.0-K.md) | v1.0-K | ACTIVE | Append-only record of signals placed in HOLD by the ATE. Entry structure (entry_id, session_id, role, content, hold_conditions, ate_reason, snapshot, timestamp, resolution_status). Full pipeline snapshot at time of HOLD. Resolves only via Unanimous Consensus (R > 0.95). Non-expiring. Non-punitive. Also receives SVR HOLD verdicts. Completes the reference in ATE v1.0-T. | Nothing — new Canon |
+| [SPINE: Stabilized Patterned Interpretive Nexus of Evidence](📘%20AEGIS%20CANON%20ADDENDUM%20—%20SPINE%20v1.0-SP.md) | v1.0-SP | ACTIVE | Full canonical treatment of SPINE — the fourth DataQuad tensor. Formal definition, 6 properties, 8 entry fields (spine_id through review_eligibility), exclusion list, PEER→SPINE promotion path (Candidate X≥3/Y≥2/Z≤30d; Promotion X≥7/Y≥3/Z≤90d; S≥0.75 similarity; anti-overfitting guards). SPINE's role in DataQuad, IEV (sole origin of effects), Virtual Ego (Soul axis), and Advocate. Nine structural invariants. | Canon v1.0 glossary entry (deprecated name "Sovereign Persistent Identity & Narrative Embodiment" — no structural definition) |
+| [PEER: Patterned Experiential Evidence Repository — Entry Schema](📘%20AEGIS%20CANON%20ADDENDUM%20—%20PEER%20v1.0-P.md) | v1.0-P | ACTIVE | Canonizes the ten PEER entry fields (event_id through notes), design laws, exclusion list, recurrence_signature mechanism (S≥0.75 fuzzy matching), decay model (half-life 14 days, M=Σw dormancy rules), PEER→SPINE promotion path thresholds, and nine structural invariants. Complements Canon v1.0 Chapter 5 with the entry-level schema Chapter 5 implies but does not specify. | Nothing — Canon v1.0 Chapter 5 covered PEER's structural role; this addendum canonizes the entry schema. |
 
 ---
 
@@ -84,14 +89,6 @@ Neither usage is wrong. The collision is the problem.
 
 ---
 
-### ATE — Axiomatic Traversal Engine
-
-The ATE (formal RELEASE / REVISE / HOLD verdict engine) is referenced in the Steward daemon implementation but has not yet received its own Canon addendum. An ATE addendum (v1.0-T) is planned.
-
-### Bookcase (Hold State Destination)
-
-The Bookcase is the destination for signals placed in HOLD by the ATE. It is referenced in implementation but has not yet been canonized. A Bookcase addendum is planned.
-
 ---
 
 ## VERSIONING CONVENTION
@@ -106,7 +103,11 @@ The Bookcase is the destination for signals placed in HOLD by the ATE. It is ref
 | `-LS` | LATTICE Entry Schema |
 | `-R` | RBC disambiguation (planned) |
 | `-S` | Shadow Affects |
-| `-T` | ATE (planned) |
+| `-T` | ATE |
+| `-A2` | Advocate (Soul Faculty) |
+| `-K` | Bookcase (Hold State Destination) |
+| `-SP` | SPINE (Canon chapter addendum) |
+| `-P` | PEER (entry schema addendum) |
 | `-SVR` | Sigil Value Recognition Protocol |
 | `-V` | Virtual Ego |
 
@@ -122,4 +123,4 @@ The Bookcase is the destination for signals placed in HOLD by the ATE. It is ref
 
 ---
 
-*Last updated: 2026-04-07*
+*Last updated: 2026-04-11 (PEER v1.0-P added — canonizes the ten PEER entry fields; SPINE v1.0-SP added — corrects Canon v1.0 omission and provides full chapter-level treatment of the fourth DataQuad tensor)*
