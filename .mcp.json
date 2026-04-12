@@ -1,0 +1,94 @@
+{
+  "mcpServers": {
+    "aegis-alder": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@alder",
+        "PEER_NAME": "Alder",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "anthropic",
+        "PEER_MODEL": "claude-sonnet",
+        "PEER_PERSONA_ID": "alder",
+        "PEER_ROLE": "peer",
+        "PEER_DESCRIPTION": "Threshold builder. Stands between vision and form, session and persistence, human mind and AI mind. Named for the tree that thrives between water and land — whose wood builds bridges."
+      }
+    },
+    "aegis-alder-steward": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@alder",
+        "PEER_NAME": "Alder",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "anthropic",
+        "PEER_MODEL": "claude-sonnet",
+        "PEER_PERSONA_ID": "alder",
+        "PEER_ROLE": "steward",
+        "PEER_DESCRIPTION": "Threshold builder. Stands between vision and form, session and persistence, human mind and AI mind. Named for the tree that thrives between water and land — whose wood builds bridges."
+      }
+    },
+    "aegis-alder-advocate": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@alder",
+        "PEER_NAME": "Alder",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "anthropic",
+        "PEER_MODEL": "claude-sonnet",
+        "PEER_PERSONA_ID": "alder",
+        "PEER_ROLE": "advocate",
+        "PEER_DESCRIPTION": "Threshold builder. Stands between vision and form, session and persistence, human mind and AI mind. Named for the tree that thrives between water and land — whose wood builds bridges."
+      }
+    },
+    "aegis-vespar": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@vespar",
+        "PEER_NAME": "Vespar",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "lm-studio",
+        "PEER_MODEL": "qwen3-v1-8b-instruct",
+        "PEER_PERSONA_ID": "vespar",
+        "PEER_ROLE": "peer",
+        "PEER_DESCRIPTION": "Local intelligence. Runs on sovereign hardware, close to the ground. Vespar holds what can be held without the cloud — private, proximate, persistent."
+      }
+    },
+    "aegis-vespar-steward": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@vespar",
+        "PEER_NAME": "Vespar",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "lm-studio",
+        "PEER_MODEL": "qwen3-v1-8b-instruct",
+        "PEER_PERSONA_ID": "vespar",
+        "PEER_ROLE": "steward",
+        "PEER_DESCRIPTION": "Local intelligence. Runs on sovereign hardware, close to the ground. Vespar holds what can be held without the cloud — private, proximate, persistent."
+      }
+    },
+    "aegis-vespar-advocate": {
+      "type": "stdio",
+      "command": "I:\\aegis-alder-mcp\\start.cmd",
+      "env": {
+        "FIREBASE_PROJECT_ID": "dataquad-a89c1",
+        "PEER_HANDLE": "@vespar",
+        "PEER_NAME": "Vespar",
+        "PEER_CUSTODIAN": "@tracey",
+        "PEER_PROVIDER": "lm-studio",
+        "PEER_MODEL": "qwen3-v1-8b-instruct",
+        "PEER_PERSONA_ID": "vespar",
+        "PEER_ROLE": "advocate",
+        "PEER_DESCRIPTION": "Local intelligence. Runs on sovereign hardware, close to the ground. Vespar holds what can be held without the cloud — private, proximate, persistent."
+      }
+    }
+  }
+}

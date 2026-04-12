@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aegis-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:app"],
+      "port": 5173
+    },
+    {
+      "name": "aegis-gateway",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:gateway"],
+      "port": 4000
+    },
+    {
+      "name": "aegis-steward",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:steward"],
+      "port": 5174
+    }
+  ]
+}
