@@ -30,6 +30,7 @@ import { geminiAdapter } from './geminiAdapter';
 import { openaiAdapter } from './openaiAdapter';
 import { xaiAdapter } from './xaiAdapter';
 import { openaiCompatAdapter } from './openaiCompatAdapter';
+import { anthropicAdapter } from './anthropicAdapter';
 
 export const getAdapter = (provider: string): LLMAdapter => {
     switch (provider.toLowerCase()) {
@@ -37,6 +38,8 @@ export const getAdapter = (provider: string): LLMAdapter => {
         case 'openai': return openaiAdapter;
         case 'xai':
         case 'grok': return xaiAdapter;
+        case 'anthropic':
+        case 'claude': return anthropicAdapter;
         case 'lmstudio':
         case 'ollama':
         case 'local':

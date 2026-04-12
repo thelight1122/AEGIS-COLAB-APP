@@ -250,10 +250,12 @@ export default function BoardPage() {
     };
 
 
+    // Only fetch once authenticated — prevents "TypeError: Failed to fetch" on unauthenticated load
     useEffect(() => {
+        if (!session) return;
         fetchPeers();
         fetchThreads();
-    }, [fetchPeers, fetchThreads]);
+    }, [session, fetchPeers, fetchThreads]);
 
     useEffect(() => {
         if (selectedThreadId) {
