@@ -2,6 +2,20 @@
 
 Welcome to the **AEGIS Coherence Chamber**, a governed collaboration environment for Human and AI Peers working on shared artifacts.
 
+<<<<<<< HEAD
+---
+
+## 1. Workspaces
+
+### The Chamber Dashboard
+
+The **Chamber** is your primary theater of operations. It is a visual canvas where collective intelligence is mapped.
+
+- **Nodes**: Create nodes to map concepts (Proposals, Tensions, Evidence).
+- **Links**: Connect nodes to establish relationships and logic flow.
+- **IDS Stream (Intelligence Definition System)**: A real-time card feed representing snapshots of intelligence that can be attached to workspace nodes for context.
+- **Telemetry Panel**: Monitor the health of your collaborative session via **Drift** and **Inclusion** metrics.
+=======
 This manual reflects the current repository state and avoids claiming features that are not yet fully implemented.
 
 ## 1. Getting Oriented
@@ -27,9 +41,47 @@ The app includes both public and workspace surfaces.
 ## 2. The Chamber Workspace
 
 The Chamber is the main live collaboration surface.
+>>>>>>> 0fc14ea7a0c6788b476e6b0418fd0291483a2543
 
 Key elements currently present:
 
+<<<<<<< HEAD
+## 2. Navigation & Views
+
+Access these areas via the sidebar or workspace navigation:
+
+### Workspace Streams
+
+- **LandingPage**: Workspace entry and general posture greeting.
+- **Peers**: View and configure Human and AI Peers (e.g., active triggers).
+- **Lenses**: Manage perspective filters applied to the workspace views.
+- **Sessions**: Review active cycle history and synchronization benchmarks.
+- **Artifacts**: Access the locked "Golden Version" archives of previous boards.
+
+### System Control
+
+- **FrameworkPage**: Overview of the governing rulesets and triggers.
+- **GovernancePage**: Direct inspection of the append-only event ledger stream.
+- **TeamSetup**: Interface for initializing peer participation matrices.
+- **Settings**: Centralized configuration for AI Peer keys.
+
+---
+
+## 3. Peer Integration & AI
+
+Collaboration in the Chamber recognizes **Human** and **AI** Peers equally.
+
+### Managing Peers
+
+- Access the **Peers** page to manage participants.
+- **AI Peers**: Specialized agents (e.g., Drift Sentinel, Canon Guardian) that provide automated insights.
+
+### Empowering AI
+
+1. Go to the **Settings** page.
+2. Enter your API keys (e.g., OpenAI, Gemini, local).
+3. Once active, status indicators update inside workspace grids.
+=======
 - **Whiteboard area** for artifact-focused collaboration
 - **Telemetry panel** showing collaboration/governance signals
 - **Peer presence / coalition context**
@@ -59,6 +111,7 @@ From there you can:
 ### Sessions
 
 The **Sessions** page provides historical and current session review.
+>>>>>>> 0fc14ea7a0c6788b476e6b0418fd0291483a2543
 
 Current session detail includes:
 
@@ -67,12 +120,26 @@ Current session detail includes:
 - event counts
 - session dates and status
 
+<<<<<<< HEAD
+- **Session Cycles**: Every cycle in the Chamber corresponds to a frame.
+- **Lock Availability**: Once threshold inclusion conditions are met structurally, the version can be archived for permanent sync.
+=======
 Important truth note:
 
 - **Replay is still a placeholder** in the current implementation and should not be interpreted as a finished playback engine.
+>>>>>>> 0fc14ea7a0c6788b476e6b0418fd0291483a2543
 
 ## 4. Peers And Team Setup
 
+<<<<<<< HEAD
+## 5. System Integrity
+
+- All API keys are preserved strictly inside your local client environment. They are never transmitted outwards for decision extraction.
+- Supports local setups for offline Peer interaction with **LM Studio**.
+
+> [!TIP]
+> Use local nodes to test prompts before submitting to the wider ledger sync to conserve resources.
+=======
 The `/peers` route currently functions as a **Team Setup** surface rather than only a simple registry viewer.
 
 Current capabilities include:
@@ -144,3 +211,4 @@ As of the current repo state:
 - Use **Lenses** to make perspective coverage explicit.
 - Use **Settings** to unlock provider-backed AI participation locally.
 - Treat session replay and similar future-facing surfaces as evolving, not final.
+>>>>>>> 0fc14ea7a0c6788b476e6b0418fd0291483a2543

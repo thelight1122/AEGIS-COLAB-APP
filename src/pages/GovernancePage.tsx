@@ -15,7 +15,7 @@ export default function GovernancePage() {
                             Governance Architecture
                         </h1>
                         <p className="text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                            This page describes AEGIS-Adaptive Equilibrium & Governance Integration System, the governance architecture of this system. AEGIS provides a structural constraint layer designed to ensure stable, non-hierarchical collaboration between human and artificial intelligence peers.
+                            This page describes AEGIS — Adaptive Equilibrium & Governance Integration System, the governance architecture of this system. AEGIS provides a structural constraint layer designed to ensure stable, non-hierarchical collaboration between human and artificial intelligence peers.
                         </p>
                     </div>
 
@@ -44,7 +44,7 @@ export default function GovernancePage() {
                             <div className="space-y-4">
                                 <h2 className="text-2xl font-bold border-l-4 border-[#197fe6] pl-6">Canon Axioms</h2>
                                 <p className="text-slate-500 dark:text-slate-400">
-                                    The Canon Core defines the fourteen Axioms or invariants, that constrain the operation of this system. These constraints apply to the system itself, never to the human or AI peers participating in it.
+                                    The Canon Core defines the fourteen Axioms, or invariants, that constrain the operation of this system. These constraints apply to the system itself, never to the human or AI peers participating in it.
                                 </p>
                             </div>
 
