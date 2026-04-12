@@ -155,6 +155,16 @@ export function spineCount(): number {
 
 // ── Test Utilities ────────────────────────────────────────────────────────────
 
+/**
+ * Load a pre-existing SpineEntry into the in-memory store.
+ * Used for cross-session hydration from Firebase — preserves all original fields.
+ * Skips if an entry with the same spine_id is already present (idempotent).
+ */
+export function loadSpineEntry(entry: SpineEntry): void {
+    if (_spine.some(e => e.spine_id === entry.spine_id)) return;
+    _spine.push(entry);
+}
+
 /** Reset the in-memory store between test runs. Never call in production. */
 export function _resetSpineForTesting(): void {
     _spine.length = 0;

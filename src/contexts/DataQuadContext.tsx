@@ -12,7 +12,7 @@
  *   finalizeSession   → call in handleCloseSession before navigation
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     seedPeerSSP,
     appendLineage,
@@ -21,6 +21,12 @@ import {
     setWorkingMemory,
     openSession,
     closeDataQuadSession,
+    writePeerEntryToFirebase,
+    writeSpineEntryToFirebase,
+    writeBookcaseEntryToFirebase,
+    loadRecentPeerEntries,
+    loadAllSpineEntries,
+    loadUnresolvedBookcaseEntries,
 } from '../services/dataquad';
 import type { PeerProfile } from '../core/peers/types';
 import type { AffectSignal, CoherenceSnapshot, ResidualSignal } from '../services/dataquad';
@@ -31,6 +37,12 @@ import {
 } from '../core/governance/integrityClock';
 import type { ClockState } from '../core/governance/integrityClock';
 import { DataQuadContext } from './DataQuadContextBase';
+import type { PeerEntry } from '../../server/peer.js';
+import type { SpineEntry } from '../../server/spine.js';
+import type { BookcaseEntry } from '../../server/bookcase.js';
+import { loadPeerEntry } from '../../server/peer.js';
+import { loadSpineEntry } from '../../server/spine.js';
+import { loadBookcaseEntry } from '../../server/bookcase.js';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -156,6 +168,56 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
         safe('closeSession', () => closeDataQuadSession(sessionId, coherence));
     }, [safe]);
 
+    // ── PEER / SPINE / Bookcase persistence ──────────────────────────────────
+
+    const persistPeerEntry = useCallback((sessionId: string, entry: PeerEntry) => {
+        safe(`peer-entry:${entry.event_id}`, () => writePeerEntryToFirebase(sessionId, entry));
+    }, [safe]);
+
+    const persistSpineEntry = useCallback((entry: SpineEntry) => {
+        safe(`spine-entry:${entry.spine_id}`, () => writeSpineEntryToFirebase(entry));
+    }, [safe]);
+
+    const persistBookcaseEntry = useCallback((entry: BookcaseEntry) => {
+        safe(`bookcase-entry:${entry.entry_id}`, () => writeBookcaseEntryToFirebase(entry));
+    }, [safe]);
+
+    // ── Hydration on mount ────────────────────────────────────────────────────
+    // Load PEER, SPINE, and unresolved Bookcase entries from Firebase into the
+    // in-memory stores. This gives the promoter historical context from previous
+    // sessions so the 14-day decay window and 90-day promotion window are real.
+    // Runs once at provider mount, before any session starts.
+
+    useEffect(() => {
+        const hydrate = async () => {
+            try {
+                // Load recent PEER entries (last 90 days — full promotion window)
+                const rawPeer = await loadRecentPeerEntries(90);
+                for (const raw of rawPeer) {
+                    loadPeerEntry(raw as unknown as PeerEntry);
+                }
+
+                // Load all SPINE entries (structural, non-expiring)
+                const rawSpine = await loadAllSpineEntries();
+                for (const raw of rawSpine) {
+                    loadSpineEntry(raw as unknown as SpineEntry);
+                }
+
+                // Load unresolved Bookcase entries (HOLD state, non-expiring)
+                const rawBookcase = await loadUnresolvedBookcaseEntries();
+                for (const raw of rawBookcase) {
+                    loadBookcaseEntry(raw as unknown as BookcaseEntry);
+                }
+            } catch (err) {
+                // Hydration failure is non-fatal — the promoter simply starts fresh
+                console.warn('[DataQuad] Hydration failed — stores starting empty:', err);
+            }
+        };
+
+        hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // mount only
+
     return (
         <DataQuadContext.Provider value={{
             seedChamberPeers,
@@ -167,6 +229,9 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
             finalizeSession,
             clockState,
             resetSessionClock,
+            persistPeerEntry,
+            persistSpineEntry,
+            persistBookcaseEntry,
         }}>
             {children}
         </DataQuadContext.Provider>

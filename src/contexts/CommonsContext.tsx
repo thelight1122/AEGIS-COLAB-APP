@@ -26,6 +26,7 @@ import {
     summarizeCommonsSession,
 } from '../core/commons/session';
 import { runPipeline, type SessionState } from '../../server/steward-core';
+import { getEntry as getBookcaseEntry } from '../../server/bookcase.js';
 import { resetClock } from '../core/governance/integrityClock';
 import { HUMAN_PEER } from '../core/peers/humanPeer';
 import { createVerifiedOrientation, markOrientationStale } from '../core/peers/orientation';
@@ -71,6 +72,9 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         setPeerWorkingMemory,
         recordPeerResidual,
         resetSessionClock,
+        persistPeerEntry,
+        persistSpineEntry,
+        persistBookcaseEntry,
     } = useDataQuad();
     const { keys, status: keyringStatus } = useKeyring();
 
@@ -403,6 +407,15 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             content: userPrompt,
             ...(userAffectHint ? { affect_hint: userAffectHint } : {}),
         }, state);
+        // Persist PEER entry and any SPINE promotion from user turn
+        persistPeerEntry(currentSessionId, userReport.peer_entry);
+        if (userReport.promoter_result.spine_entry) {
+            persistSpineEntry(userReport.promoter_result.spine_entry);
+        }
+        if (userReport.bookcase_entry_id) {
+            const heldEntry = getBookcaseEntry(userReport.bookcase_entry_id);
+            if (heldEntry) persistBookcaseEntry(heldEntry);
+        }
         const userPulse = buildCustodialPulse(userReport);
         const userMessage: Omit<WorkshopMessage, 'id' | 'timestamp'> = {
             participant: 'You',
@@ -490,6 +503,15 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                 content: displayResponseText,
                 ...(aiAffectHint ? { affect_hint: aiAffectHint } : {}),
             }, state);
+            // Persist PEER entry and any SPINE promotion from AI turn
+            persistPeerEntry(currentSessionId, aiReport.peer_entry);
+            if (aiReport.promoter_result.spine_entry) {
+                persistSpineEntry(aiReport.promoter_result.spine_entry);
+            }
+            if (aiReport.bookcase_entry_id) {
+                const heldEntry = getBookcaseEntry(aiReport.bookcase_entry_id);
+                if (heldEntry) persistBookcaseEntry(heldEntry);
+            }
             const aiPulse = buildCustodialPulse(aiReport);
             const residualPatterns = collectResidualPatterns({
                 orientationStatus: orientationEvidence.orientationStatus,

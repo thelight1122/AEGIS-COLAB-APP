@@ -193,6 +193,16 @@ export function totalCount(): number {
 // ── Test Utilities ────────────────────────────────────────────────────────────
 // Not exported from the barrel — test files import directly from bookcase.ts
 
+/**
+ * Load a pre-existing BookcaseEntry into the in-memory store.
+ * Used for cross-session hydration from Firebase — preserves all original fields.
+ * Skips if an entry with the same entry_id is already present (idempotent).
+ */
+export function loadBookcaseEntry(entry: BookcaseEntry): void {
+    if (_bookcase.some(e => e.entry_id === entry.entry_id)) return;
+    _bookcase.push(entry);
+}
+
 /** Reset the in-memory store between test runs. Never call in production. */
 export function _resetBookcaseForTesting(): void {
     _bookcase.length = 0;

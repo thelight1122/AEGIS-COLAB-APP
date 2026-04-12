@@ -301,6 +301,17 @@ export function peerCount(): number {
 
 // ── Test Utilities ────────────────────────────────────────────────────────────
 
+/**
+ * Load a pre-existing PeerEntry into the in-memory store.
+ * Used for cross-session hydration from Firebase — preserves all original fields
+ * including the original event_id and timestamp.
+ * Skips if an entry with the same event_id is already present (idempotent).
+ */
+export function loadPeerEntry(entry: PeerEntry): void {
+    if (_peer.some(e => e.event_id === entry.event_id)) return;
+    _peer.push(entry);
+}
+
 /** Reset the in-memory store between test runs. Never call in production. */
 export function _resetPeerForTesting(): void {
     _peer.length = 0;

@@ -24,9 +24,14 @@ import {
     query,
     orderBy,
     limit,
+    where,
     serverTimestamp,
+    Timestamp,
 } from 'firebase/firestore';
 import type { PeerProfile } from '../core/peers/types';
+import type { PeerEntry } from '../../server/peer.js';
+import type { SpineEntry } from '../../server/spine.js';
+import type { BookcaseEntry } from '../../server/bookcase.js';
 
 // ── Firebase Init ─────────────────────────────────────────────────────────────
 
@@ -136,15 +141,21 @@ export async function seedPeerSSP(peer: PeerProfile): Promise<boolean> {
 // ── Q3 — Lineage (append-only) ────────────────────────────────────────────────
 
 /**
- * appendLineage — writes one tamper-evident entry to a peer's SPINE.
- * Security rules prevent updates and deletes on this sub-collection.
+ * appendLineage — writes one tamper-evident entry to a peer's lineage.
+ *
+ * Writes to two sub-collections in parallel:
+ *   q3_lineage — app's own lineage store (used by readPeerContext and Chamber)
+ *   q3_nct     — AEGIS MCP peer context store (read by peer_read_context tool on @alder/@vespar)
+ *
+ * This dual-write is the NCT bridge — without it, AEGIS peers have no memory of
+ * what happened in the app between sessions. Both collections share the same schema.
  */
 export async function appendLineage(peerId: string, event: LineageEvent): Promise<void> {
-    const ref = collection(db, 'peers', peerId, 'q3_lineage');
-    await addDoc(ref, {
-        ...event,
-        created_at: serverTimestamp(),
-    });
+    const payload = { ...event, created_at: serverTimestamp() };
+    await Promise.all([
+        addDoc(collection(db, 'peers', peerId, 'q3_lineage'), payload),
+        addDoc(collection(db, 'peers', peerId, 'q3_nct'), payload),
+    ]);
 }
 
 // ── Q2 — Affect State ─────────────────────────────────────────────────────────
@@ -238,6 +249,89 @@ export async function closeDataQuadSession(
         ended_at:  serverTimestamp(),
         coherence,
     });
+}
+
+// ── PEER Entry Persistence ────────────────────────────────────────────────────
+// Stores the PEER in-memory entries to Firestore for cross-session durability.
+// The flat `peer_entries` collection is queried by recency for promoter hydration.
+
+/**
+ * Serialize a value to a Firestore-safe plain object.
+ * Strips undefined values (Firestore rejects them) and converts readonly arrays.
+ */
+function toFirestore<T>(obj: T): Record<string, unknown> {
+    return JSON.parse(JSON.stringify(obj)) as Record<string, unknown>;
+}
+
+/**
+ * writePeerEntryToFirebase — persists a PEER entry to Firestore.
+ * Keyed on event_id for idempotency (safe to call multiple times).
+ */
+export async function writePeerEntryToFirebase(sessionId: string, entry: PeerEntry): Promise<void> {
+    const ref = doc(db, 'peer_entries', entry.event_id);
+    await setDoc(ref, { ...toFirestore(entry), session_id: sessionId }, { merge: false });
+}
+
+/**
+ * loadRecentPeerEntries — loads PEER entries written in the last `daysBack` days.
+ * Default 90 days covers the full SPINE promotion window.
+ * Returns raw Firebase data that callers convert back to PeerEntry via loadPeerEntry().
+ */
+export async function loadRecentPeerEntries(daysBack = 90): Promise<Array<Record<string, unknown>>> {
+    const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
+    const q = query(
+        collection(db, 'peer_entries'),
+        where('timestamp', '>=', cutoff),
+        orderBy('timestamp', 'asc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data() }));
+}
+
+// ── SPINE Entry Persistence ───────────────────────────────────────────────────
+
+/**
+ * writeSpineEntryToFirebase — persists a promoted SPINE entry to Firestore.
+ * Keyed on spine_id for idempotency.
+ */
+export async function writeSpineEntryToFirebase(entry: SpineEntry): Promise<void> {
+    const ref = doc(db, 'spine_entries', entry.spine_id);
+    await setDoc(ref, toFirestore(entry), { merge: false });
+}
+
+/**
+ * loadAllSpineEntries — returns all SPINE entries in promotion order.
+ * These are structural invariants — they don't expire.
+ */
+export async function loadAllSpineEntries(): Promise<Array<Record<string, unknown>>> {
+    const q = query(collection(db, 'spine_entries'), orderBy('promoted_at', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data() }));
+}
+
+// ── Bookcase Entry Persistence ────────────────────────────────────────────────
+
+/**
+ * writeBookcaseEntryToFirebase — persists a HOLD-state bookcase entry to Firestore.
+ * Keyed on entry_id. Uses merge so resolution fields can be added later.
+ */
+export async function writeBookcaseEntryToFirebase(entry: BookcaseEntry): Promise<void> {
+    const ref = doc(db, 'bookcase_entries', entry.entry_id);
+    await setDoc(ref, toFirestore(entry), { merge: true });
+}
+
+/**
+ * loadUnresolvedBookcaseEntries — loads all bookcase entries with resolution_status = 'held'.
+ * These are the entries awaiting Unanimous Consensus (R > 0.95).
+ */
+export async function loadUnresolvedBookcaseEntries(): Promise<Array<Record<string, unknown>>> {
+    const q = query(
+        collection(db, 'bookcase_entries'),
+        where('resolution_status', '==', 'held'),
+        orderBy('timestamp', 'asc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data() }));
 }
 
 /**
