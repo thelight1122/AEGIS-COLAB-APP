@@ -1,4 +1,12 @@
+import type { ATEVerdict, DominantAxis, IntentPosture, SoulQuality, StewardReport } from '../../server/steward-core';
+import type { OrientationStatus } from '../core/peers/types';
+
 export type ModelProvider = 'openai' | 'gemini' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
+export type WorkshopParticipantType = 'human' | 'ai' | 'custodian' | 'system';
+export type WorkshopPosture = 'Identify' | 'Define' | 'Suggest';
+export type WorkshopEventType = 'exchange' | 'reflection' | 'session';
+export type SourceFidelityState = 'verbatim' | 'derived' | 'interpreted' | 'generated' | 'mixed';
+export type InquiryDisposition = 'inquiry' | 'contribution' | 'mixed';
 
 export interface ConnectedModel {
     id: string;
@@ -12,13 +20,50 @@ export interface ConnectedModel {
     isActive: boolean;
 }
 
+export interface CustodialPulse {
+    verdict: ATEVerdict;
+    posture: IntentPosture;
+    soulQuality: SoulQuality;
+    resonanceLevel: number;
+    dominantAxis: DominantAxis;
+    findingCount: number;
+    canonClean: boolean;
+}
+
 export interface WorkshopMessage {
     id: string;
     participant: string;
-    participantType: 'human' | 'ai';
+    participantType: WorkshopParticipantType;
+    eventType: WorkshopEventType;
+    role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: number;
-    posture?: 'Identify' | 'Define' | 'Suggest';
+    posture: WorkshopPosture;
+    report?: StewardReport;
+    custodialPulse?: CustodialPulse;
+    sourceTurnId?: string;
+    orientationStatus?: OrientationStatus;
+    orientationReceipt?: string;
+    orientationNotes?: string;
+    fidelityState?: SourceFidelityState;
+    fidelityNotes?: string;
+    canonCitationNotes?: string;
+    inquiryDisposition?: InquiryDisposition;
+    inquiryNotes?: string;
+    peerIntrospection?: string;
+    peerIntrospectionNotes?: string;
 }
 
 export type ExplorationPhase = 'Divergent' | 'Clarifying' | 'Stabilizing' | 'Constructive';
+
+export interface CommonsSessionOverview {
+    exchangeCount: number;
+    participantCount: number;
+    aiTurnCount: number;
+    activeAlerts: number;
+    averageResonance: number;
+    currentPosition: number;
+    lastVerdict: ATEVerdict;
+    lastSoulQuality: SoulQuality;
+    lastPosture: IntentPosture;
+}

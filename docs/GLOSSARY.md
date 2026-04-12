@@ -1,5 +1,9 @@
 # AEGIS-CoLAB_APP Glossary
 
+This glossary remains the app-specific quick reference.
+
+For the expanded terminology model that correlates these terms to broader AEGIS meaning, see [AEGIS_LEXICON.md](./AEGIS_LEXICON.md).
+
 ## Chamber
 
 The primary collaborative workspace where Peers interact around a live artifact/session context.

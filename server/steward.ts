@@ -35,12 +35,10 @@
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
-import { resetClock } from '../src/core/governance/integrityClock.js';
 import {
     runPipeline,
     getSession,
     resetSession,
-    sessions,
     type StewardIncoming,
 } from './steward-core.js';
 

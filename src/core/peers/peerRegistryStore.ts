@@ -1,4 +1,7 @@
 import type { PeerProfile } from "./types";
+import { createUnverifiedOrientation } from './orientation';
+import type { TemporalOrientationState } from './types';
+import { normalizeLocalEndpoint } from '../providers/localEndpoint';
 
 const STORAGE_KEY = "aegis.peers.v1";
 
@@ -32,6 +35,21 @@ export function loadPeers(): PeerProfile[] {
                 delete item.apiKey;
                 migrationNeeded = true;
             }
+            if (!('orientation' in item) || !item.orientation || typeof item.orientation !== 'object') {
+                item.orientation = createUnverifiedOrientation({
+                    source: 'unknown',
+                    facet: item.type === 'human' ? 'observer' : 'system',
+                    notes: 'Legacy peer migrated without verified temporal orientation.',
+                });
+                migrationNeeded = true;
+            }
+            if (typeof item.baseURL === 'string') {
+                const normalizedBaseURL = normalizeLocalEndpoint(item.baseURL);
+                if (normalizedBaseURL && normalizedBaseURL !== item.baseURL) {
+                    item.baseURL = normalizedBaseURL;
+                    migrationNeeded = true;
+                }
+            }
             return item as unknown as PeerProfile;
         });
 
@@ -62,4 +80,8 @@ export function updatePeer(peers: PeerProfile[], id: string, updates: Partial<Pe
 
 export function deletePeer(peers: PeerProfile[], id: string): PeerProfile[] {
     return peers.filter((p) => p.id !== id);
+}
+
+export function updatePeerOrientation(peers: PeerProfile[], id: string, orientation: TemporalOrientationState): PeerProfile[] {
+    return peers.map((peer) => (peer.id === id ? { ...peer, orientation } : peer));
 }

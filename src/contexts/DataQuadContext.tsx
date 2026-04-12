@@ -12,43 +12,25 @@
  *   finalizeSession   → call in handleCloseSession before navigation
  */
 
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
     seedPeerSSP,
     appendLineage,
     recordAffect,
+    recordResidual,
+    setWorkingMemory,
     openSession,
     closeDataQuadSession,
 } from '../services/dataquad';
 import type { PeerProfile } from '../core/peers/types';
-import type { AffectSignal, CoherenceSnapshot } from '../services/dataquad';
+import type { AffectSignal, CoherenceSnapshot, ResidualSignal } from '../services/dataquad';
 import {
     runIntegrityCoherenceGate,
     tickClock,
     resetClock,
 } from '../core/governance/integrityClock';
 import type { ClockState } from '../core/governance/integrityClock';
-
-// ── Context Shape ─────────────────────────────────────────────────────────────
-
-interface DataQuadContextValue {
-    /** Seed all peers' SSSPs and open the session record. Call on Chamber mount. */
-    seedChamberPeers: (peers: PeerProfile[], sessionId: string) => void;
-    /** Write a peer's AI response to their Q3 lineage. */
-    recordMessage: (peerId: string, content: string, sessionId: string, allHandles: string[]) => void;
-    /** Write a CONTRIBUTION card to its author's Q3 lineage. */
-    recordContrib: (peerId: string, content: string, sessionId: string, allHandles: string[]) => void;
-    /** Write an affect signal to a peer's Q2 PEER ledger (Advocate's domain). */
-    recordPeerAffect: (peerId: string, signal: AffectSignal) => void;
-    /** Seal the session with a coherence snapshot. Call before closing. */
-    finalizeSession: (sessionId: string, coherence: CoherenceSnapshot) => void;
-    /** Current Internal Clock state — reflect_due fires when threshold is reached. */
-    clockState: ClockState | null;
-    /** Reset the clock after a Reflect Session completes. */
-    resetSessionClock: (sessionId: string) => void;
-}
-
-const DataQuadContext = createContext<DataQuadContextValue | null>(null);
+import { DataQuadContext } from './DataQuadContextBase';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -151,6 +133,25 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
         );
     }, [safe]);
 
+    const setPeerWorkingMemory = useCallback((peerId: string, sessionId: string, content: string) => {
+        const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
+        safe(`working-memory:${peerId}:${sessionId}`, () =>
+            setWorkingMemory(
+                peerId,
+                `pct-${sessionId}`,
+                content,
+                sessionId,
+                expiresAt,
+            )
+        );
+    }, [safe]);
+
+    const recordPeerResidual = useCallback((peerId: string, signal: ResidualSignal) => {
+        safe(`residual:${peerId}:${signal.pattern_key}`, () =>
+            recordResidual(peerId, signal)
+        );
+    }, [safe]);
+
     const finalizeSession = useCallback((sessionId: string, coherence: CoherenceSnapshot) => {
         safe('closeSession', () => closeDataQuadSession(sessionId, coherence));
     }, [safe]);
@@ -161,6 +162,8 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
             recordMessage,
             recordContrib,
             recordPeerAffect,
+            setPeerWorkingMemory,
+            recordPeerResidual,
             finalizeSession,
             clockState,
             resetSessionClock,
@@ -168,12 +171,4 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
             {children}
         </DataQuadContext.Provider>
     );
-}
-
-// ── Hook ──────────────────────────────────────────────────────────────────────
-
-export function useDataQuad(): DataQuadContextValue {
-    const ctx = useContext(DataQuadContext);
-    if (!ctx) throw new Error('useDataQuad must be used inside <DataQuadProvider>');
-    return ctx;
 }

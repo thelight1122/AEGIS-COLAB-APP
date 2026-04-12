@@ -1,4 +1,5 @@
 import { type ChatOptions, type ChatResponse } from './adapters';
+import { normalizeLocalEndpoint } from '../providers/localEndpoint';
 
 export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
     try {
@@ -25,9 +26,10 @@ export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
     // Direct fallback for local providers (e.g. LM Studio)
     const isLocalFallbackEnabled = localStorage.getItem('aegis_local_fallback') === 'true';
 
-    if (isLocalFallbackEnabled && options.provider === 'local' && options.baseURL) {
+    if (isLocalFallbackEnabled && ['local', 'lmstudio', 'ollama'].includes(options.provider) && options.baseURL) {
         console.info('Falling back to direct local call for LM Studio');
-        const resp = await fetch(`${options.baseURL}/chat/completions`, {
+        const baseURL = normalizeLocalEndpoint(options.baseURL) ?? options.baseURL;
+        const resp = await fetch(`${baseURL}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

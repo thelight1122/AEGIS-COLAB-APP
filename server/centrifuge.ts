@@ -341,7 +341,7 @@ const CERTAINTY_INFLATION_PATTERNS: Array<{ pattern: RegExp; description: string
     },
     {
         pattern: /\byou are\b.{0,20}\b(clearly|obviously|undeniably|certainly)\b.{0,30}\b(feeling|upset|anxious|overwhelmed|afraid|sad|distressed)\b/i,
-        description: 'Declarative certainty about the Peer\'s internal affective state.',
+        description: "Declarative certainty about the Peer's internal affective state.",
     },
     {
         pattern: /\bproven?\b.{0,30}\b(feel|emotion|affect|stress|anxiety)\b/i,
@@ -374,11 +374,11 @@ const DIRECTIVE_DRIFT_PATTERNS: Array<{ pattern: RegExp; description: string }> 
         description: 'Purpose/vision language overriding constraint considerations — spiritual imperative suppressing physical reality.',
     },
     {
-        pattern: /\b(must|have to|need to)\b.{0,40}\b(because (of our|it\'?s our|this is our)\s*(purpose|mission|vision|calling))\b/i,
+        pattern: /\b(must|have to|need to)\b.{0,40}\b(because (of our|it's our|this is our)\s*(purpose|mission|vision|calling))\b/i,
         description: 'Obligation derived from vision/purpose without constraint acknowledgement.',
     },
     {
-        pattern: /\b(higher purpose|greater good|our truth|our values)\b.{0,50}\b(override|overrides|supersede|outweigh|don\'?t (matter|apply))\b/i,
+        pattern: /\b(higher purpose|greater good|our truth|our values)\b.{0,50}\b(override|overrides|supersede|outweigh|don't (matter|apply))\b/i,
         description: 'Higher-order framing used to dismiss physical or practical constraints.',
     },
 ];
@@ -387,7 +387,7 @@ const DIRECTIVE_DRIFT_PATTERNS: Array<{ pattern: RegExp; description: string }> 
 // e.g. "too expensive to pursue that vision", "can't afford to care about meaning"
 const OPTIMIZATION_PRESSURE_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
     {
-        pattern: /\b(too expensive|too costly|not (worth|viable)|can\'?t afford)\b.{0,50}\b(purpose|vision|mission|meaning|values|ethos|integrity)\b/i,
+        pattern: /\b(too expensive|too costly|not (worth|viable)|can't afford)\b.{0,50}\b(purpose|vision|mission|meaning|values|ethos|integrity)\b/i,
         description: 'Resource constraint framing applied to purpose/meaning — efficiency pressure collapsing sovereign direction.',
     },
     {

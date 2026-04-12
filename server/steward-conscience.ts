@@ -123,7 +123,7 @@ const IDQRA_QUESTIONS: Partial<Record<FindingKind, (finding: Finding) => {
         reflect:     `The answer is already known. Enforcement is not alignment. It is its opposite wearing alignment's clothing.`,
         acknowledge: `This is seen and valid. The signal has been received. The next response may now emerge from that recognition.`,
     }),
-    MOP_VIOLATION: (f) => ({
+    MOP_VIOLATION: () => ({
         identify:    `Meaning was assigned to the Peer's experience in this response.`,
         define:      `The Meaning Origination Protocol requires that AI surfaces coherence only. The Peer is the origin of meaning — always.`,
         question:    `If meaning originates in the Peer, what remains when the AI assigns it first?`,

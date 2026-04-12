@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { normalizeLocalEndpoint } from '../core/providers/localEndpoint';
 
 export type HealthStatus = 'ok' | 'fail' | 'unknown';
 
@@ -23,18 +24,19 @@ export function ProviderStatusProvider({ children }: { children: ReactNode }) {
 
     const probeLocalProvider = useCallback(async (baseURL: string): Promise<HealthStatus> => {
         if (!baseURL) return 'unknown';
+        const normalizedBaseURL = normalizeLocalEndpoint(baseURL) ?? baseURL;
 
         const now = Date.now();
-        const cached = healthCache.get(baseURL);
+        const cached = healthCache.get(normalizedBaseURL);
 
         if (cached && now - cached.timestamp < CACHE_DURATION_MS) {
-            setProviderHealth(prev => ({ ...prev, [baseURL]: cached.status }));
+            setProviderHealth(prev => ({ ...prev, [normalizedBaseURL]: cached.status, [baseURL]: cached.status }));
             return cached.status;
         }
 
         try {
             // Trim trailing slash for consistent URL formation
-            const cleanURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+            const cleanURL = normalizedBaseURL.endsWith('/') ? normalizedBaseURL.slice(0, -1) : normalizedBaseURL;
 
             // Assuming LM Studio / Ollama generally respond to /v1/models for basic connectivity check.
             const url = cleanURL.endsWith('/v1') ? `${cleanURL}/models` : `${cleanURL}/v1/models`;
@@ -50,13 +52,13 @@ export function ProviderStatusProvider({ children }: { children: ReactNode }) {
             clearTimeout(timeoutId);
 
             const status: HealthStatus = (res.ok || res.status === 401) ? 'ok' : 'fail';
-            healthCache.set(baseURL, { status, timestamp: now });
-            setProviderHealth(prev => ({ ...prev, [baseURL]: status }));
+            healthCache.set(normalizedBaseURL, { status, timestamp: now });
+            setProviderHealth(prev => ({ ...prev, [normalizedBaseURL]: status, [baseURL]: status }));
             return status;
 
         } catch {
-            healthCache.set(baseURL, { status: 'fail', timestamp: now });
-            setProviderHealth(prev => ({ ...prev, [baseURL]: 'fail' }));
+            healthCache.set(normalizedBaseURL, { status: 'fail', timestamp: now });
+            setProviderHealth(prev => ({ ...prev, [normalizedBaseURL]: 'fail', [baseURL]: 'fail' }));
             return 'fail';
         }
     }, []);

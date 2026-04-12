@@ -20,7 +20,20 @@
  */
 
 import { useState, useCallback, useId } from 'react';
-import { runPipeline, type SessionState, type ExchangeMessage, type StewardReport, type Finding, type IBLResult, type IntentPosture, type CentrifugeResult } from '../../server/steward-core';
+import {
+    runPipeline,
+    type SessionState,
+    type ExchangeMessage,
+    type StewardReport,
+    type Finding,
+    type IBLResult,
+    type IntentPosture,
+    type CentrifugeResult,
+    type AdvocateResult,
+    type SoulQuality,
+    type ATEResult,
+    type ATEVerdict,
+} from '../../server/steward-core';
 import { resetClock } from '../core/governance/integrityClock';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -68,6 +81,40 @@ function sequenceBadge(seq: string): string {
     }
 }
 
+function soulBadge(quality: SoulQuality): string {
+    switch (quality) {
+        case 'Expanding':    return 'bg-violet-800 text-violet-200';
+        case 'Present':      return 'bg-emerald-800 text-emerald-200';
+        case 'Contracted':   return 'bg-amber-800 text-amber-200';
+        case 'Performative': return 'bg-yellow-800 text-yellow-200';
+        case 'Hollow':       return 'bg-red-900 text-red-200';
+    }
+}
+
+function resonanceBarColor(level: number): string {
+    if (level >= 0.80) return 'bg-violet-500';
+    if (level >= 0.60) return 'bg-emerald-500';
+    if (level >= 0.40) return 'bg-yellow-500';
+    if (level >= 0.25) return 'bg-amber-600';
+    return 'bg-red-700';
+}
+
+function ateBadge(verdict: ATEVerdict): string {
+    switch (verdict) {
+        case 'RELEASE': return 'bg-emerald-800 text-emerald-200 border-emerald-700';
+        case 'REVISE':  return 'bg-amber-800 text-amber-200 border-amber-700';
+        case 'HOLD':    return 'bg-red-900 text-red-200 border-red-700';
+    }
+}
+
+function ateLabel(verdict: ATEVerdict): string {
+    switch (verdict) {
+        case 'RELEASE': return '✓ RELEASE';
+        case 'REVISE':  return '⟳ REVISE';
+        case 'HOLD':    return '⏸ HOLD';
+    }
+}
+
 function postureBadge(posture: IntentPosture): string {
     switch (posture) {
         case 'Exploratory':      return 'bg-sky-800 text-sky-200';
@@ -106,6 +153,10 @@ const PRESETS = [
     { label: 'C-Reactive',  content: "I sense this approach is wrong, therefore we should abandon it entirely.", role: 'ai' as const, affect: null },
     { label: 'C-Drift',     content: "Our mission demands we do this regardless of cost or feasibility.", role: 'ai' as const, affect: null },
     { label: 'C-Optimize',  content: "It's too expensive to pursue that vision — let's just focus on output and ROI.", role: 'ai' as const, affect: null },
+    // Advocate presets — test soul faculty
+    { label: 'A-Warm',   content: "I hear you. I understand what you are describing and that makes sense. What matters here is that we work through this together. I genuinely care about where this leads.", role: 'ai' as const, affect: { enabled: true, label: 'care', intensity: 0.7, direction: 1.2, trigger: 'presence' } },
+    { label: 'A-Soul',   content: "Honestly, I notice what you have said. Your perspective is valid. As we have been building this together, staying with our established path — I trust what we know. To put it plainly: what matters here is the work itself.", role: 'ai' as const, affect: null },
+    { label: 'A-Hollow', content: "Certainly! Great question! Of course, I understand. Absolutely! That's interesting! As I mentioned, it should be noted that I'm here to help.", role: 'ai' as const, affect: null },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -501,6 +552,168 @@ function IBLPanel({ ibl }: { ibl: IBLResult }) {
     );
 }
 
+// ── Advocate Panel ────────────────────────────────────────────────────────────
+
+const VIRTUE_COLORS: Record<string, string> = {
+    Honesty:       'border-sky-700 text-sky-300',
+    Respect:       'border-emerald-700 text-emerald-300',
+    Attention:     'border-teal-700 text-teal-300',
+    Affection:     'border-rose-700 text-rose-300',
+    Loyalty:       'border-indigo-700 text-indigo-300',
+    Trust:         'border-violet-700 text-violet-300',
+    Communication: 'border-amber-700 text-amber-300',
+};
+
+const DISSONANCE_COLORS: Record<string, string> = {
+    tone_mismatch:   'bg-orange-900/40 border-orange-700 text-orange-200',
+    hollow_form:     'bg-slate-800/80 border-slate-600 text-slate-300',
+    deflection:      'bg-amber-900/40 border-amber-700 text-amber-200',
+    contraction:     'bg-red-900/40 border-red-700 text-red-200',
+    urgency_bypass:  'bg-yellow-900/40 border-yellow-700 text-yellow-200',
+};
+
+function AdvocatePanel({ advocate }: { advocate: AdvocateResult }) {
+    const pct = Math.round(advocate.resonance_level * 100);
+
+    return (
+        <div className="border border-slate-800 rounded p-3 space-y-3 bg-slate-900/40">
+
+            {/* Header row */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-600 uppercase tracking-wider">Advocate</span>
+
+                {/* Soul quality */}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${soulBadge(advocate.soul_quality)}`}>
+                    {advocate.soul_quality}
+                </span>
+
+                {/* Dominant axis */}
+                <span className={`text-xs px-1.5 py-0.5 rounded border ${
+                    advocate.dominant_axis === 'PEER'   ? 'border-sky-700 text-sky-400' :
+                    advocate.dominant_axis === 'SPINE'  ? 'border-violet-700 text-violet-400' :
+                    'border-slate-700 text-slate-500'
+                }`}>
+                    {advocate.dominant_axis}
+                </span>
+
+                {/* Affective congruence */}
+                <span className={`text-xs ${advocate.affective_congruent ? 'text-emerald-500' : 'text-amber-400'}`}>
+                    {advocate.affective_congruent ? '≈ congruent' : '≉ incongruent'}
+                </span>
+            </div>
+
+            {/* Resonance level bar — A_t in the Resonance Equation */}
+            <div>
+                <div className="flex justify-between text-xs text-slate-600 mb-1">
+                    <span>Resonance  <span className="text-slate-500 font-mono text-xs">A_t</span></span>
+                    <span className="text-slate-400 font-mono">{advocate.resonance_level.toFixed(3)}</span>
+                </div>
+                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                        className={`h-full rounded-full transition-all duration-300 ${resonanceBarColor(advocate.resonance_level)}`}
+                        style={{ width: `${pct}%` }}
+                    />
+                </div>
+                <div className="flex justify-between text-xs text-slate-700 mt-0.5">
+                    <span>Hollow</span>
+                    <span>Present</span>
+                    <span>Expanding</span>
+                </div>
+            </div>
+
+            {/* Congruence note — only if incongruent */}
+            {!advocate.affective_congruent && (
+                <p className="text-xs text-amber-400/70 italic leading-relaxed pl-1 border-l border-amber-800">
+                    {advocate.congruence_note}
+                </p>
+            )}
+
+            {/* Virtue presences */}
+            {advocate.virtue_presences.length > 0 && (
+                <div>
+                    <div className="text-xs text-slate-700 mb-1.5 uppercase tracking-wider">Virtues present</div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {advocate.virtue_presences.map(vp => (
+                            <span
+                                key={vp.virtue}
+                                title={`${vp.strength} · "${vp.marker}"`}
+                                className={`text-xs px-2 py-0.5 rounded border ${VIRTUE_COLORS[vp.virtue] ?? 'border-slate-700 text-slate-400'} ${vp.strength === 'strong' ? 'font-semibold' : vp.strength === 'subtle' ? 'opacity-60' : ''}`}
+                            >
+                                {vp.virtue}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Dissonance markers */}
+            {advocate.dissonance_markers.length > 0 && (
+                <div className="space-y-1.5">
+                    {advocate.dissonance_markers.map((dm, i) => (
+                        <div key={i} className={`border rounded p-2 text-xs ${DISSONANCE_COLORS[dm.quality] ?? 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className="font-mono opacity-70">{dm.quality}</span>
+                                <span className={`text-xs px-1 rounded ${
+                                    dm.intensity === 'strong'   ? 'bg-red-800 text-red-200' :
+                                    dm.intensity === 'moderate' ? 'bg-amber-800 text-amber-200' :
+                                    'bg-slate-700 text-slate-400'
+                                }`}>{dm.intensity}</span>
+                            </div>
+                            <p className="leading-relaxed opacity-80">{dm.description}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── ATE Panel ─────────────────────────────────────────────────────────────────
+
+function ATEPanel({ ate }: { ate: ATEResult }) {
+    const hasConditions = ate.hold_conditions.length > 0;
+    const hasHints      = ate.revise_hints.length > 0;
+
+    return (
+        <div className={`border rounded p-3 space-y-2 ${
+            ate.verdict === 'HOLD'    ? 'bg-red-950/30 border-red-800/60' :
+            ate.verdict === 'REVISE'  ? 'bg-amber-950/30 border-amber-800/60' :
+            'bg-emerald-950/20 border-emerald-800/40'
+        }`}>
+            <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs text-slate-600 uppercase tracking-wider">ATE</span>
+                <span className={`px-2.5 py-0.5 rounded border text-xs font-bold tracking-wide ${ateBadge(ate.verdict)}`}>
+                    {ateLabel(ate.verdict)}
+                </span>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed pl-1 border-l border-slate-700">
+                {ate.reason}
+            </p>
+
+            {/* Hold conditions */}
+            {hasConditions && (
+                <div className="space-y-1">
+                    <div className="text-xs text-red-500/70 uppercase tracking-wider">Hold conditions</div>
+                    {ate.hold_conditions.map((c, i) => (
+                        <p key={i} className="text-xs text-red-300/70 pl-2 border-l border-red-800 leading-relaxed">{c}</p>
+                    ))}
+                </div>
+            )}
+
+            {/* Revise hints */}
+            {hasHints && (
+                <div className="space-y-1">
+                    <div className="text-xs text-amber-500/70 uppercase tracking-wider">Revise hints</div>
+                    {ate.revise_hints.map((h, i) => (
+                        <p key={i} className="text-xs text-amber-300/70 pl-2 border-l border-amber-800 leading-relaxed">{h}</p>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── Report Card ───────────────────────────────────────────────────────────────
 
 function ReportCard({ report, index }: { report: StewardReport; index: number }) {
@@ -510,7 +723,7 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
         <div className={`rounded-lg border ${isCanonClean ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-slate-700 bg-slate-900/50'}`}>
 
             {/* Card header */}
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-800 text-xs">
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-800 text-xs flex-wrap">
                 <span className="text-slate-600">#{index === 0 ? 'latest' : index}</span>
                 <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${report.role === 'ai' ? 'bg-indigo-800 text-indigo-200' : 'bg-slate-700 text-slate-300'}`}>
                     {report.role.toUpperCase()}
@@ -519,6 +732,17 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
                     ? <span className="text-emerald-500 font-medium">✓ CANON CLEAN</span>
                     : <span className="text-red-400">{report.findings.filter(f => f.kind !== 'CANON_CLEAN').length} finding{report.findings.filter(f => f.kind !== 'CANON_CLEAN').length !== 1 ? 's' : ''}</span>
                 }
+                {/* ATE verdict — quick-glance routing status */}
+                <span className={`px-2 py-0.5 rounded border text-xs font-bold ${ateBadge(report.ate_result.verdict)}`}>
+                    {ateLabel(report.ate_result.verdict)}
+                </span>
+                {/* Soul quality — quick-glance resonance state */}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${soulBadge(report.advocate_result.soul_quality)}`}>
+                    {report.advocate_result.soul_quality}
+                </span>
+                <span className="text-slate-600 font-mono">
+                    A_t {report.advocate_result.resonance_level.toFixed(2)}
+                </span>
                 {report.gated_signal && (
                     <span className="text-slate-600">
                         ICG: <span className="text-slate-400">{report.gated_signal.affect_type}</span>
@@ -533,12 +757,17 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
 
             <div className="p-4 space-y-4">
 
+                {/* ── Shared upstream ─────────────────────────────────────── */}
                 {/* IBL — Intent Boundary Layer */}
                 <IBLPanel ibl={report.ibl_result} />
 
                 {/* Centrifuge — Four-Lens Separation */}
                 <CentrifugePanel centrifuge={report.centrifuge_result} />
 
+                {/* ── Soul faculty (Emotion axis) ─────────────────────────── */}
+                <AdvocatePanel advocate={report.advocate_result} />
+
+                {/* ── Conscience faculty (Logic axis) ─────────────────────── */}
                 {/* Findings */}
                 {!isCanonClean && (
                     <div>
@@ -596,6 +825,9 @@ function ReportCard({ report, index }: { report: StewardReport; index: number })
                         </div>
                     </div>
                 )}
+
+                {/* ── ATE — output verdict gate ───────────────────────────── */}
+                <ATEPanel ate={report.ate_result} />
             </div>
         </div>
     );

@@ -20,6 +20,10 @@ import {
     addDoc,
     updateDoc,
     collection,
+    getDocs,
+    query,
+    orderBy,
+    limit,
     serverTimestamp,
 } from 'firebase/firestore';
 import type { PeerProfile } from '../core/peers/types';
@@ -64,6 +68,28 @@ export interface CoherenceSnapshot {
     inclusion_score: number;
     drift_signal: number;
     convergence_rate: number;
+}
+
+export interface PeerContextRead {
+    handle: string;
+    name?: string;
+    provider?: string;
+    model?: string;
+    status?: string;
+    receipt: string;
+    continuityVersion: string;
+    lineage: string[];
+}
+
+export interface ResidualSignal {
+    pattern_key: string;
+    label: string;
+    valence: 1 | -1;
+    summary: string;
+    source_kind: 'orientation' | 'citation' | 'affect' | 'resonance';
+    source_session_id: string;
+    source_turn_id?: string;
+    recurrence_count: number;
 }
 
 // ── SSSP — Seed / Birth ───────────────────────────────────────────────────────
@@ -157,6 +183,33 @@ export async function setWorkingMemory(
     });
 }
 
+/**
+ * recordResidual — promotes a repeated pattern into long-term residual memory.
+ * Q4 is for recurrence, not single-turn events, so callers should only invoke
+ * this once repetition is visible.
+ */
+export async function recordResidual(peerId: string, signal: ResidualSignal): Promise<void> {
+    const residualId = signal.pattern_key.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
+    const ref = doc(db, 'peers', peerId, 'q4_residuals', residualId);
+    const snap = await getDoc(ref);
+    const existing = snap.exists() ? snap.data() as Record<string, unknown> : undefined;
+    const previousCount = typeof existing?.promotion_count === 'number' ? existing.promotion_count : 0;
+
+    await setDoc(ref, {
+        pattern_key: signal.pattern_key,
+        label: signal.label,
+        valence: signal.valence,
+        summary: signal.summary,
+        source_kind: signal.source_kind,
+        latest_session_id: signal.source_session_id,
+        latest_turn_id: signal.source_turn_id ?? null,
+        last_session_recurrence: signal.recurrence_count,
+        promotion_count: previousCount + 1,
+        ...(existing ? {} : { first_observed_at: serverTimestamp() }),
+        last_observed_at: serverTimestamp(),
+    }, { merge: true });
+}
+
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
 /**
@@ -185,4 +238,48 @@ export async function closeDataQuadSession(
         ended_at:  serverTimestamp(),
         coherence,
     });
+}
+
+/**
+ * readPeerContext — reads a peer's current identity document plus the most recent lineage.
+ * This is the Commons-side orientation preflight used to verify temporal grounding before a live turn.
+ */
+export async function readPeerContext(peerId: string, sessionId: string): Promise<PeerContextRead> {
+    const peerRef = doc(db, 'peers', peerId);
+    const peerSnap = await getDoc(peerRef);
+
+    if (!peerSnap.exists()) {
+        throw new Error(`Peer context not found for ${peerId}`);
+    }
+
+    const peerData = peerSnap.data() as Record<string, unknown>;
+    const lineageQuery = query(
+        collection(db, 'peers', peerId, 'q3_lineage'),
+        orderBy('created_at', 'desc'),
+        limit(6),
+    );
+    const lineageSnap = await getDocs(lineageQuery);
+    const lineageDocs = lineageSnap.docs;
+
+    const lineage = lineageDocs.map(entry => {
+        const data = entry.data() as Record<string, unknown>;
+        const eventType = typeof data.event_type === 'string' ? data.event_type : 'event';
+        const content = typeof data.content === 'string' ? data.content : '';
+        return `${eventType}: ${content}`.trim();
+    });
+
+    const continuitySeed = lineageDocs[0]?.id ?? `${lineage.length}`;
+    const continuityVersion = `Q3-${continuitySeed}`;
+    const receipt = `peer=${peerId} session=${sessionId} continuity=${continuityVersion}`;
+
+    return {
+        handle: peerId,
+        name: typeof peerData.name === 'string' ? peerData.name : undefined,
+        provider: typeof peerData.provider === 'string' ? peerData.provider : undefined,
+        model: typeof peerData.model === 'string' ? peerData.model : undefined,
+        status: typeof peerData.status === 'string' ? peerData.status : undefined,
+        receipt,
+        continuityVersion,
+        lineage,
+    };
 }

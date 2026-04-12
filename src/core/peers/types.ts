@@ -1,5 +1,19 @@
 export type PeerType = 'ai' | 'human';
 export type LLMProvider = 'gemini' | 'openai' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
+export type OrientationStatus = 'unverified' | 'verified' | 'stale';
+export type OrientationSource = 'peer_context' | 'commons_session' | 'manual' | 'system' | 'unknown';
+export type OrientationFacet = 'peer' | 'steward' | 'advocate' | 'observer' | 'system';
+
+export interface TemporalOrientationState {
+    status: OrientationStatus;
+    source: OrientationSource;
+    facet: OrientationFacet;
+    sessionId?: string;
+    orientedAt?: string;
+    receipt?: string;
+    continuityVersion?: string;
+    notes?: string;
+}
 
 export interface PeerProfile {
     id: string;
@@ -14,6 +28,7 @@ export interface PeerProfile {
     baseURL?: string;
     notes?: string;
     dataQuad?: string[]; // Foundational knowledge segments (e.g., AEGIS Canon)
+    orientation?: TemporalOrientationState;
 }
 
 export type TeamPreset = {

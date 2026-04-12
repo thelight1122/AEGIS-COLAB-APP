@@ -15,6 +15,8 @@ import { UnlockModal } from '../security/UnlockModal';
 import { loadPeers, savePeers } from '../../core/peers/peerRegistryStore';
 import { loadActiveTeam, setSelectedPeerIds } from '../../core/peers/activeTeamStore';
 import type { LLMProvider } from '../../core/peers/types';
+import { createUnverifiedOrientation } from '../../core/peers/orientation';
+import { normalizeLocalEndpoint } from '../../core/providers/localEndpoint';
 
 const MODEL_OPTIONS: { provider: ModelProvider, label: string, defaultModel: string }[] = [
     { provider: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o' },
@@ -30,7 +32,7 @@ const LOCAL_OPTIONS: { provider: ModelProvider, label: string, defaultEndpoint: 
 
 export function SessionInit() {
     const navigate = useNavigate();
-    const { connectedModels, addModel, validateModel } = useCommons();
+    const { connectedModels, addModel, validateModel, enterWorkshop } = useCommons();
     const { status, keys } = useKeyring();
 
     const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
@@ -71,6 +73,11 @@ export function SessionInit() {
                 nextPeers[existingIdx].enabled = true;
                 nextPeers[existingIdx].model = m.model;
                 if (m.endpointUrl) nextPeers[existingIdx].baseURL = m.endpointUrl;
+                nextPeers[existingIdx].orientation = createUnverifiedOrientation({
+                    source: 'commons_session',
+                    facet: 'system',
+                    notes: 'Peer connected to Commons. Verified temporal orientation still pending.',
+                });
                 nextActiveTeamIds.add(nextPeers[existingIdx].id);
             } else {
                 nextPeers.push({
@@ -82,7 +89,12 @@ export function SessionInit() {
                     model: m.model,
                     enabled: true,
                     domains: ['General', 'Engineering', 'Product'],
-                    baseURL: m.endpointUrl
+                    baseURL: m.endpointUrl,
+                    orientation: createUnverifiedOrientation({
+                        source: 'commons_session',
+                        facet: 'system',
+                        notes: 'Peer connected to Commons. Verified temporal orientation still pending.',
+                    }),
                 });
                 nextActiveTeamIds.add(m.id);
             }
@@ -90,7 +102,7 @@ export function SessionInit() {
 
         savePeers(nextPeers);
         setSelectedPeerIds(activeTeam, Array.from(nextActiveTeamIds));
-        navigate('/chamber');
+        enterWorkshop();
     };
 
     const handleAddHosted = (provider: ModelProvider, model: string) => {
@@ -106,12 +118,13 @@ export function SessionInit() {
         if (!config.endpoint || !config.model) return;
 
         const key = config.apiKey || keys[provider];
+        const endpointUrl = normalizeLocalEndpoint(config.endpoint);
 
         addModel({
             provider,
             model: config.model,
             apiKey: key,
-            endpointUrl: config.endpoint,
+            endpointUrl,
             type: 'local'
         });
     };

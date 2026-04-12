@@ -37,6 +37,8 @@ export const getAdapter = (provider: string): LLMAdapter => {
         case 'openai': return openaiAdapter;
         case 'xai':
         case 'grok': return xaiAdapter;
+        case 'lmstudio':
+        case 'ollama':
         case 'local':
         case 'openaicompat': return openaiCompatAdapter;
         default: return openaiCompatAdapter;

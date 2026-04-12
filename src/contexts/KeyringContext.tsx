@@ -83,9 +83,12 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const sessionPassphrase = sessionStorage.getItem(SESSION_KEY);
         if (sessionPassphrase && KeyVault.hasVault()) {
-            unlock(sessionPassphrase).catch(() => {
-                sessionStorage.removeItem(SESSION_KEY);
-            });
+            const restoreId = window.setTimeout(() => {
+                unlock(sessionPassphrase).catch(() => {
+                    sessionStorage.removeItem(SESSION_KEY);
+                });
+            }, 0);
+            return () => window.clearTimeout(restoreId);
         }
     }, [unlock]);
 

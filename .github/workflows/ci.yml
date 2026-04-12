@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,5 +22,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm run test:all
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run steward tests
+        run: npm run test:steward
+
+      - name: Run governance E2E
+        run: npm run test:governance
+
+      - name: Run session E2E
+        run: npm run test:sessions

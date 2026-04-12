@@ -1,9 +1,11 @@
 import { type ChatOptions, type ChatResponse, type LLMAdapter } from './index';
+import { normalizeLocalEndpoint } from '../../providers/localEndpoint';
 
 export const openaiCompatAdapter: LLMAdapter = {
     async completeChat(options: ChatOptions): Promise<ChatResponse> {
         const { model, messages, baseURL, apiKey } = options;
-        const url = `${baseURL || 'https://api.openai.com/v1'}/chat/completions`;
+        const normalizedBaseURL = baseURL ? normalizeLocalEndpoint(baseURL) : undefined;
+        const url = `${normalizedBaseURL || 'https://api.openai.com/v1'}/chat/completions`;
 
         const response = await fetch(url, {
             method: 'POST',

@@ -17,6 +17,7 @@ import { useKeyring } from '../contexts/KeyringContext';
 import { getProviderReadiness } from '../core/providers/providerReadiness';
 import { useNavigate } from 'react-router-dom';
 import { useProviderStatus } from '../contexts/ProviderStatusContext';
+import { normalizeLocalEndpoint } from '../core/providers/localEndpoint';
 export default function TeamSetup() {
     const [peers, setPeers] = useState<PeerProfile[]>(() => loadPeers());
     const [presets, setPresets] = useState<TeamPreset[]>(() => loadTeamPresets());
@@ -304,7 +305,10 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        const normalized = (formData.provider === 'lmstudio' || formData.provider === 'ollama')
+            ? { ...formData, baseURL: normalizeLocalEndpoint(formData.baseURL) }
+            : formData;
+        onSave(normalized);
     };
 
     return (
@@ -575,7 +579,13 @@ function PeerCard({ peer, isActive, onToggle, onEdit, onDelete, readOnly }: {
                 <div className="mt-3 flex items-center justify-between gap-2 bg-yellow-500/10 p-2.5 rounded-lg border border-yellow-500/20">
                     <div className="flex flex-col">
                         <span className="text-xs font-bold uppercase text-yellow-600">
-                            {readiness.state === 'locked' ? 'Locked' : 'Missing Config/Key'}
+                            {readiness.state === 'locked'
+                                ? 'Locked'
+                                : readiness.state === 'unreachable'
+                                    ? 'Endpoint Unreachable'
+                                    : readiness.state === 'missing_key'
+                                        ? 'Missing Key'
+                                        : 'Missing Config'}
                         </span>
                         <span className="text-[10px] text-muted-foreground">{readiness.reason}</span>
                     </div>

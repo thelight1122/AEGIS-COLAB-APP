@@ -13,7 +13,7 @@ import { computeInclusionState, canLock } from '../../core/governance/inclusionS
 import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS, DEFAULT_DOMAIN_LENSES } from '../../core/governance/systemLenses';
 import { callGateway } from '../../core/llm/gatewayClient';
 import { useKeyring } from '../../contexts/KeyringContext';
-import { useDataQuad } from '../../contexts/DataQuadContext';
+import { useDataQuad } from '../../contexts/useDataQuad';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isE2E } from '../../lib/e2e';
@@ -48,7 +48,7 @@ export default function ChamberLayout() {
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
     const { seedChamberPeers, recordMessage, recordContrib, recordPeerAffect, finalizeSession, clockState, resetSessionClock } = useDataQuad();
-    const [sessions, setSessions] = useState<LiveSession[]>(() => {
+    const [sessions] = useState<LiveSession[]>(() => {
         const existing = loadSessions();
         const hasActive = existing.some(s => s.status === 'Active');
         if (hasActive) return existing;
@@ -344,7 +344,7 @@ export default function ChamberLayout() {
 
         window.addEventListener('ids-card-added', handleIdsAdded);
         return () => window.removeEventListener('ids-card-added', handleIdsAdded);
-    }, [createHardenedEvent]);
+    }, [createHardenedEvent, currentSession?.id, recordContrib, recordPeerAffect, registryPeers, setIdsCardsFromStore]);
 
     const handleChat = useCallback(async (text: string) => {
         if (!currentSession) return;
@@ -419,7 +419,7 @@ export default function ChamberLayout() {
         } finally {
             setIsChatting(false);
         }
-    }, [currentSession, registryPeers, selectedChatPeerIds, vaultKeys, createHardenedEvent]);
+    }, [currentSession, registryPeers, selectedChatPeerIds, vaultKeys, createHardenedEvent, recordMessage, recordPeerAffect]);
 
     const handleChatFromStream = useCallback(async (type: IDSCard['type'], text: string) => {
         addCard(type, text);
@@ -534,35 +534,63 @@ export default function ChamberLayout() {
             <div className="h-14 flex items-center justify-between px-6 bg-background-dark/30 backdrop-blur-md border-b border-white/5 shrink-0 z-50">
                 <div className="flex items-center gap-4">
                     {isEditingMetadata ? (
-                        <div className="flex items-center gap-2">
-                            <input
-                                title="Artifact Title"
-                                className="bg-neutral-dark border border-neutral-border rounded px-3 py-0.5 text-xs text-white focus:outline-none focus:border-primary/50"
-                                value={tempMetadata.title}
-                                onChange={(e) => setTempMetadata(prev => ({ ...prev, title: e.target.value }))}
-                            />
-                            <Button
-                                title="Save Title"
-                                size="sm"
-                                className="h-6 w-6"
-                                onClick={() => { setArtifactMetadata(tempMetadata); setIsEditingMetadata(false); }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </Button>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-primary/60">
+                                Governance Integrity v1.0
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    title="Artifact Title"
+                                    aria-label="Artifact Title"
+                                    className="bg-neutral-dark border border-neutral-border rounded px-3 py-0.5 text-xs text-white focus:outline-none focus:border-primary/50"
+                                    value={tempMetadata.title}
+                                    onChange={(e) => setTempMetadata(prev => ({ ...prev, title: e.target.value }))}
+                                />
+                                <input
+                                    title="Target Domains"
+                                    aria-label="Target Domains"
+                                    className="bg-neutral-dark border border-neutral-border rounded px-3 py-0.5 text-xs text-white focus:outline-none focus:border-primary/50 min-w-[220px]"
+                                    value={tempMetadata.domains.join(', ')}
+                                    onChange={(e) => setTempMetadata(prev => ({
+                                        ...prev,
+                                        domains: e.target.value
+                                            .split(',')
+                                            .map((domain) => domain.trim())
+                                            .filter(Boolean),
+                                    }))}
+                                />
+                                <Button
+                                    title="Save Metadata"
+                                    size="sm"
+                                    className="h-6 w-6"
+                                    onClick={() => { setArtifactMetadata(tempMetadata); setIsEditingMetadata(false); }}
+                                >
+                                    <Check className="w-3 h-3" />
+                                </Button>
+                            </div>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 group">
-                            <h2 className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active Artifact</h2>
-                            <span className="text-xs font-bold text-white tracking-tight">{artifactMetadata.title}</span>
-                            <Button
-                                title="Edit Title"
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-white/40 hover:text-primary"
-                                onClick={() => { setTempMetadata(artifactMetadata); setIsEditingMetadata(true); }}
-                            >
-                                <Edit2 className="w-3 h-3" />
-                            </Button>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-primary/60">
+                                Governance Integrity v1.0
+                            </span>
+                            <div className="flex items-center gap-2 group">
+                                <h2 className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active Artifact</h2>
+                                <span className="text-xs font-bold text-white tracking-tight">{artifactMetadata.title}</span>
+                                <Button
+                                    data-testid="edit-metadata"
+                                    title="Edit Title"
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className={cn(
+                                        "h-8 w-8 transition-opacity text-white/40 hover:text-primary",
+                                        isE2E() ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                    )}
+                                    onClick={() => { setTempMetadata(artifactMetadata); setIsEditingMetadata(true); }}
+                                >
+                                    <Edit2 className="w-3 h-3" />
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>

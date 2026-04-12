@@ -9,7 +9,7 @@ Prevent inconsistent governance states (phantom locks, duplicated ledger entries
 ### 1. Single Active Session (Option A)
 
 - **Rule**: Each artifact (unique `artifactId`) can have exactly ONE active "Live Session" at any given time.
-- **Enforcement**:
+- **Resonance**:
   - When a user opens an artifact, the system checks for an existing active session.
   - If found, the user joins the existing session.
   - If not found, a new session is initialized.

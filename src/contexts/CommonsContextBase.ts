@@ -3,8 +3,11 @@ import type {
     ConnectedModel,
     WorkshopMessage,
     ExplorationPhase,
-    ModelProvider
+    ModelProvider,
+    CommonsSessionOverview,
+    CustodialPulse,
 } from '../types/commons';
+import type { StewardReport } from '../../server/steward-core';
 
 export interface CommonsContextType {
     connectedModels: ConnectedModel[];
@@ -15,6 +18,9 @@ export interface CommonsContextType {
     roundRobinOrder: string[];
     currentTurnIndex: number | null;
     sessionId: string | null;
+    sessionOverview: CommonsSessionOverview;
+    latestCustodialPulse: CustodialPulse | null;
+    latestCustodialReport: StewardReport | null;
 
     addModel: (params: {
         provider: ModelProvider,
@@ -27,7 +33,7 @@ export interface CommonsContextType {
     enterWorkshop: (explicitSessionId?: string) => void;
     addMessage: (message: Omit<WorkshopMessage, 'id' | 'timestamp'>) => void;
     setAudioEnabled: (enabled: boolean) => void;
-    startRoundRobin: (userPrompt: string) => void;
+    startRoundRobin: (userPrompt: string) => Promise<void>;
     interruptRoundRobin: () => void;
     beginNewChat: () => void;
     setModelSelection: (id: string, isSelected: boolean) => void;

@@ -1,4 +1,5 @@
 import type { PeerProfile } from './types';
+import { createVerifiedOrientation } from './orientation';
 
 export const HUMAN_PEER: PeerProfile = {
     id: "human",
@@ -9,4 +10,9 @@ export const HUMAN_PEER: PeerProfile = {
     model: "",
     enabled: true,
     domains: [],
+    orientation: createVerifiedOrientation({
+        source: 'manual',
+        facet: 'observer',
+        notes: 'Human observer is self-present by definition within the current session.',
+    }),
 };
