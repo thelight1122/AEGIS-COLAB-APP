@@ -18,7 +18,6 @@
  * It is a keeper of what has not yet earned release.
  */
 
-import { randomUUID } from 'crypto';
 import type { ExchangeRole, Finding, ConscienceOutput } from './steward-core.js';
 import type { IBLResult } from './ibl.js';
 import type { CentrifugeResult } from './centrifuge.js';
@@ -113,7 +112,7 @@ export function appendToBookcase(
     snapshot: BookcaseSnapshot,
 ): BookcaseEntry {
     const entry: BookcaseEntry = {
-        entry_id: randomUUID(),
+        entry_id: globalThis.crypto.randomUUID(),
         session_id,
         role,
         content,

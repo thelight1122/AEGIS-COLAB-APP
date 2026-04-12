@@ -20,7 +20,6 @@
  *    it can settle honestly later."
  */
 
-import { randomUUID } from 'crypto';
 import type { ExchangeRole } from './steward-core.js';
 import type { CentrifugeResult } from './centrifuge.js';
 import type { IBLResult } from './ibl.js';
@@ -232,7 +231,7 @@ export function recordPeerEntry(params: {
         : 'tentative';
 
     const entry: PeerEntry = {
-        event_id: randomUUID(),
+        event_id: globalThis.crypto.randomUUID(),
         timestamp: Date.now(),
         interaction_context: context,
         observed_noise_type: noise_type,

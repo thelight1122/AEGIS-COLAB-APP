@@ -21,7 +21,6 @@
  *   "SPINE is where uncertainty goes when it has proven it will not disappear."
  */
 
-import { randomUUID } from 'crypto';
 import type { IEVEffectName } from '../src/core/canon/aegis-iev.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -116,7 +115,7 @@ export function promoteToSpine(params: {
     stability_score?: StabilityScore;
 }): SpineEntry {
     const entry: SpineEntry = {
-        spine_id: randomUUID(),
+        spine_id: globalThis.crypto.randomUUID(),
         abstracted_pattern: params.abstracted_pattern,
         origin_signature: params.origin_signature,
         context_span: [...params.context_span],
