@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * peer-spine-promoter.test.ts — PEER → SPINE Promotion Engine Tests
  *
@@ -28,20 +29,28 @@ import {
     getCluster,
     clusterCount,
     CANDIDATE_X,
+    CANDIDATE_Y,
     PROMOTION_X,
+    PROMOTION_Y,
     SIMILARITY_THRESHOLD,
+    CANDIDATE_Z_MS,
+    PROMOTION_Z_MS,
+    DORMANT_MASS_THRESHOLD,
+    DORMANT_WINDOW_MS,
     RATE_LIMIT_PER_24H,
     RATE_LIMIT_WINDOW_MS,
     _resetPromoterForTesting,
 } from '../peer-spine-promoter.js';
 import {
     recordPeerEntry,
+    getAllPeerEntries,
     peerCount,
     _resetPeerForTesting,
     type PeerEntry,
 } from '../peer.js';
 import {
     promoteToSpine,
+    getAllSpineEntries,
     spineCount,
     _resetSpineForTesting,
 } from '../spine.js';
