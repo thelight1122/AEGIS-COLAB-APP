@@ -26,7 +26,6 @@ import {
     limit,
     where,
     serverTimestamp,
-    Timestamp,
 } from 'firebase/firestore';
 import type { PeerProfile } from '../core/peers/types';
 import type { PeerEntry } from '../../server/peer.js';
@@ -141,21 +140,16 @@ export async function seedPeerSSP(peer: PeerProfile): Promise<boolean> {
 // ── Q3 — Lineage (append-only) ────────────────────────────────────────────────
 
 /**
- * appendLineage — writes one tamper-evident entry to a peer's lineage.
+ * appendLineage — writes one tamper-evident entry to a peer's lineage (q3_lineage).
  *
- * Writes to two sub-collections in parallel:
- *   q3_lineage — app's own lineage store (used by readPeerContext and Chamber)
- *   q3_nct     — AEGIS MCP peer context store (read by peer_read_context tool on @alder/@vespar)
- *
- * This dual-write is the NCT bridge — without it, AEGIS peers have no memory of
- * what happened in the app between sessions. Both collections share the same schema.
+ * The NCT bridge is implemented on the MCP server side: peer_read_context now reads
+ * from both q3_nct (MCP Admin SDK writes) and q3_lineage (app client SDK writes),
+ * so AEGIS peers see the full session history without requiring client write access
+ * to the Admin-SDK-only q3_nct collection.
  */
 export async function appendLineage(peerId: string, event: LineageEvent): Promise<void> {
     const payload = { ...event, created_at: serverTimestamp() };
-    await Promise.all([
-        addDoc(collection(db, 'peers', peerId, 'q3_lineage'), payload),
-        addDoc(collection(db, 'peers', peerId, 'q3_nct'), payload),
-    ]);
+    await addDoc(collection(db, 'peers', peerId, 'q3_lineage'), payload);
 }
 
 // ── Q2 — Affect State ─────────────────────────────────────────────────────────

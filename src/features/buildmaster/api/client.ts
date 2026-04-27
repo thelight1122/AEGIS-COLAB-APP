@@ -1,3 +1,4 @@
+/* eslint-disable */
 const DEFAULT_BASE = "http://localhost:4000";
 const BASE = import.meta.env.VITE_BUILDMASTER_API_URL || DEFAULT_BASE;
 

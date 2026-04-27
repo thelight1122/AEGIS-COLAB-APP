@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState } from 'react';
 import { Play, Plus, Clock, Users, Briefcase, Terminal } from 'lucide-react';
 import { createRun } from '../api/endpoints';

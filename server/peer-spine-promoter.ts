@@ -35,13 +35,11 @@
 
 import {
     getAllPeerEntries,
-    getEntriesBySignature,
     applyDecayToAll,
     computeDecayWeight,
     type PeerEntry,
     type NoiseType,
     type SignalDiscrepancy,
-    type InteractionContext,
 } from './peer.js';
 import {
     promoteToSpine,

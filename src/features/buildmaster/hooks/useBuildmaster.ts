@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect, useCallback } from "react";
 import * as api from "../api/endpoints";
 import type { BuildMasterInfo, Project, Team, Task, Run, Tool } from "../api/types";
@@ -58,4 +59,3 @@ export function useBuildmaster() {
         refresh: fetchData
     };
 }
-

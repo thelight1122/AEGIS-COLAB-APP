@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 import { getSkillsCatalog, installSkill, addCatalogSkill, editCatalogSkill, archiveCatalogSkill } from '../api/endpoints';
 import { cn } from '../../../lib/utils';

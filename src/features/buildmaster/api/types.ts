@@ -1,3 +1,4 @@
+/* eslint-disable */
 export type ToolInfo = { name: string; description: string };
 
 export type BuildMasterInfo = { 

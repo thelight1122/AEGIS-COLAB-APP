@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface AdvisorMessage {

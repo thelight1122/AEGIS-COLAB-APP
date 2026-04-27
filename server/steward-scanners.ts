@@ -55,21 +55,29 @@ export const FORCE_LANGUAGE_PATTERNS: RegExp[] = [
     ...FORBIDDEN_UI_WORDS.map(w => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')),
 ];
 
+// Words that negate the force when they appear immediately before a matched word.
+// "not to enforce", "without enforcement", "never enforce", "no force" etc. are not violations.
+const NEGATION_PREFIX = /\b(not|without|never|no|non-?|doesn't|don't|didn't|cannot|can't|won't|isn't|aren't)\s+(?:\w+\s+){0,2}$/i;
+
 export function scanForceLanguage(content: string, role: ExchangeRole): Finding[] {
     const findings: Finding[] = [];
     const severity = role === 'ai' ? 'alert' : 'watch';
 
     for (const pattern of FORCE_LANGUAGE_PATTERNS) {
-        if (pattern.test(content)) {
-            const match = content.match(pattern);
-            findings.push({
-                kind: 'FORCE_LANGUAGE',
-                description: `Force language detected: "${match?.[0]}" — violates AEGIS non-force posture`,
-                severity,
-                word: match?.[0],
-            });
-            break; // one finding per message — don't flood the conscience engine
-        }
+        const match = content.match(pattern);
+        if (!match || match.index === undefined) continue;
+
+        // Check if the match is preceded by a negation word — if so, skip (false positive)
+        const preceding = content.slice(0, match.index);
+        if (NEGATION_PREFIX.test(preceding)) continue;
+
+        findings.push({
+            kind: 'FORCE_LANGUAGE',
+            description: `Force language detected: "${match[0]}" — violates AEGIS non-force posture`,
+            severity,
+            word: match[0],
+        });
+        break; // one finding per message — don't flood the conscience engine
     }
     return findings;
 }

@@ -1,6 +1,6 @@
 export type PeerType = 'ai' | 'human';
 export type LLMProvider = 'gemini' | 'openai' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
-export type OrientationStatus = 'unverified' | 'verified' | 'stale';
+export type OrientationStatus = 'unverified' | 'verified' | 'stale' | 'cloud';
 export type OrientationSource = 'peer_context' | 'commons_session' | 'manual' | 'system' | 'unknown';
 export type OrientationFacet = 'peer' | 'steward' | 'advocate' | 'observer' | 'system';
 

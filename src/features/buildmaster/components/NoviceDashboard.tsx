@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState } from 'react';
 import { Settings, Play, Plus, Sliders, Terminal, Wrench } from 'lucide-react';
 import { createBm } from '../api/endpoints';

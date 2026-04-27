@@ -263,7 +263,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const recordCommonsExchange = (handle: string, content: string, currentSessionId: string, models: ConnectedModel[], affectHint?: ReturnType<typeof inferAffectHint>) => {
-        const allHandles = [HUMAN_PEER.handle, ...models.map(model => `@${model.model.toLowerCase().replace(/[^a-z0-9]+/g, '-') || model.provider}`)];
+        const allHandles = [HUMAN_PEER.handle, ...models.map(model => `@${model.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || model.provider}`)];
         recordMessage(handle, content, currentSessionId, allHandles);
         if (affectHint) {
             recordPeerAffect(handle, {
@@ -323,8 +323,6 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const performOrientationPreflight = async (model: ConnectedModel, currentSessionId: string): Promise<PeerContextRead | undefined> => {
-        if (!(model.provider === 'lmstudio' || model.provider === 'ollama')) return undefined;
-
         const peer = resolveRegistryPeer(model);
         if (!peer?.handle) return undefined;
 
@@ -449,7 +447,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
 
             let responseText = '';
             const peer = resolveRegistryPeer(model);
-            const peerHandle = peer?.handle ?? `@${model.model.toLowerCase().replace(/[^a-z0-9]+/g, '-') || model.provider}`;
+            const peerHandle = peer?.handle ?? `@${model.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || model.provider}`;
             try {
                 const adapter = getAdapter(model.provider);
                 const orientationPreflight = await performOrientationPreflight(model, currentSessionId);

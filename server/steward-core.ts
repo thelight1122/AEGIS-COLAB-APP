@@ -35,7 +35,6 @@ import { runATE, type ATEResult } from './ate.js';
 import { runAdvocate, type AdvocateResult } from './advocate.js';
 import {
     appendToBookcase,
-    type BookcaseEntry,
     type BookcaseSnapshot,
 } from './bookcase.js';
 import { recordPeerEntry, type PeerEntry } from './peer.js';

@@ -25,32 +25,23 @@ import {
     checkEntry,
     computeSimilarity,
     getAllClusters,
-    getActiveClusters,
     getCluster,
     clusterCount,
     CANDIDATE_X,
-    CANDIDATE_Y,
     PROMOTION_X,
-    PROMOTION_Y,
     SIMILARITY_THRESHOLD,
-    CANDIDATE_Z_MS,
-    PROMOTION_Z_MS,
-    DORMANT_MASS_THRESHOLD,
-    DORMANT_WINDOW_MS,
     RATE_LIMIT_PER_24H,
     RATE_LIMIT_WINDOW_MS,
     _resetPromoterForTesting,
 } from '../peer-spine-promoter.js';
 import {
     recordPeerEntry,
-    getAllPeerEntries,
     peerCount,
     _resetPeerForTesting,
     type PeerEntry,
 } from '../peer.js';
 import {
     promoteToSpine,
-    getAllSpineEntries,
     spineCount,
     _resetSpineForTesting,
 } from '../spine.js';
@@ -420,7 +411,7 @@ describe('pattern lifecycle', () => {
 
         // New evidence should wake the cluster
         const e2 = collapsingEntry();
-        const r2 = checkEntry(e2, now + RATE_LIMIT_WINDOW_MS + 1000);
+        checkEntry(e2, now + RATE_LIMIT_WINDOW_MS + 1000);
         const updatedCluster = getCluster(r1.cluster_signature);
         expect(updatedCluster!.status).toBe('active');
     });

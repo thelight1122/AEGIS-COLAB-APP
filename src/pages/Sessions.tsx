@@ -96,7 +96,7 @@ function AwarenessArc({ events }: { events: GovernanceEvent[] }) {
 
 // ── Event card ────────────────────────────────────────────────────────────────
 
-function EventCard({ event, index }: { event: GovernanceEvent; index: number }) {
+function EventCard({ event }: { event: GovernanceEvent; index?: number }) {
     const [expanded, setExpanded] = useState(false);
 
     const awarnessDelta = event.awareness_score_after - event.awareness_score_before;
