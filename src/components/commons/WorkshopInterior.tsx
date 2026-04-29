@@ -339,9 +339,11 @@ export function WorkshopInterior() {
                                                             ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
                                                             : msg.orientationStatus === 'stale'
                                                                 ? 'border-amber-500/20 bg-amber-500/10 text-amber-300'
-                                                                : 'border-slate-800 bg-slate-900/40 text-slate-500',
+                                                                : msg.orientationStatus === 'cloud'
+                                                                    ? 'border-sky-500/20 bg-sky-500/10 text-sky-400'
+                                                                    : 'border-slate-800 bg-slate-900/40 text-slate-500',
                                                     )}>
-                                                        Orientation {msg.orientationStatus}
+                                                        {msg.orientationStatus === 'cloud' ? 'Cloud peer' : `Orientation ${msg.orientationStatus}`}
                                                     </span>
                                                 )}
                                                 {msg.orientationReceipt && (
