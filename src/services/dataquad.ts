@@ -261,9 +261,13 @@ function toFirestore<T>(obj: T): Record<string, unknown> {
  * writePeerEntryToFirebase — persists a PEER entry to Firestore.
  * Keyed on event_id for idempotency (safe to call multiple times).
  */
-export async function writePeerEntryToFirebase(sessionId: string, entry: PeerEntry): Promise<void> {
+export async function writePeerEntryToFirebase(sessionId: string, entry: PeerEntry, participantId?: string): Promise<void> {
     const ref = doc(db, 'peer_entries', entry.event_id);
-    await setDoc(ref, { ...toFirestore(entry), session_id: sessionId }, { merge: false });
+    await setDoc(ref, {
+        ...toFirestore(entry),
+        session_id: sessionId,
+        participant_id: participantId ?? null,
+    }, { merge: false });
 }
 
 /**

@@ -10,6 +10,10 @@ export type InquiryDisposition = 'inquiry' | 'contribution' | 'mixed';
 
 export interface ConnectedModel {
     id: string;
+    peerId?: string;
+    handle?: string;
+    facetId?: string;
+    dataQuad?: string[];
     provider: ModelProvider;
     model: string;
     apiKey?: string;

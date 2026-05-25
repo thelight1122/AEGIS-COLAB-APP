@@ -17,7 +17,7 @@ export interface DataQuadContextValue {
     clockState: ClockState | null;
     resetSessionClock: (sessionId: string) => void;
     /** Persist a PEER entry from runPipeline to Firebase (fire-and-forget) */
-    persistPeerEntry: (sessionId: string, entry: PeerEntry) => void;
+    persistPeerEntry: (sessionId: string, entry: PeerEntry, participantId?: string) => void;
     /** Persist a promoted SPINE entry from the promoter to Firebase (fire-and-forget) */
     persistSpineEntry: (entry: SpineEntry) => void;
     /** Persist a HOLD-state Bookcase entry to Firebase (fire-and-forget) */

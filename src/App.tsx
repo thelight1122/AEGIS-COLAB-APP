@@ -10,6 +10,7 @@ import BoardPage from './pages/BoardPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CommonsRoute from './pages/CommonsRoute';
 import LandingPage from './pages/LandingPage';
+import EcoVerseLanding from './pages/EcoVerseLanding';
 import FrameworkPage from './pages/FrameworkPage';
 import GovernancePage from './pages/GovernancePage';
 import BuildmasterWorkshop from './pages/BuildmasterWorkshop';
@@ -36,6 +37,7 @@ function App() {
 
                 {/* Public Full-Screen Pages */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/ecoverse" element={<EcoVerseLanding />} />
                 <Route path="/framework" element={<FrameworkPage />} />
                 <Route path="/governance" element={<GovernancePage />} />
                 <Route path="/commons" element={<AppShell><CommonsRoute /></AppShell>} />

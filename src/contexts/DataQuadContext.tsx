@@ -170,8 +170,8 @@ export function DataQuadProvider({ children }: { children: React.ReactNode }) {
 
     // ── PEER / SPINE / Bookcase persistence ──────────────────────────────────
 
-    const persistPeerEntry = useCallback((sessionId: string, entry: PeerEntry) => {
-        safe(`peer-entry:${entry.event_id}`, () => writePeerEntryToFirebase(sessionId, entry));
+    const persistPeerEntry = useCallback((sessionId: string, entry: PeerEntry, participantId?: string) => {
+        safe(`peer-entry:${participantId ?? 'unknown'}:${entry.event_id}`, () => writePeerEntryToFirebase(sessionId, entry, participantId));
     }, [safe]);
 
     const persistSpineEntry = useCallback((entry: SpineEntry) => {

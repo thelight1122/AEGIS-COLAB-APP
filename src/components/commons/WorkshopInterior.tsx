@@ -21,6 +21,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { loadPeers } from '../../core/peers/peerRegistryStore';
 import { getOrientationLabel } from '../../core/peers/orientation';
+import { resolvePeerForModel } from '../../core/commons/session';
 
 function verdictBadge(verdict: 'RELEASE' | 'REVISE' | 'HOLD') {
     switch (verdict) {
@@ -189,8 +190,8 @@ export function WorkshopInterior() {
                                             <div className="text-slate-200 font-medium">One session field. One custodial memory substrate. No private competing truth-centers.</div>
                                         </div>
                                         <div className="space-y-1">
-                                            <div className="text-slate-400 font-bold uppercase tracking-tighter">Local Operability</div>
-                                            <div className="text-slate-200 font-medium">LM Studio and Ollama peers can participate directly for internal testing.</div>
+                                            <div className="text-slate-400 font-bold uppercase tracking-tighter">Substrate Interfaces</div>
+                                            <div className="text-slate-200 font-medium">Personas may speak through LM Studio, Ollama, or hosted conduits without those conduits becoming identity.</div>
                                         </div>
                                     </div>
 
@@ -224,12 +225,17 @@ export function WorkshopInterior() {
                         </div>
                         {connectedParticipants.map((model: ConnectedModel) => (
                             <div key={model.id} className="flex items-center justify-between gap-3">
+                                {(() => {
+                                    const peer = resolvePeerForModel(registryPeers, model);
+                                    const orientation = peer?.orientation;
+                                    return (
+                                <>
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className={cn('w-2 h-2 rounded-full', model.provider === 'lmstudio' ? 'bg-violet-400/70' : 'bg-blue-500/50')} />
                                     <span className="text-sm font-medium text-slate-300 truncate">
-                                        {model.model}
+                                        {peer?.handle ?? model.handle ?? model.model}
                                         <span className="text-[10px] text-slate-500 font-bold uppercase ml-1">
-                                            ({model.provider === 'lmstudio' ? 'Vespar/Local' : model.type === 'hosted' ? 'Cloud' : 'Local'})
+                                            ({model.provider === 'lmstudio' ? 'LM Studio interface' : model.type === 'hosted' ? 'Hosted interface' : 'Local interface'})
                                         </span>
                                     </span>
                                 </div>
@@ -238,8 +244,7 @@ export function WorkshopInterior() {
                                     <span className={cn(
                                         'text-[9px] px-1.5 py-0.5 rounded border uppercase font-bold tracking-tighter',
                                         (() => {
-                                            const peer = registryPeers.find(entry => entry.id === model.id || entry.provider === model.provider);
-                                            switch (peer?.orientation?.status) {
+                                            switch (orientation?.status) {
                                                 case 'verified':
                                                     return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300';
                                                 case 'stale':
@@ -249,9 +254,12 @@ export function WorkshopInterior() {
                                             }
                                         })()
                                     )}>
-                                        {getOrientationLabel(registryPeers.find(entry => entry.id === model.id || entry.provider === model.provider)?.orientation)}
+                                        {getOrientationLabel(orientation)}
                                     </span>
                                 </div>
+                                </>
+                                    );
+                                })()}
                             </div>
                         ))}
                     </div>
@@ -432,7 +440,11 @@ export function WorkshopInterior() {
                                         <Loader2 className="w-3 h-3 animate-spin" />
                                     </div>
                                     <span className="text-xs font-bold text-[#197fe6] uppercase tracking-wider">
-                                        {connectedModels.find((model: ConnectedModel) => model.id === roundRobinOrder[currentTurnIndex])?.model} is entering the field...
+                                        {(() => {
+                                            const activeModel = connectedModels.find((model: ConnectedModel) => model.id === roundRobinOrder[currentTurnIndex]);
+                                            const peer = activeModel ? resolvePeerForModel(registryPeers, activeModel) : undefined;
+                                            return peer?.handle ?? activeModel?.handle ?? activeModel?.model;
+                                        })()} is entering the field...
                                     </span>
                                 </div>
                             </div>

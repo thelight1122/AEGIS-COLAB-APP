@@ -17,6 +17,7 @@ import { loadActiveTeam, setSelectedPeerIds } from '../../core/peers/activeTeamS
 import type { LLMProvider } from '../../core/peers/types';
 import { createUnverifiedOrientation } from '../../core/peers/orientation';
 import { normalizeLocalEndpoint } from '../../core/providers/localEndpoint';
+import { resolvePeerForModel } from '../../core/commons/session';
 
 const MODEL_OPTIONS: { provider: ModelProvider, label: string, defaultModel: string }[] = [
     { provider: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o' },
@@ -53,7 +54,7 @@ export function SessionInit() {
         (m.type === 'local' || m.apiKey || keys[m.provider])
     );
 
-    const readyModels = Array.from(new Set(connectedList.map(m => {
+    const readyParticipants = Array.from(new Set(connectedList.map(m => {
         const opt = [...MODEL_OPTIONS, ...LOCAL_OPTIONS].find(o => o.provider === m.provider);
         return opt?.label || m.provider;
     }))).slice(0, 3);
@@ -66,9 +67,10 @@ export function SessionInit() {
         const nextPeers = [...currentPeers];
         const nextActiveTeamIds = new Set(activeTeam.selectedPeerIds);
 
-        // Update/Add models from Commons
+        // Update/add substrate participants from Commons.
         activeCommonsModels.forEach(m => {
-            const existingIdx = nextPeers.findIndex(p => p.provider === m.provider);
+            const existingPeer = resolvePeerForModel(nextPeers, m);
+            const existingIdx = existingPeer ? nextPeers.findIndex(p => p.id === existingPeer.id) : -1;
             if (existingIdx >= 0) {
                 nextPeers[existingIdx].enabled = true;
                 nextPeers[existingIdx].model = m.model;
@@ -81,9 +83,9 @@ export function SessionInit() {
                 nextActiveTeamIds.add(nextPeers[existingIdx].id);
             } else {
                 nextPeers.push({
-                    id: m.id,
-                    handle: `@${m.provider}`,
-                    name: m.provider.charAt(0).toUpperCase() + m.provider.slice(1),
+                    id: m.peerId ?? m.id,
+                    handle: m.handle ?? `@${m.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || m.id}`,
+                    name: m.handle?.replace('@', '') || m.model,
                     type: 'ai',
                     provider: m.provider as LLMProvider,
                     model: m.model,
@@ -130,7 +132,13 @@ export function SessionInit() {
     };
 
     const ModelCard = ({ opt, type }: { opt: { provider: ModelProvider, label: string, defaultModel?: string, defaultEndpoint?: string }, type: 'hosted' | 'local' }) => {
-        const existing = connectedModels.find((m: ConnectedModel) => m.provider === opt.provider);
+        const localConfig = localInputs[opt.provider as keyof typeof localInputs];
+        const localEndpoint = normalizeLocalEndpoint(localConfig?.endpoint);
+        const existing = connectedModels.find((m: ConnectedModel) => {
+            if (m.provider !== opt.provider) return false;
+            if (type === 'hosted') return m.model === opt.defaultModel;
+            return m.model === localConfig?.model && m.endpointUrl === localEndpoint;
+        });
         const hasSavedKey = !!keys[opt.provider];
 
         return (
@@ -147,7 +155,7 @@ export function SessionInit() {
                         <>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex justify-between">
-                                    API KEY
+                                    ACCESS KEY
                                     {hasSavedKey && isUnlocked && (
                                         <span className="text-green-500 flex items-center gap-1">
                                             <Shield className="w-3 h-3" />
@@ -165,13 +173,13 @@ export function SessionInit() {
                                 />
                             </div>
                             <div className="text-[10px] text-slate-500 font-mono">
-                                Default Model: {opt.defaultModel}
+                                Runtime Model: {opt.defaultModel}
                             </div>
                         </>
                     ) : (
                         <>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">ENDPOINT URL</label>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">ACCESS PATH URL</label>
                                 <input
                                     type="text"
                                     className="w-full bg-[#111921] border border-slate-800 rounded px-3 py-2 text-sm text-white focus:border-[#197fe6] outline-none transition-colors"
@@ -185,7 +193,7 @@ export function SessionInit() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">MODEL NAME</label>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">RUNTIME MODEL</label>
                                 <input
                                     type="text"
                                     className="w-full bg-[#111921] border border-slate-800 rounded px-3 py-2 text-sm text-white focus:border-[#197fe6] outline-none transition-colors"
@@ -200,7 +208,7 @@ export function SessionInit() {
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">API KEY (OPTIONAL)</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">ACCESS KEY (OPTIONAL)</label>
                                 </div>
                                 <input
                                     type="password"
@@ -233,7 +241,7 @@ export function SessionInit() {
                             className="w-full bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold"
                             disabled={type === 'hosted' ? (!inputs[opt.provider] && !hasSavedKey) : (!localInputs[opt.provider as keyof typeof localInputs]?.endpoint || !localInputs[opt.provider as keyof typeof localInputs]?.model)}
                         >
-                            {hasSavedKey && isUnlocked ? 'Connect with Vault Key' : 'Connect Model'}
+                            {hasSavedKey && isUnlocked ? 'Connect with Vault Key' : 'Add Participant'}
                         </Button>
                     )
                 ) : (
@@ -302,7 +310,7 @@ export function SessionInit() {
                 <div className="space-y-8" id="hosted-models-section">
                     <div className="flex items-center gap-4">
                         <Globe className="w-5 h-5 text-slate-500" />
-                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Hosted Models</h2>
+                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Hosted Runtime Interfaces</h2>
                         <div className="flex-1 h-px bg-slate-800" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -315,7 +323,7 @@ export function SessionInit() {
                 <div className="space-y-8" id="local-models-section">
                     <div className="flex items-center gap-4">
                         <Cpu className="w-5 h-5 text-slate-500" />
-                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Local Models</h2>
+                        <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Local Runtime Interfaces</h2>
                         <div className="flex-1 h-px bg-slate-800" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -338,9 +346,9 @@ export function SessionInit() {
                                     <ArrowRight className="w-6 h-6" />
                                 </Button>
                                 <div className="flex flex-col items-center gap-1.5 grayscale opacity-70">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Models Online</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Participants Online</p>
                                     <p className="text-xs text-slate-400 font-medium">
-                                        {readyModels.join(', ')} {readyModels.length < connectedList.length ? `and ${connectedList.length - readyModels.length} more` : ''}
+                                        {readyParticipants.join(', ')} {readyParticipants.length < connectedList.length ? `and ${connectedList.length - readyParticipants.length} more` : ''}
                                     </p>
                                     <Button
                                         variant="link"
@@ -351,7 +359,7 @@ export function SessionInit() {
                                         }}
                                         className="text-slate-500 hover:text-white mt-2"
                                     >
-                                        Setup More Providers
+                                        Add More Interfaces
                                     </Button>
                                 </div>
                             </div>
@@ -362,7 +370,7 @@ export function SessionInit() {
                                     className="h-16 px-12 text-lg font-bold bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
                                     disabled={true}
                                 >
-                                    Connect a Provider to Begin
+                                    Connect a Runtime Interface to Begin
                                 </Button>
                                 <Button
                                     variant="link"
@@ -370,7 +378,7 @@ export function SessionInit() {
                                     onClick={() => navigate('/settings')}
                                     className="text-slate-500 hover:text-white"
                                 >
-                                    Setup Providers in Settings
+                                    Configure Interfaces in Settings
                                 </Button>
                             </div>
                         ) : (

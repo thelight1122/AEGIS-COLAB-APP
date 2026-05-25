@@ -8,20 +8,24 @@ import type {
     ModelProvider,
     WorkshopMessage,
 } from '../types/commons';
-import { getAdapter } from '../core/llm/adapters';
 import { useDataQuad } from './useDataQuad';
 import { useKeyring } from './KeyringContext';
 import {
     analyzeOrientationResponse,
     analyzeResponseDiscipline,
+    buildParticipantHandles,
     buildCustodialPulse,
     buildPeerProfiles,
     buildPeerPrompt,
+    buildTurnDataQuadTargets,
     collectResidualPatterns,
     computeExplorationPhase,
     derivePosture,
     extractPeerIntrospection,
+    getModelPeerHandle,
     inferAffectHint,
+    resolvePeerForModel,
+    updateOrientationForModel,
     summarizeAdvocate,
     summarizeCommonsSession,
 } from '../core/commons/session';
@@ -30,9 +34,11 @@ import { getEntry as getBookcaseEntry } from '../../server/bookcase.js';
 import { resetClock } from '../core/governance/integrityClock';
 import { HUMAN_PEER } from '../core/peers/humanPeer';
 import { createVerifiedOrientation, markOrientationStale } from '../core/peers/orientation';
-import { loadPeers, savePeers, updatePeerOrientation } from '../core/peers/peerRegistryStore';
+import { loadPeers, savePeers } from '../core/peers/peerRegistryStore';
 import { loadActiveTeam } from '../core/peers/activeTeamStore';
 import { readPeerContext, type PeerContextRead } from '../services/dataquad';
+import { validateParticipantRuntime } from '../core/providers/substrateInterfaceValidation';
+import { callGateway } from '../core/llm/gatewayClient';
 
 const EMPTY_OVERVIEW: CommonsSessionOverview = {
     exchangeCount: 0,
@@ -126,6 +132,10 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                     })
                     .map(peer => ({
                         id: peer.id,
+                        peerId: peer.id,
+                        handle: peer.handle,
+                        facetId: peer.personaId,
+                        dataQuad: peer.dataQuad,
                         provider: peer.provider,
                         model: peer.model,
                         apiKey: keys[peer.provider],
@@ -174,9 +184,18 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
 
     const validateModel = async (id: string) => {
         setConnectedModels(prev => prev.map(model => model.id === id ? { ...model, status: 'Validating' } : model));
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setConnectedModels(prev => prev.map(model => model.id === id ? { ...model, status: 'Connected' } : model));
-        return true;
+        const target = connectedModels.find(model => model.id === id);
+        if (!target) return false;
+
+        const result = await validateParticipantRuntime(target, keys[target.provider]);
+        setConnectedModels(prev => prev.map(model => model.id === id ? {
+            ...model,
+            status: result.ok ? 'Connected' : 'Not Connected',
+        } : model));
+        if (!result.ok) {
+            console.warn(`[Commons] substrate interface validation failed for ${target.provider}/${target.model}: ${result.reason}`);
+        }
+        return result.ok;
     };
 
     const ensureSession = (explicitSessionId?: string) => {
@@ -194,7 +213,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
 
         if (!seededSessionIds.current.has(nextSessionId)) {
             seededSessionIds.current.add(nextSessionId);
-            const peers = buildPeerProfiles(eligibleModels);
+            const peers = buildPeerProfiles(eligibleModels, loadPeers());
             seedChamberPeers(peers, nextSessionId);
         }
 
@@ -263,7 +282,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const recordCommonsExchange = (handle: string, content: string, currentSessionId: string, models: ConnectedModel[], affectHint?: ReturnType<typeof inferAffectHint>) => {
-        const allHandles = [HUMAN_PEER.handle, ...models.map(model => `@${model.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || model.provider}`)];
+        const allHandles = buildParticipantHandles(models, loadPeers());
         recordMessage(handle, content, currentSessionId, allHandles);
         if (affectHint) {
             recordPeerAffect(handle, {
@@ -314,12 +333,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const resolveRegistryPeer = (model: ConnectedModel) => {
-        const peers = loadPeers();
-        return peers.find(peer =>
-            peer.id === model.id ||
-            (peer.provider === model.provider && peer.model === model.model) ||
-            peer.provider === model.provider,
-        );
+        return resolvePeerForModel(loadPeers(), model);
     };
 
     const performOrientationPreflight = async (model: ConnectedModel, currentSessionId: string): Promise<PeerContextRead | undefined> => {
@@ -339,9 +353,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
 
         if (analysis.receipt) {
             persistPeerOrientation(peers => {
-                const targetPeer = peers.find(peer => peer.id === model.id || peer.provider === model.provider);
-                if (!targetPeer) return peers;
-                return updatePeerOrientation(peers, targetPeer.id, createVerifiedOrientation({
+                return updateOrientationForModel(peers, model, createVerifiedOrientation({
                     source: 'peer_context',
                     facet: 'peer',
                     sessionId: currentSessionId,
@@ -360,9 +372,9 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
 
         if (analysis.hasSelfOrientationClaim) {
             persistPeerOrientation(peers => {
-                const targetPeer = peers.find(peer => peer.id === model.id || peer.provider === model.provider);
+                const targetPeer = resolvePeerForModel(peers, model);
                 if (!targetPeer) return peers;
-                return updatePeerOrientation(peers, targetPeer.id, markOrientationStale(
+                return updateOrientationForModel(peers, model, markOrientationStale(
                     targetPeer.orientation,
                     'Peer made self-orientation claims without a current READ_RECEIPT. Treat identity statements as unverified until a fresh context read occurs.',
                 ));
@@ -406,7 +418,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             ...(userAffectHint ? { affect_hint: userAffectHint } : {}),
         }, state);
         // Persist PEER entry and any SPINE promotion from user turn
-        persistPeerEntry(currentSessionId, userReport.peer_entry);
+        persistPeerEntry(currentSessionId, userReport.peer_entry, HUMAN_PEER.handle);
         if (userReport.promoter_result.spine_entry) {
             persistSpineEntry(userReport.promoter_result.spine_entry);
         }
@@ -446,10 +458,17 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             playAudioCue();
 
             let responseText = '';
+            const registryPeers = loadPeers();
             const peer = resolveRegistryPeer(model);
-            const peerHandle = peer?.handle ?? `@${model.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || model.provider}`;
+            const turnTargets = buildTurnDataQuadTargets({
+                model,
+                models: eligibleAtTurnStart,
+                peers: registryPeers,
+                sessionId: currentSessionId,
+                sourceTurnId: modelId,
+            });
+            const peerHandle = peer?.handle ?? turnTargets.participantHandle;
             try {
-                const adapter = getAdapter(model.provider);
                 const orientationPreflight = await performOrientationPreflight(model, currentSessionId);
                 updatePeerPCT(
                     peerHandle,
@@ -472,7 +491,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                     orientationPreflight,
                 });
 
-                const response = await adapter.completeChat({
+                const response = await callGateway({
                     provider: model.provider,
                     model: model.model,
                     apiKey: model.apiKey || keys[model.provider],
@@ -502,7 +521,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                 ...(aiAffectHint ? { affect_hint: aiAffectHint } : {}),
             }, state);
             // Persist PEER entry and any SPINE promotion from AI turn
-            persistPeerEntry(currentSessionId, aiReport.peer_entry);
+            persistPeerEntry(currentSessionId, aiReport.peer_entry, turnTargets.peerEntryParticipantId);
             if (aiReport.promoter_result.spine_entry) {
                 persistSpineEntry(aiReport.promoter_result.spine_entry);
             }

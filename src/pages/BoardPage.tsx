@@ -26,6 +26,21 @@ function shortId(id: string): string {
     return id.slice(-6);
 }
 
+/** Deterministic integer hash of a string — stable across reloads */
+function stableHash(seed: string): number {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+interface AutoReplyTurn {
+    persona: string;
+    body: string;
+}
+
 export default function BoardPage() {
     const { session, user, loading: authLoading } = useAuthSession();
     const [peers, setPeers] = useState<Peer[]>([]);
@@ -343,6 +358,64 @@ export default function BoardPage() {
         if (data) {
             setThreads((prev) => [data, ...prev]);
             setSelectedThreadId(data.id);
+        }
+    };
+
+    // ── AI Peer Simulator (DEV only) ─────────────────────────────────
+    const simulateAIMessage = async (
+        threadId: string,
+        priorTurns: AutoReplyTurn[] = [],
+        simulatorPeerId: string | null = null,
+    ) => {
+        if (!session || !threadId) return;
+        setActionError(null);
+
+        const personas = ['Lumin', 'Haven', 'Shield', 'Echo'];
+        const categories = ['observe', 'question', 'reflect', 'expand'];
+        const seed = `${threadId}-${priorTurns.length}`;
+        const variantIndex = stableHash(seed) % personas.length;
+        const persona = personas[variantIndex];
+
+        const pointsSkipped: string[] = [];
+        const availableCategories = categories.filter(cat => {
+            const alreadyUsed = priorTurns.some(t => t.body.startsWith(`[${cat}]`));
+            if (alreadyUsed) {
+                pointsSkipped.push(cat);
+                return false;
+            }
+            return true;
+        });
+
+        const category = availableCategories[stableHash(seed + '-cat') % availableCategories.length] ?? categories[0];
+        const rawBody = `[${category}] ${persona} contributes a simulated response (lane ${variantIndex + 1}).`;
+        const body = rawBody.split(' ').slice(0, 90).join(' ');
+
+        const authorId = simulatorPeerId || selectedPeerId || user?.id;
+        if (!authorId) return;
+
+        const { data, error } = await supabase
+            .from('messages')
+            .insert([{
+                thread_id: threadId,
+                author_peer_id: authorId,
+                author_peer_type: 'ai',
+                body,
+                kind: `ai_sim|${persona}`,
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[messages.insert]', error);
+            setActionError(error.message || 'AI simulation failed.');
+            return;
+        }
+
+        if (data) {
+            setMessages(prev => {
+                if (prev.some(m => m.id === data.id)) return prev;
+                return [...prev, data];
+            });
         }
     };
 
@@ -691,6 +764,39 @@ export default function BoardPage() {
                         )}
 
 
+                        {/* AI Simulator — DEV mode only */}
+                        {import.meta.env.DEV && selectedThreadId && session && (
+                            <div className="p-3 border-t border-dashed border-border/40 bg-muted/5 shrink-0">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                                    AI Simulator
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-[10px] h-7"
+                                        onClick={() => void simulateAIMessage(selectedThreadId, [], selectedPeerId)}
+                                    >
+                                        Simulate AI
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-[10px] h-7"
+                                        onClick={async () => {
+                                            const turns: AutoReplyTurn[] = [];
+                                            for (let i = 0; i < 3; i++) {
+                                                await simulateAIMessage(selectedThreadId, turns, selectedPeerId);
+                                                turns.push({ persona: `sim-${i}`, body: `[turn-${i}]` });
+                                            }
+                                        }}
+                                    >
+                                        Stress Test x3
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Compose Box */}
                         <div className="p-4 border-t bg-muted/30 shrink-0">
                             {actionError && (
@@ -726,7 +832,17 @@ export default function BoardPage() {
                 </Card>
             </div>
 
-        </div >
+            {import.meta.env.DEV && (
+                <div className="shrink-0 flex items-center gap-4 px-4 py-1 bg-black/80 text-green-400 text-[9px] font-mono border-t border-green-900/40">
+                    <span className="font-bold">DEV DEBUG:</span>
+                    <span>session={session ? 'yes' : 'no'}</span>
+                    <span>peer={selectedPeerId ? shortId(selectedPeerId) : 'none'}</span>
+                    <span>thread={selectedThreadId ? shortId(selectedThreadId) : 'none'}</span>
+                    <span>msgs={messages.length}</span>
+                    <span>presence={Object.keys(presenceMap).length}</span>
+                </div>
+            )}
+        </div>
     );
 }
 

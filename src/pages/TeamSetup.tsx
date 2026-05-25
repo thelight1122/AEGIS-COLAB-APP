@@ -126,7 +126,7 @@ export default function TeamSetup() {
                 <div>
                     <h2 className="text-3xl font-bold flex items-center gap-3">
                         <Users className="w-8 h-8 text-primary" />
-                        Team Setup
+                        Commons Participant Set
                     </h2>
                     <p className="text-muted-foreground mt-2">
                         Configure your coalition of human and AI peers.
@@ -135,17 +135,17 @@ export default function TeamSetup() {
                 <div className="flex items-center gap-2">
                     {activeTeam.selectedPeerIds.length > 0 && (
                         <Button variant="destructive" onClick={handleClearTeam} className="gap-2 mr-2">
-                            <Trash2 className="w-4 h-4" /> Clear Team
+                            <Trash2 className="w-4 h-4" /> Clear Set
                         </Button>
                     )}
                     {presets.length > 0 && (
                         <Button variant="outline" onClick={() => setIsPresetPickerOpen(true)} className="gap-2">
-                            <FolderHeart className="w-4 h-4" /> Use Saved Team
+                            <FolderHeart className="w-4 h-4" /> Use Saved Set
                         </Button>
                     )}
                     {peers.length > 0 && (
                         <Button variant="outline" onClick={handleSaveTeamAsPreset} className="gap-2">
-                            <Save className="w-4 h-4" /> Save Team
+                            <Save className="w-4 h-4" /> Save Set
                         </Button>
                     )}
                     <Button onClick={handleCreate} className="gap-2 ml-2">
@@ -174,7 +174,7 @@ export default function TeamSetup() {
             <div className="space-y-8">
                 <div>
                     <h3 className="text-xl font-bold mb-1 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-primary" /> Current Team
+                        <Users className="w-5 h-5 text-primary" /> Current Participant Set
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
                         Human participant is always present. AI peers join only when selected.
@@ -200,7 +200,7 @@ export default function TeamSetup() {
                         ))}
                         {activeTeam.selectedPeerIds.length === 0 && (
                             <div className="col-span-full py-8 text-center bg-muted/10 border-2 border-dashed border-border rounded-xl">
-                                <p className="text-muted-foreground text-sm">No team members selected. Add them from the library.</p>
+                                <p className="text-muted-foreground text-sm">No participants selected. Add them from the library.</p>
                             </div>
                         )}
                     </div>
@@ -224,7 +224,7 @@ export default function TeamSetup() {
                         {peers.filter(p => p.type !== 'human').length === 0 && (
                             <div className="col-span-full py-12 text-center bg-muted/20 border-2 border-dashed border-border rounded-xl">
                                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-20" />
-                                <h3 className="text-lg font-semibold">No Team Members Yet</h3>
+                                <h3 className="text-lg font-semibold">No Participants Yet</h3>
                                 <p className="text-muted-foreground max-w-xs mx-auto mt-1">
                                     Start by adding human or AI participants to your registry.
                                 </p>
@@ -240,7 +240,7 @@ export default function TeamSetup() {
             <Dialog
                 isOpen={isPresetPickerOpen}
                 onClose={() => setIsPresetPickerOpen(false)}
-                title="Use Saved Team"
+                title="Use Saved Participant Set"
             >
                 <div className="space-y-4 py-2">
                     {presets.map(p => (
@@ -249,7 +249,7 @@ export default function TeamSetup() {
                                 <div className="font-bold flex items-center gap-2">
                                     {p.name}
                                     <span className="text-[10px] font-normal px-1.5 py-0.5 bg-muted rounded uppercase tracking-wider">
-                                        {p.peers.length} Members
+                                        {p.peers.length} Participants
                                     </span>
                                 </div>
                                 <div className="text-[10px] text-muted-foreground mt-1 uppercase font-mono tracking-tighter">
@@ -370,9 +370,9 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                 <>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold">Provider</label>
+                            <label className="text-sm font-semibold">Substrate Interface</label>
                             <select
-                                title="LLM Provider"
+                                title="Substrate Interface"
                                 className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none"
                                 value={formData.provider}
                                 onChange={e => setFormData({ ...formData, provider: e.target.value as LLMProvider })}
@@ -386,7 +386,7 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold">Model</label>
+                            <label className="text-sm font-semibold">Runtime Model</label>
                             <input
                                 className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none"
                                 value={formData.model}
@@ -416,7 +416,7 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                     {(formData.provider === 'lmstudio' || formData.provider === 'ollama') && (
                         <div className="space-y-2">
                             <label className="text-sm font-semibold flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-blue-500" /> Base URL
+                                <Globe className="w-4 h-4 text-blue-500" /> Access Path URL
                             </label>
                             <input
                                 className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2 text-sm outline-none font-mono"
@@ -431,7 +431,7 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                         <div className="p-3 bg-muted/30 border border-border rounded-lg flex items-start gap-2 text-sm">
                             <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             <p className="text-muted-foreground">
-                                Provider keys are managed in <span className="font-semibold text-foreground">Settings (encrypted vault)</span>.
+                                Runtime-interface access keys are managed in <span className="font-semibold text-foreground">Settings (encrypted vault)</span>.
                             </p>
                         </div>
                     </div>
@@ -444,7 +444,7 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                     className="w-full bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm outline-none resize-none"
                     value={formData.notes || ''}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Describe this team member's role or focus area..."
+                    placeholder="Describe this participant's role or focus area..."
                     rows={3}
                 />
             </div>
@@ -457,7 +457,7 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                     onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <label htmlFor="is-enabled" className="text-sm font-medium">Enable this team member</label>
+                <label htmlFor="is-enabled" className="text-sm font-medium">Enable this participant</label>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
@@ -523,7 +523,7 @@ function PeerCard({ peer, isActive, onToggle, onEdit, onDelete, readOnly }: {
                         onClick={onToggle}
                         disabled={!isActive && (!isReady || !peer.enabled)}
                     >
-                        {isActive ? 'In Team' : 'Add to Team'}
+                        {isActive ? 'In Set' : 'Add to Set'}
                     </Button>
                 </div>
             )}
@@ -539,7 +539,7 @@ function PeerCard({ peer, isActive, onToggle, onEdit, onDelete, readOnly }: {
                     <div>
                         <div className="font-bold text-lg">{peer.handle}</div>
                         <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                            {peer.type === 'ai' ? `${peer.provider} / ${peer.model}` : 'Human Participant'}
+                            {peer.type === 'ai' ? `${peer.provider} interface / ${peer.model}` : 'Human Participant'}
                         </div>
                     </div>
                 </div>
@@ -582,7 +582,7 @@ function PeerCard({ peer, isActive, onToggle, onEdit, onDelete, readOnly }: {
                             {readiness.state === 'locked'
                                 ? 'Locked'
                                 : readiness.state === 'unreachable'
-                                    ? 'Endpoint Unreachable'
+                                    ? 'Access Path Unreachable'
                                     : readiness.state === 'missing_key'
                                         ? 'Missing Key'
                                         : 'Missing Config'}

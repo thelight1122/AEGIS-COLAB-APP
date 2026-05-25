@@ -9,6 +9,7 @@ import type {
     WorkshopPosture,
 } from '../../types/commons';
 import type { PeerProfile } from '../peers/types';
+import type { TemporalOrientationState } from '../peers/types';
 import type { PeerContextRead } from '../../services/dataquad';
 import { HUMAN_PEER } from '../peers/humanPeer';
 import { PERSONA_TEMPLATES } from '../peers/personaStore';
@@ -393,20 +394,88 @@ export function getPersonaPrompt(model: ConnectedModel): string {
     return '';
 }
 
-export function buildPeerProfiles(models: ConnectedModel[]): PeerProfile[] {
+export function resolvePeerForModel(peers: PeerProfile[], model: ConnectedModel): PeerProfile | undefined {
+    const identityKeys = [
+        model.peerId,
+        model.id,
+    ].filter((value): value is string => Boolean(value));
+    const normalizedHandle = model.handle?.trim().toLowerCase();
+
+    return peers.find(peer => {
+        if (identityKeys.includes(peer.id)) return true;
+        if (normalizedHandle && peer.handle.trim().toLowerCase() === normalizedHandle) return true;
+        return false;
+    });
+}
+
+export function getModelPeerHandle(model: ConnectedModel, peers: PeerProfile[] = []): string {
+    const peer = resolvePeerForModel(peers, model);
+    return peer?.handle ?? model.handle ?? `@${normalizeHandle(model.model || model.id || model.provider)}`;
+}
+
+export function buildParticipantHandles(models: ConnectedModel[], peers: PeerProfile[] = []): string[] {
+    return [HUMAN_PEER.handle, ...models.map(model => getModelPeerHandle(model, peers))];
+}
+
+export function updateOrientationForModel(
+    peers: PeerProfile[],
+    model: ConnectedModel,
+    orientation: TemporalOrientationState,
+): PeerProfile[] {
+    const targetPeer = resolvePeerForModel(peers, model);
+    if (!targetPeer) return peers;
+    return peers.map(peer => peer.id === targetPeer.id ? { ...peer, orientation } : peer);
+}
+
+export interface TurnDataQuadTargets {
+    participantHandle: string;
+    sessionParticipants: string[];
+    q1PeerId: string;
+    q2PeerId: string;
+    q3LineagePeerId: string;
+    q4ResidualPeerId: string;
+    peerEntryParticipantId: string;
+    sourceTurnId: string;
+}
+
+export function buildTurnDataQuadTargets(params: {
+    model: ConnectedModel;
+    models: ConnectedModel[];
+    peers?: PeerProfile[];
+    sessionId: string;
+    sourceTurnId: string;
+}): TurnDataQuadTargets {
+    const participantHandle = getModelPeerHandle(params.model, params.peers);
+    return {
+        participantHandle,
+        sessionParticipants: buildParticipantHandles(params.models, params.peers),
+        q1PeerId: participantHandle,
+        q2PeerId: participantHandle,
+        q3LineagePeerId: participantHandle,
+        q4ResidualPeerId: participantHandle,
+        peerEntryParticipantId: participantHandle,
+        sourceTurnId: params.sourceTurnId,
+    };
+}
+
+export function buildPeerProfiles(models: ConnectedModel[], registryPeers: PeerProfile[] = []): PeerProfile[] {
     const peers: PeerProfile[] = [HUMAN_PEER];
     for (const model of models) {
+        const registryPeer = resolvePeerForModel(registryPeers, model);
         peers.push({
-            id: model.id,
-            handle: `@${normalizeHandle(model.model || model.provider)}`,
-            name: model.model,
+            id: registryPeer?.id ?? model.peerId ?? model.id,
+            handle: registryPeer?.handle ?? model.handle ?? `@${normalizeHandle(model.model || model.id || model.provider)}`,
+            name: registryPeer?.name ?? model.model,
             type: 'ai',
             provider: model.provider,
             model: model.model,
+            personaId: registryPeer?.personaId,
             enabled: true,
-            domains: ['Commons', 'Collaboration', 'Architecture'],
+            domains: registryPeer?.domains ?? ['Commons', 'Collaboration', 'Architecture'],
             baseURL: model.endpointUrl,
-            orientation: createUnverifiedOrientation({
+            notes: registryPeer?.notes,
+            dataQuad: registryPeer?.dataQuad ?? model.dataQuad,
+            orientation: registryPeer?.orientation ?? createUnverifiedOrientation({
                 source: 'commons_session',
                 facet: 'system',
                 notes: 'Connected to Commons but not yet verified through temporal self-orientation.',

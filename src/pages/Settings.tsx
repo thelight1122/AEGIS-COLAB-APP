@@ -193,28 +193,28 @@ export default function Settings() {
                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
                         <Bot className="w-5 h-5" />
                     </div>
-                    <h3 className="text-lg font-semibold text-card-foreground">Provider Integration</h3>
+                    <h3 className="text-lg font-semibold text-card-foreground">Runtime Interface Access</h3>
                 </div>
 
                 {!isUnlocked && (
                     <div className="mb-6 p-4 bg-muted/50 border border-border rounded-lg text-sm text-center italic text-muted-foreground">
-                        Unlock or setup your vault above to manage API keys.
+                        Unlock or setup your vault above to manage conduit access keys.
                     </div>
                 )}
 
                 <div className="space-y-6">
                     {[
-                        { id: 'gemini', label: 'Gemini', note: 'Required for Google models.' },
-                        { id: 'openai', label: 'OpenAI', note: 'Required for GPT-4 and compatible OAI endpoints.' },
-                        { id: 'anthropic', label: 'Anthropic', note: 'Required for Claude models.' },
-                        { id: 'grok', label: 'Grok / xAI', note: 'Required for Grok models.' },
-                        { id: 'lmstudio', label: 'LM Studio / Generic', note: 'Local or custom OpenAi-compatible endpoint.' }
+                        { id: 'gemini', label: 'Gemini', note: 'Access path for Google runtime models.' },
+                        { id: 'openai', label: 'OpenAI', note: 'Access path for GPT and OpenAI-compatible runtime models.' },
+                        { id: 'anthropic', label: 'Anthropic', note: 'Access path for Claude runtime models.' },
+                        { id: 'grok', label: 'Grok / xAI', note: 'Access path for Grok runtime models.' },
+                        { id: 'lmstudio', label: 'LM Studio / Generic', note: 'Local or custom OpenAI-compatible conduit.' }
                     ].map((provider) => (
                         <div key={provider.id} className="space-y-2">
                             <label className="text-sm font-medium flex items-center justify-between">
                                 <span className="flex items-center gap-2">
                                     <Key className="w-4 h-4 opacity-70" />
-                                    {provider.label} API Key
+                                    {provider.label} Access Key
                                 </span>
                                 {keys[provider.id] && (
                                     <span className="text-[10px] text-green-600 flex items-center gap-1 font-bold bg-green-500/10 px-1.5 py-0.5 rounded">
@@ -226,7 +226,7 @@ export default function Settings() {
                             <div className="flex gap-2">
                                 <Input
                                     type="password"
-                                    placeholder={keys[provider.id] ? "••••••••••••••••" : `Enter your ${provider.label} API key`}
+                                    placeholder={keys[provider.id] ? "••••••••••••••••" : `Enter your ${provider.label} access key`}
                                     value={localKeys[provider.id] || ''}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalKeys({ ...localKeys, [provider.id]: e.target.value })}
                                     className="bg-muted/30 focus-visible:ring-primary flex-1"

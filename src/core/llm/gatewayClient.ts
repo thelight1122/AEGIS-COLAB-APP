@@ -23,11 +23,12 @@ export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
         console.warn('Gateway unreachable, checking for fallback:', e);
     }
 
-    // Direct fallback for local providers (e.g. LM Studio)
+    // Live turns prefer the gateway. Direct local calls are an explicit
+    // diagnostics/development fallback for local providers only.
     const isLocalFallbackEnabled = localStorage.getItem('aegis_local_fallback') === 'true';
 
     if (isLocalFallbackEnabled && ['local', 'lmstudio', 'ollama'].includes(options.provider) && options.baseURL) {
-        console.info('Falling back to direct local call for LM Studio');
+        console.info('Falling back to direct local provider call');
         const baseURL = normalizeLocalEndpoint(options.baseURL) ?? options.baseURL;
         const resp = await fetch(`${baseURL}/chat/completions`, {
             method: 'POST',
