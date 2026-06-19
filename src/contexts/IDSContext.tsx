@@ -1,6 +1,6 @@
+"use client";
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { type IDSCard, type Attachment, MOCK_IDS_FEED } from '../types';
-import { isE2E } from '../lib/e2e';
+import { type IDSCard, type Attachment } from '../types';
 
 interface NodeOption {
     id: string;
@@ -13,17 +13,19 @@ interface IDSContextType {
     canvasNodes: NodeOption[];
     focusNodeId: string | null;
     addCard: (type: IDSCard['type'], content: string) => void;
-    clearStream: () => void;
+    beginNewChat: () => void;
     attachNode: (cardId: string, nodeId: string) => void;
+    removeCard: (cardId: string) => void;
     removeAttachment: (cardId: string, attachmentId: string) => void;
     setNodes: (nodes: NodeOption[]) => void;
     setFocusNode: (nodeId: string | null) => void;
+    setIdsCards: (cards: IDSCard[]) => void;
 }
 
 const IDSContext = createContext<IDSContextType | undefined>(undefined);
 
 export function IDSProvider({ children }: { children: ReactNode }) {
-    const [idsCards, setIdsCards] = useState<IDSCard[]>(isE2E() ? [] : MOCK_IDS_FEED);
+    const [idsCards, setIdsCards] = useState<IDSCard[]>([]);
     const [canvasNodes, setCanvasNodes] = useState<NodeOption[]>([]);
     const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
 
@@ -32,14 +34,18 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             id: `c-${Date.now()}`,
             type,
             content,
-            authorId: 'p1', // Current User
+            authorId: 'p1', // Current User Fallback
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             attachments: []
         };
         setIdsCards(prev => [newCard, ...prev]);
+
+        // Broadcast for observers (like ChamberLayout) to record governance
+        const event = new CustomEvent('ids-card-added', { detail: { type, content, card: newCard } });
+        window.dispatchEvent(event);
     }, []);
 
-    const clearStream = useCallback(() => {
+    const beginNewChat = useCallback(() => {
         setIdsCards([]);
     }, []);
 
@@ -60,6 +66,10 @@ export function IDSProvider({ children }: { children: ReactNode }) {
         }));
     }, [canvasNodes]);
 
+    const removeCard = useCallback((cardId: string) => {
+        setIdsCards(prev => prev.filter(card => card.id !== cardId));
+    }, []);
+
     const removeAttachment = useCallback((cardId: string, attachmentId: string) => {
         setIdsCards(prev => prev.map(card => {
             if (card.id !== cardId) return card;
@@ -71,11 +81,41 @@ export function IDSProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const setNodes = useCallback((nodes: NodeOption[]) => {
-        setCanvasNodes(nodes);
+        setCanvasNodes(prev => {
+            if (
+                prev.length === nodes.length &&
+                prev.every((node, idx) => (
+                    node.id === nodes[idx]?.id &&
+                    node.label === nodes[idx]?.label &&
+                    node.type === nodes[idx]?.type
+                ))
+            ) {
+                return prev;
+            }
+            return nodes;
+        });
     }, []);
 
     const setFocusNode = useCallback((nodeId: string | null) => {
         setFocusNodeId(nodeId);
+    }, []);
+
+    const replaceIdsCards = useCallback((cards: IDSCard[]) => {
+        setIdsCards(prev => {
+            if (
+                prev.length === cards.length &&
+                prev.every((card, idx) => (
+                    card.id === cards[idx]?.id &&
+                    card.type === cards[idx]?.type &&
+                    card.content === cards[idx]?.content &&
+                    card.authorId === cards[idx]?.authorId &&
+                    card.timestamp === cards[idx]?.timestamp
+                ))
+            ) {
+                return prev;
+            }
+            return cards;
+        });
     }, []);
 
     return (
@@ -84,17 +124,20 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             canvasNodes,
             focusNodeId,
             addCard,
-            clearStream,
+            beginNewChat,
             attachNode,
+            removeCard,
             removeAttachment,
             setNodes,
-            setFocusNode
+            setFocusNode,
+            setIdsCards: replaceIdsCards
         }}>
             {children}
         </IDSContext.Provider>
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIDS() {
     const context = useContext(IDSContext);
     if (!context) {

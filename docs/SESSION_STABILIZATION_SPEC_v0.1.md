@@ -1,6 +1,6 @@
 # AEGIS Coherence Chamber
 
-# Session Stabilization Specification v0.1
+## Session Stabilization Specification v0.1
 
 Status: Operational Stabilization Layer  
 Scope: Session lifecycle, single-active-session constraint, resilience rules  

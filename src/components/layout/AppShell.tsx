@@ -3,6 +3,7 @@ import { loadSessions, saveSessions, applyAbandonment } from '../../core/session
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ConfigStatus } from '../ui/ConfigStatus';
+import { AIAdvisor } from './AIAdvisor';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -23,17 +24,16 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex flex-col h-screen w-full bg-background text-foreground overflow-hidden">
+        <div className="flex flex-col h-screen w-screen max-w-none bg-background-dark text-white overflow-hidden font-display">
             <ConfigStatus />
-            <div className="flex flex-1 overflow-hidden">
+            <Header />
+            <div className="flex flex-1 min-h-0 overflow-hidden">
                 <Sidebar />
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <Header />
-                    <main className="flex-1 overflow-auto p-6 relative">
-                        {children}
-                    </main>
-                </div>
+                <main className="flex-1 min-h-0 relative overflow-y-auto">
+                    {children}
+                </main>
             </div>
+            <AIAdvisor />
         </div>
     );
 }

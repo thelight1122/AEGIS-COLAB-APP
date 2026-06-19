@@ -1,0 +1,1 @@
+export { useDataQuad } from './DataQuadContextBase';

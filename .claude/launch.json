@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aegis-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:app", "--", "--port", "5180"],
+      "port": 5180
+    },
+    {
+      "name": "aegis-gateway",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:gateway"],
+      "port": 9090
+    },
+    {
+      "name": "aegis-steward",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:steward"],
+      "port": 5174
+    },
+    {
+      "name": "ecoverse-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "I:\\1 AAA SQUAD 13\\AEGIS_ALIGN-ECOVERSE", "run", "dev"],
+      "port": 5176
+    }
+  ]
+}

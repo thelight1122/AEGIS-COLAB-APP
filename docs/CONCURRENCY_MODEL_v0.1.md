@@ -9,9 +9,9 @@ Prevent inconsistent governance states (phantom locks, duplicated ledger entries
 ### 1. Single Active Session (Option A)
 
 - **Rule**: Each artifact (unique `artifactId`) can have exactly ONE active "Live Session" at any given time.
-- **Enforcement**:
-  - When a user opens an artifact, the system checks for an existing active session.
-  - If found, the user joins the existing session.
+- **Mechanism**:
+  - When a Peer opens an artifact, the system checks for an existing active session.
+  - If found, the Peer joins the existing session.
   - If not found, a new session is initialized.
 - **Benefit**: Eliminates fork-join complexity and ensures a single source of truth for the local environment.
 
@@ -32,3 +32,13 @@ Prevent inconsistent governance states (phantom locks, duplicated ledger entries
 
 - **Persistence**: Use a shared event log (simulated via `localStorage` for MVP).
 - **Rehydration**: On page refresh, the inclusion state is reconstructed by replaying the event stream from the active session.
+
+## Current Repo Note
+
+In the present repository state:
+
+- session persistence is local-browser based
+- the single-active-session rule is real
+- session abandonment is currently applied by the shell on a 5-minute inactivity threshold, not 30 minutes
+
+If other documents mention a different timeout, this file should be read in favor of the current implemented behavior until the code changes.

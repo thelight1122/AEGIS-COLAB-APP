@@ -7,7 +7,8 @@ export default mergeConfig(
         test: {
             globals: true,
             environment: 'node',
-            include: ['src/**/*.test.{ts,tsx}'],
+            pool: 'threads',
+            include: ['src/**/*.test.{ts,tsx}', 'server/__tests__/**/*.test.ts'],
 
             // Keep console output normal, also emit JUnit
             reporters: ['default', 'junit'],

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
     History,
     Calendar,
@@ -6,17 +6,358 @@ import {
     Users,
     Activity,
     ChevronRight,
-    PlayCircle,
     FileText,
-    MessageSquare
+    MessageSquare,
+    ArrowRight,
+    Zap,
+    Bot,
+    User,
+    Shield,
+    CheckCircle,
+    XCircle,
+    Eye,
+    AlertTriangle,
+    Filter,
+    TrendingUp,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MOCK_SESSIONS } from '../types';
+import { loadSessions } from '../core/sessions/sessionStore';
+import { Button } from '../components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import type { SessionStatus, Session } from '../core/sessions/types';
+import type { GovernanceEvent } from '../core/governance/types';
+
+// ── Filter types ──────────────────────────────────────────────────────────────
+
+type EventFilter = 'all' | 'exchange' | 'contribution' | 'governance';
+
+const FILTER_LABELS: Record<EventFilter, string> = {
+    all: 'All',
+    exchange: 'AI Exchanges',
+    contribution: 'Contributions',
+    governance: 'Governance',
+};
+
+function matchesFilter(event: GovernanceEvent, filter: EventFilter): boolean {
+    if (filter === 'all') return true;
+    if (filter === 'exchange') return event.type === 'AI_CHAT_COMPLETED' || event.type === 'AI_CHAT_REQUESTED';
+    if (filter === 'contribution') return event.type === 'CONTRIBUTION';
+    return event.type !== 'AI_CHAT_COMPLETED' && event.type !== 'AI_CHAT_REQUESTED' && event.type !== 'CONTRIBUTION';
+}
+
+// ── Awareness arc ─────────────────────────────────────────────────────────────
+
+function AwarenessArc({ events }: { events: GovernanceEvent[] }) {
+    const scores = events.map((e, i) => ({ i, score: e.awareness_score_after }));
+    if (scores.length === 0) return null;
+
+    const max = Math.max(...scores.map(s => s.score), 1);
+    const finalScore = scores[scores.length - 1].score;
+
+    return (
+        <div className="bg-muted/30 rounded-xl border border-border/50 p-4">
+            <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5" /> Awareness Arc
+                </span>
+                <span className={cn(
+                    "text-xs font-bold px-2 py-0.5 rounded-full border",
+                    finalScore >= 75 ? "bg-green-500/10 text-green-500 border-green-500/20"
+                    : finalScore >= 40 ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                    : "bg-red-500/10 text-red-400 border-red-500/20"
+                )}>
+                    {finalScore}% final
+                </span>
+            </div>
+            <div className="flex items-end gap-0.5 h-10">
+                {scores.map(({ i, score }) => (
+                    <div
+                        key={i}
+                        className={cn(
+                            "flex-1 rounded-t-sm min-w-[2px] transition-all",
+                            score >= 75 ? "bg-green-500/50"
+                            : score >= 40 ? "bg-yellow-500/50"
+                            : "bg-red-500/30"
+                        )}
+                        style={{ height: `${(score / max) * 100}%` }}
+                        title={`Event ${i + 1}: ${score}%`}
+                    />
+                ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                <span>Start</span>
+                <span>End</span>
+            </div>
+        </div>
+    );
+}
+
+// ── Event card ────────────────────────────────────────────────────────────────
+
+function EventCard({ event }: { event: GovernanceEvent; index?: number }) {
+    const [expanded, setExpanded] = useState(false);
+
+    const awarnessDelta = event.awareness_score_after - event.awareness_score_before;
+
+    const typeConfig = {
+        AI_CHAT_REQUESTED: {
+            label: 'AI Prompt',
+            icon: <Bot className="w-3.5 h-3.5" />,
+            color: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+            dot: 'bg-violet-500',
+        },
+        AI_CHAT_COMPLETED: {
+            label: 'AI Response',
+            icon: <Bot className="w-3.5 h-3.5" />,
+            color: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+            dot: 'bg-violet-500',
+        },
+        AI_CHAT_FAILED: {
+            label: 'AI Error',
+            icon: <XCircle className="w-3.5 h-3.5" />,
+            color: 'text-red-400 bg-red-500/10 border-red-500/20',
+            dot: 'bg-red-500',
+        },
+        CONTRIBUTION: {
+            label: 'Contribution',
+            icon: <MessageSquare className="w-3.5 h-3.5" />,
+            color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+            dot: 'bg-blue-500',
+        },
+        AWARENESS_ACK: {
+            label: 'Awareness Ack',
+            icon: <CheckCircle className="w-3.5 h-3.5" />,
+            color: 'text-green-400 bg-green-500/10 border-green-500/20',
+            dot: 'bg-green-500',
+        },
+        PROXY_REVIEW: {
+            label: 'Proxy Review',
+            icon: <Eye className="w-3.5 h-3.5" />,
+            color: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+            dot: 'bg-orange-400',
+        },
+        DEFER_LENS: {
+            label: 'Lens Deferred',
+            icon: <AlertTriangle className="w-3.5 h-3.5" />,
+            color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+            dot: 'bg-yellow-400',
+        },
+        lens_deferral_with_rationale: {
+            label: 'Lens Deferred',
+            icon: <AlertTriangle className="w-3.5 h-3.5" />,
+            color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+            dot: 'bg-yellow-400',
+        },
+        LOCK_REQUEST: {
+            label: 'Lock Request',
+            icon: <Shield className="w-3.5 h-3.5" />,
+            color: 'text-primary bg-primary/10 border-primary/20',
+            dot: 'bg-primary',
+        },
+        SESSION_CLEARED: {
+            label: 'Session Cleared',
+            icon: <XCircle className="w-3.5 h-3.5" />,
+            color: 'text-muted-foreground bg-muted border-border',
+            dot: 'bg-muted-foreground',
+        },
+    }[event.type] ?? {
+        label: event.type,
+        icon: <Activity className="w-3.5 h-3.5" />,
+        color: 'text-muted-foreground bg-muted border-border',
+        dot: 'bg-muted-foreground',
+    };
+
+    const peerId = 'peerId' in event ? event.peerId
+        : 'lensId' in event ? event.lensId
+        : null;
+
+    const content = event.type === 'AI_CHAT_COMPLETED' ? event.responseText
+        : event.type === 'CONTRIBUTION' ? event.contentSummary
+        : event.type === 'AI_CHAT_REQUESTED' ? event.prompt
+        : event.type === 'DEFER_LENS' || event.type === 'lens_deferral_with_rationale' ? event.rationale
+        : null;
+
+    const isLong = typeof content === 'string' && content.length > 280;
+    const displayContent = isLong && !expanded ? content.slice(0, 280) + '…' : content;
+
+    return (
+        <div className="flex gap-3 group">
+            {/* Timeline stem */}
+            <div className="flex flex-col items-center flex-shrink-0 pt-1">
+                <div className={cn("w-2 h-2 rounded-full ring-2 ring-background flex-shrink-0", typeConfig.dot)} />
+                <div className="w-px flex-1 bg-border/50 mt-1 min-h-[20px]" />
+            </div>
+
+            {/* Card */}
+            <div className="flex-1 pb-4 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                        typeConfig.color
+                    )}>
+                        {typeConfig.icon}
+                        {typeConfig.label}
+                    </span>
+                    {peerId && (
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                            {String(peerId).startsWith('@') ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                            {String(peerId)}
+                        </span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground ml-auto font-mono">
+                        {new Date(event.timestamp).toLocaleTimeString()}
+                    </span>
+                    {awarnessDelta !== 0 && (
+                        <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded border",
+                            awarnessDelta > 0
+                                ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                        )}>
+                            {awarnessDelta > 0 ? '+' : ''}{awarnessDelta}% awareness
+                        </span>
+                    )}
+                </div>
+
+                {displayContent && (
+                    <div className="bg-muted/30 rounded-lg border border-border/40 p-3 text-sm text-foreground/90 leading-relaxed">
+                        <p className="whitespace-pre-wrap break-words">{displayContent}</p>
+                        {isLong && (
+                            <button
+                                onClick={() => setExpanded(v => !v)}
+                                className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                            >
+                                {expanded
+                                    ? <><ChevronUp className="w-3 h-3" /> Show less</>
+                                    : <><ChevronDown className="w-3 h-3" /> Show full response</>}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Awareness score bar */}
+                <div className="mt-1.5 flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] text-muted-foreground font-mono">awareness</span>
+                    <div className="flex-1 h-1 rounded-full bg-border overflow-hidden max-w-[120px]">
+                        <div
+                            className={cn(
+                                "h-full rounded-full transition-all",
+                                event.awareness_score_after >= 75 ? "bg-green-500"
+                                : event.awareness_score_after >= 40 ? "bg-yellow-500"
+                                : "bg-red-500"
+                            )}
+                            style={{ width: `${event.awareness_score_after}%` }}
+                        />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-mono">{event.awareness_score_after}%</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Replay Timeline ─────────────────────────────────────��─────────────────────
+
+function ReplayTimeline({ session }: { session: Session }) {
+    const [filter, setFilter] = useState<EventFilter>('all');
+
+    const filtered = useMemo(
+        () => session.eventLog.filter(e => matchesFilter(e, filter)),
+        [session.eventLog, filter]
+    );
+
+    const counts = useMemo(() => ({
+        all: session.eventLog.length,
+        exchange: session.eventLog.filter(e => matchesFilter(e, 'exchange')).length,
+        contribution: session.eventLog.filter(e => matchesFilter(e, 'contribution')).length,
+        governance: session.eventLog.filter(e => matchesFilter(e, 'governance')).length,
+    }), [session.eventLog]);
+
+    if (session.eventLog.length === 0) {
+        return (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+                No events recorded in this session.
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {/* Awareness arc */}
+            <AwarenessArc events={session.eventLog} />
+
+            {/* Filter bar */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+                <Filter className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                {(Object.keys(FILTER_LABELS) as EventFilter[]).map(f => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={cn(
+                            "px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors",
+                            filter === f
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/40"
+                        )}
+                    >
+                        {FILTER_LABELS[f]}
+                        <span className="ml-1 opacity-60">({counts[f]})</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Timeline */}
+            <div className="pt-2">
+                {filtered.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                        No {FILTER_LABELS[filter].toLowerCase()} events in this session.
+                    </p>
+                ) : (
+                    filtered.map((event, i) => (
+                        <EventCard key={`${event.timestamp}-${i}`} event={event} index={i} />
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ── Main Sessions page ────────────────────────────────────────────────────────
 
 export default function Sessions() {
-    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(MOCK_SESSIONS[0]?.id || null);
+    const navigate = useNavigate();
+    const [sessions] = useState(() => loadSessions());
+    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+        sessions.length > 0 ? sessions[0].id : null
+    );
 
-    const selectedSession = MOCK_SESSIONS.find(s => s.id === selectedSessionId);
+    const selectedSession = sessions.find(s => s.id === selectedSessionId);
+
+    if (sessions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed rounded-2xl bg-card shadow-inner gap-6 text-center animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto mt-10">
+                <div className="p-6 rounded-full bg-primary/5 ring-8 ring-primary/5 border border-primary/10">
+                    <History className="w-12 h-12 text-primary/40" />
+                </div>
+                <div className="max-w-md space-y-2">
+                    <h3 className="text-2xl font-bold tracking-tight">No sessions recorded</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                        Your deliberation history will appear here once you've engaged with the Commons Workshop.
+                    </p>
+                </div>
+                <Button
+                    size="lg"
+                    className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white shadow-xl shadow-[#197fe6]/20 px-8 rounded-full font-bold gap-2"
+                    onClick={() => navigate('/chamber')}
+                >
+                    Start a Session
+                    <ArrowRight className="w-5 h-5" />
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full max-w-7xl">
@@ -28,7 +369,7 @@ export default function Sessions() {
                 </div>
 
                 <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
-                    {MOCK_SESSIONS.map((session) => (
+                    {sessions.map((session) => (
                         <button
                             key={session.id}
                             onClick={() => setSelectedSessionId(session.id)}
@@ -40,20 +381,21 @@ export default function Sessions() {
                             )}
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-mono text-muted-foreground">{session.date}</span>
-                                <div className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                                    session.finalInclusionScore >= 80
-                                        ? "bg-green-500/10 text-green-500 border-green-500/20"
-                                        : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                )}>
-                                    {session.finalInclusionScore}%
-                                </div>
+                                <span className="text-xs font-mono text-muted-foreground">
+                                    {session.startedAt ? new Date(session.startedAt).toLocaleDateString() : 'Draft'}
+                                </span>
+                                <StatusBadge status={session.status} />
                             </div>
-                            <h3 className="font-semibold text-sm mb-1 line-clamp-1">{session.name}</h3>
+                            <h3 className="font-semibold text-sm mb-1 line-clamp-1">Artifact: {session.artifactId}</h3>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{session.duration}</span>
-                                <span className="flex items-center gap-1"><Users className="w-3 h-3" />{session.participants.human + session.participants.ai}</span>
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    Session {session.id.split('-')[1]?.slice(0, 6)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Users className="w-3 h-3" />
+                                    {session.participants.length} Peer{session.participants.length !== 1 ? 's' : ''}
+                                </span>
                             </div>
                         </button>
                     ))}
@@ -67,67 +409,64 @@ export default function Sessions() {
                         {/* Detail Header */}
                         <div className="p-6 border-b border-border bg-muted/20">
                             <div className="flex items-center justify-between gap-4 mb-4">
-                                <h1 className="text-2xl font-bold">{selectedSession.name}</h1>
-                                <div className="flex gap-2">
+                                <h1 className="text-2xl font-bold">Session: {selectedSession.id.slice(0, 12)}</h1>
+                                <div className="flex gap-2 items-center">
                                     <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
                                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                        {selectedSession.date}
+                                        {selectedSession.startedAt
+                                            ? new Date(selectedSession.startedAt).toLocaleDateString()
+                                            : 'N/A'}
                                     </div>
-                                    <div className="px-3 py-1 bg-background border border-border rounded-lg text-xs flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                        {selectedSession.duration}
-                                    </div>
+                                    <StatusBadge status={selectedSession.status} />
+                                    {selectedSession.status === 'Active' && (
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white gap-1.5 rounded-full font-bold shadow-md shadow-[#197fe6]/20"
+                                            onClick={() => navigate('/chamber')}
+                                        >
+                                            <Zap className="w-3.5 h-3.5" />
+                                            Resume
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <MetricCard
-                                    label="Inclusion"
-                                    value={`${selectedSession.finalInclusionScore}%`}
+                                    label="Events"
+                                    value={selectedSession.eventLog.length}
                                     icon={<Activity className="w-4 h-4 text-green-500" />}
                                 />
                                 <MetricCard
                                     label="Participants"
-                                    value={`${selectedSession.participants.human}H / ${selectedSession.participants.ai}AI`}
+                                    value={selectedSession.participants.length}
                                     icon={<Users className="w-4 h-4 text-blue-500" />}
                                 />
                                 <MetricCard
                                     label="Artifacts"
-                                    value={selectedSession.outcomes.artifactsCount}
+                                    value={1}
                                     icon={<FileText className="w-4 h-4 text-orange-500" />}
                                 />
                                 <MetricCard
                                     label="Proposals"
-                                    value={selectedSession.outcomes.proposalsCount}
+                                    value={selectedSession.eventLog.filter(e => e.type === 'CONTRIBUTION').length}
                                     icon={<MessageSquare className="w-4 h-4 text-purple-500" />}
                                 />
                             </div>
                         </div>
 
-                        {/* Detail Content */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                            <section className="space-y-3">
-                                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Session Summary</h3>
-                                <p className="text-base leading-relaxed text-foreground/90 bg-muted/30 p-4 rounded-xl border border-border/50">
-                                    {selectedSession.summary}
-                                </p>
-                            </section>
-
-                            <section className="space-y-4">
-                                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Deliberation Replay</h3>
-                                <div className="aspect-video w-full rounded-2xl bg-neutral-900 border border-neutral-800 flex flex-col items-center justify-center group cursor-pointer overflow-hidden relative shadow-inner">
-                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    <PlayCircle className="w-16 h-16 text-primary/80 group-hover:text-primary group-hover:scale-110 transition-all duration-300 z-10" />
-                                    <p className="mt-4 text-sm text-neutral-400 font-medium z-10">Interactive Replay Placeholder</p>
-                                    <div className="mt-2 text-[10px] text-neutral-500 z-10">Playback engine pending final build</div>
-                                </div>
-                            </section>
-
-                            <div className="pt-2 flex justify-end">
-                                <button className="text-sm text-primary hover:underline flex items-center gap-1 font-medium px-4 py-2 rounded-lg hover:bg-primary/5 transition-colors">
-                                    View Full Narrative Logs <ChevronRight className="w-4 h-4" />
-                                </button>
+                        {/* Replay Timeline */}
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="flex items-center gap-2 mb-6">
+                                <ChevronRight className="w-4 h-4 text-primary" />
+                                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Deliberation Replay
+                                </h3>
+                                <span className="text-xs text-muted-foreground">
+                                    — {selectedSession.eventLog.length} events
+                                </span>
                             </div>
+                            <ReplayTimeline session={selectedSession} />
                         </div>
                     </div>
                 ) : (
@@ -142,7 +481,32 @@ export default function Sessions() {
     );
 }
 
-function MetricCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
+// ── Supporting components ─────────────────────────────────────────────────────
+
+const STATUS_STYLES: Record<SessionStatus, string> = {
+    Active: "bg-green-500/10 text-green-500 border-green-500/20",
+    Closed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    Draft: "bg-muted text-muted-foreground border-border",
+    Abandoned: "bg-red-500/10 text-red-400 border-red-500/20",
+};
+
+function StatusBadge({ status }: { status: SessionStatus }) {
+    return (
+        <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border", STATUS_STYLES[status])}>
+            {status}
+        </div>
+    );
+}
+
+function MetricCard({
+    label,
+    value,
+    icon,
+}: {
+    label: string;
+    value: string | number;
+    icon: React.ReactNode;
+}) {
     return (
         <div className="bg-background rounded-xl p-3 border border-border/50 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-lg bg-muted/50">

@@ -61,10 +61,11 @@ export function AuthPanel() {
         setMessage(null);
 
         try {
+            const redirectTo = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(window.location.pathname + window.location.search)}`;
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                    emailRedirectTo: redirectTo
                 }
             });
 
@@ -87,8 +88,14 @@ export function AuthPanel() {
                 setEmail('');
                 startCooldown();
             }
-        } catch {
-            setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+        } catch (error) {
+            const detail = error instanceof Error && error.message
+                ? ` ${error.message}`
+                : '';
+            setMessage({
+                type: 'error',
+                text: `Unable to reach the identity service. Check Supabase URL/key configuration.${detail}`,
+            });
             startCooldown();
         } finally {
             setLoading(false);

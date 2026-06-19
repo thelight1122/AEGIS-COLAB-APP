@@ -102,3 +102,38 @@ CREATE POLICY "Disallow update on messages" ON messages FOR UPDATE USING (false)
 
 DROP POLICY IF EXISTS "Disallow delete on messages" ON messages;
 CREATE POLICY "Disallow delete on messages" ON messages FOR DELETE USING (false);
+
+-- 5. ACCOUNT-SCOPED APP STATE
+-- Stores non-secret local Commons state so sessions/preferences can survive browser
+-- refreshes, app updates, and logins on another device. API keys and vault
+-- passphrases remain local-only.
+CREATE TABLE IF NOT EXISTS user_app_state (
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    storage_key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, storage_key)
+);
+
+ALTER TABLE user_app_state ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "user_app_state_select_own" ON user_app_state;
+CREATE POLICY "user_app_state_select_own" ON user_app_state
+FOR SELECT TO authenticated
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "user_app_state_insert_own" ON user_app_state;
+CREATE POLICY "user_app_state_insert_own" ON user_app_state
+FOR INSERT TO authenticated
+WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "user_app_state_update_own" ON user_app_state;
+CREATE POLICY "user_app_state_update_own" ON user_app_state
+FOR UPDATE TO authenticated
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "user_app_state_delete_own" ON user_app_state;
+CREATE POLICY "user_app_state_delete_own" ON user_app_state
+FOR DELETE TO authenticated
+USING (user_id = auth.uid());

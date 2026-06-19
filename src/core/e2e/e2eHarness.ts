@@ -6,16 +6,21 @@ import { PEER_STORAGE_KEY } from '../../lib/peerStore';
  */
 export const e2eHarness = {
     /**
-     * Resets all relevant local storage keys to a clean state.
+     * Resets only deterministic E2E keys. Never clear all browser storage:
+     * production preferences, peer prompts, vaults, and archives may share the
+     * same origin during local testing.
      */
     resetAppState: () => {
-        localStorage.clear();
-        // Specifically clear the keys we know about to be safe
-        localStorage.removeItem('aegis.sessions.v0');
-        localStorage.removeItem('aegis-peers-registry');
-        localStorage.removeItem('aegis_events_current-artifact');
-        localStorage.removeItem('aegis_metadata_current-artifact');
-        localStorage.removeItem('aegis_ops_current-artifact');
+        [
+            'aegis.sessions.v0',
+            'aegis-peers-registry',
+            'aegis_events_current-artifact',
+            'aegis_metadata_current-artifact',
+            'aegis_ops_current-artifact',
+        ].forEach(key => localStorage.removeItem(key));
+        [
+            'aegis.activeTeam.session.v1',
+        ].forEach(key => sessionStorage.removeItem(key));
         console.log('[E2E] App state reset performed.');
     },
 
@@ -25,14 +30,36 @@ export const e2eHarness = {
      */
     seedScenarioLockableAfterActions: () => {
         const e2ePeers = [
-            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering'] },
-            { id: 'p3', name: 'Sarah', type: 'human', role: 'Product', status: 'online', acknowledged: false, domains: ['Product'] },
+            {
+                id: 'p1',
+                handle: '@user',
+                name: 'User AI',
+                type: 'ai',
+                enabled: true,
+                domains: ['Engineering', 'Operational Layer'],
+                provider: 'openai', // mock
+                model: 'gpt-4'
+            },
+            {
+                id: 'p3',
+                handle: '@sarah',
+                name: 'Sarah AI',
+                type: 'ai',
+                enabled: true,
+                domains: ['Product'],
+                provider: 'openai', // mock
+                model: 'gpt-4'
+            },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
+        sessionStorage.setItem('aegis.activeTeam.session.v1', JSON.stringify({
+            selectedPeerIds: ['p1', 'p3'],
+            loadedPresetId: null
+        }));
 
         localStorage.setItem("aegis_metadata_current-artifact", JSON.stringify({
             title: "Operational Layer — Prism Refract Behavior",
-            domains: ["Operational Layer", "Product"]
+            domains: ["Operational Layer", "Product", "Engineering"]
         }));
 
         localStorage.setItem("aegis.sessions.v0", JSON.stringify([]));
@@ -47,14 +74,25 @@ export const e2eHarness = {
      */
     seedReadyToLock: () => {
         const e2ePeers = [
-            { id: 'p1', name: 'User', type: 'human', role: 'Facilitator', status: 'online', acknowledged: false, domains: ['Engineering'] },
+            {
+                id: 'p1',
+                handle: '@eng',
+                name: 'User AI',
+                type: 'ai',
+                enabled: true,
+                domains: ['Engineering'],
+                provider: 'openai',
+                model: 'gpt-4'
+            },
         ];
         localStorage.setItem(PEER_STORAGE_KEY, JSON.stringify(e2ePeers));
+        sessionStorage.setItem('aegis.activeTeam.session.v1', JSON.stringify({
+            selectedPeerIds: ['p1'],
+            loadedPresetId: null
+        }));
 
         const lockableEvents = [
-            { type: 'AWARENESS_ACK', peerId: 'p1', timestamp: Date.now() },
-            // This would make Engineering acknowledged. 
-            // If artifact is Engineering only, it would be lockable.
+            { type: 'AWARENESS_ACK', peerId: 'p1', timestamp: Date.now(), timestamp_utc: new Date().toISOString() },
         ];
         localStorage.setItem('aegis_events_current-artifact', JSON.stringify(lockableEvents));
 

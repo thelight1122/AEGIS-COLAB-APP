@@ -1,10 +1,9 @@
 /**
- * @vitest-environment jsdom
+ * @vitest-environment happy-dom
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import type {
-    GovernedOperation,
-    ToolProposal
+    GovernedOperation
 } from "./governedOperation";
 import {
     OperationStatus,
@@ -43,7 +42,7 @@ describe("GovernedOperation Governance", () => {
 
     it("should fail validation for missing fields", () => {
         const invalid = { ...validOp, id: undefined };
-        // @ts-ignore - purposefully passing invalid type
+
         expect(() => assertGovernedOperation(invalid)).toThrow();
     });
 

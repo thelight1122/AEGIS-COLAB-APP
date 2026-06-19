@@ -1,0 +1,84 @@
+﻿
+Running 4 tests using 4 workers
+
+  Γ£ô  2 [chromium] ΓÇ║ tests\governance.spec.ts:74:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ TC-060: Lock Availability Logic Assertions (481ms)
+  Γ£ÿ  3 [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating (5.6s)
+  Γ£ÿ  4 [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping (5.7s)
+  Γ£ÿ  1 [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence (30.0s)
+
+
+  1) [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[placeholder="Name"]')[22m
+
+
+      12 |         // Add a new peer with domains
+      13 |         await page.getByRole('button', { name: /Add Peer/i }).click();
+    > 14 |         await page.locator('input[placeholder="Name"]').fill('QA Specialist');
+         |                                                         ^
+      15 |         await page.locator('input[placeholder="Role"]').fill('Verification');
+      16 |         await page.locator('input[placeholder*="Domain Tags"]').fill('QA, Testing, Governance');
+      17 |         await page.getByRole('button', { name: "Add Peer" }).click();
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:14:57
+
+    Error Context: test-results\governance-Governance-Inte-4233a-gement-Registry-Persistence-chromium\error-context.md
+
+  2) [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Product', { exact: true }).nth(1)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Product', { exact: true }).nth(1)[22m
+
+
+      29 |         await expect(page.getByText('Product').first()).toBeVisible();
+      30 |         // Since we updated mock data, Product should have 'Product' domain
+    > 31 |         await expect(page.getByText('Product', { exact: true }).nth(1)).toBeVisible();
+         |                                                                         ^
+      32 |     });
+      33 |
+      34 |     test('GI-010/021/030: Chamber Domain Intersection & Lock Gating', async ({ page }) => {
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:31:73
+
+    Error Context: test-results\governance-Governance-Inte-06fea--GI-020-Lens-Domain-Mapping-chromium\error-context.md
+
+  3) [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText(/Design/i)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText(/Design/i)[22m
+
+
+      36 |
+      37 |         // Verify initial state
+    > 38 |         await expect(page.getByText(/Design/i)).toBeVisible(); // Default active domain from mock metadata
+         |                                                 ^
+      39 |
+      40 |         // Edit artifact metadata to add a domain
+      41 |         await page.getByRole('button', { name: /Edit Metadata/i }).click();
+        at E:\Git_Repository\AEGIS-COLAB-APP\tests\governance.spec.ts:38:49
+
+    Error Context: test-results\governance-Governance-Inte-65205-in-Intersection-Lock-Gating-chromium\error-context.md
+
+  3 failed
+    [chromium] ΓÇ║ tests\governance.spec.ts:9:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-001/002: Peer Domain Management & Registry Persistence 
+    [chromium] ΓÇ║ tests\governance.spec.ts:25:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-020: Lens Domain Mapping 
+    [chromium] ΓÇ║ tests\governance.spec.ts:34:5 ΓÇ║ Governance Integrity Protocol E2E ΓÇ║ GI-010/021/030: Chamber Domain Intersection & Lock Gating 
+  1 passed (31.4s)

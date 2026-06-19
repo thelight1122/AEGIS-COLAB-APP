@@ -7,3 +7,11 @@ export const SYSTEM_LENSES = [
     RATIONAL_SYNTHESIS_LENS,
     AFFECTIVE_SYNTHESIS_LENS
 ];
+
+export const DEFAULT_DOMAIN_LENSES = [
+    { id: 'Product', domains: ['Product'], autoReview: false },
+    { id: 'Engineering', domains: ['Engineering'], autoReview: false },
+    { id: 'Design', domains: ['Design'], autoReview: false },
+    { id: 'Security', domains: ['Security'], autoReview: false },
+    { id: 'Legal', domains: ['Legal'], autoReview: false }
+];

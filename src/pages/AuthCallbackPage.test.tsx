@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment happy-dom */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import AuthCallbackPage from './AuthCallbackPage';
@@ -62,7 +62,7 @@ describe('AuthCallbackPage', () => {
 
         // Wait for the setTimeout redirect
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+            expect(mockNavigate).toHaveBeenCalledWith('/commons', { replace: true });
         }, { timeout: 3000 });
     });
 
@@ -139,7 +139,7 @@ describe('AuthCallbackPage', () => {
 
         vi.mocked(supabase.auth.exchangeCodeForSession).mockResolvedValue({
             data: { session: null, user: null },
-            error: { message: 'Invalid code', name: 'AuthError', status: 400 } as any
+            error: { message: 'Invalid code', name: 'AuthError', status: 400 } as unknown as AuthTokenResponse['error']
         } as AuthTokenResponse);
 
         render(
@@ -161,7 +161,7 @@ describe('AuthCallbackPage', () => {
         vi.mocked(supabase.auth.getSession).mockResolvedValue({
             data: { session: mockSession },
             error: null
-        } as any);
+        } as unknown as AuthTokenResponse);
 
         render(
             <MemoryRouter>

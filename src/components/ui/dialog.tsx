@@ -17,11 +17,11 @@ export function Dialog({ isOpen, onClose, title, children, className }: DialogPr
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div
                 className={cn(
-                    "bg-card text-card-foreground border border-border shadow-lg rounded-lg w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200",
+                    "bg-card text-card-foreground border border-border shadow-lg rounded-lg w-full max-w-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200",
                     className
                 )}
             >
-                <div className="flex items-center justify-between p-4 border-b border-border">
+                <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                     <h2 className="text-lg font-semibold">{title}</h2>
                     <button
                         onClick={onClose}
@@ -31,7 +31,7 @@ export function Dialog({ isOpen, onClose, title, children, className }: DialogPr
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="p-4">
+                <div className="p-4 overflow-y-auto flex-1">
                     {children}
                 </div>
             </div>

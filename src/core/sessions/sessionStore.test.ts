@@ -6,7 +6,7 @@ import {
     canStartSession,
     applyAbandonment
 } from './sessionStore';
-import type { Session } from './types';
+
 
 describe('sessionStore Logic', () => {
     const artifactId = 'A-1';

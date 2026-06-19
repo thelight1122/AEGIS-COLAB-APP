@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+.aegis-runtime/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -41,3 +42,17 @@ dist-ssr/
 .env.production.local
 test-results/*
 !test-results/.keep
+
+# Agent / tool caches and debug artifacts (regenerable — not versioned)
+.agent/
+.playwright-mcp/
+__pycache__/
+*.pyc
+
+# Root-level debug screenshots (manual capture during dev)
+/*.png
+
+# Browser-storage forensic / recovery dumps (LevelDB; contain live tokens — never version)
+var/browser-storage-forensic-*/
+var/browser-storage-recovery-*/
+*.ldb

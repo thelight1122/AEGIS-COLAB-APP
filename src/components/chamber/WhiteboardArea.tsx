@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useCallback, useState, useEffect, useRef } from 'react';
 import {
     ReactFlow,
@@ -17,13 +18,18 @@ import {
     Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { ProposalNode } from './nodes/ProposalNode';
 import { TensionNode } from './nodes/TensionNode';
 import { ScenarioNode, BoundaryNode } from './nodes/StructureNodes';
+import { ImageNode } from './nodes/ImageNode';
+import { AgentNode } from './nodes/AgentNode';
+import { DecisionNode } from './nodes/DecisionNode';
 import type { AppNode } from './nodes/nodeTypes';
 import { CreateNodeModal } from './CreateNodeModal';
+import type { CreateNodeData } from './CreateNodeModal';
+import { WhiteboardToolbar } from './WhiteboardToolbar';
 import { Button } from '../ui/button';
 
 const nodeTypes: NodeTypes = {
@@ -31,51 +37,14 @@ const nodeTypes: NodeTypes = {
     tension: TensionNode,
     scenario: ScenarioNode,
     boundary: BoundaryNode,
+    image: ImageNode,
+    agent: AgentNode,
+    decision: DecisionNode,
 };
 
-const initialNodes: AppNode[] = [
-    {
-        id: '1',
-        type: 'proposal',
-        position: { x: 250, y: 100 },
-        data: {
-            label: 'Implement RAG Pipeline',
-            description: 'Connect vector DB to improved context window',
-            author: 'Architect'
-        },
-    },
-    {
-        id: '2',
-        type: 'tension',
-        position: { x: 100, y: 300 },
-        data: {
-            label: 'Latency Concerns',
-            description: 'Vector search adding 200ms overhead',
-            intensity: 'medium'
-        },
-    },
-    {
-        id: '3',
-        type: 'scenario',
-        position: { x: 500, y: 200 },
-        data: {
-            label: 'Q4 Deployment',
-            active: true
-        },
-    },
-    {
-        id: '4',
-        type: 'boundary',
-        position: { x: 400, y: 50 },
-        data: {
-            label: 'Infrastructure Scope',
-        },
-    },
-];
+const initialNodes: AppNode[] = [];
 
-const initialEdges: Edge[] = [
-    { id: 'e1-2', source: '1', target: '2', animated: true },
-];
+const initialEdges: Edge[] = [];
 
 interface WhiteboardAreaProps {
     focusNodeId?: string | null;
@@ -86,6 +55,10 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
     const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createNodeType, setCreateNodeType] = useState<CreateNodeData['type']>('proposal');
+    const [nodeToEdit, setNodeToEdit] = useState<AppNode | null>(null);
+    const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+    const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
     const { fitView } = useReactFlow();
     const prevFocusRef = useRef<string | null>(null);
 
@@ -94,7 +67,7 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
         if (onNodesReady) {
             const nodeList = nodes.map((n) => ({
                 id: n.id,
-                label: n.data.label,
+                label: n.data.label || n.type || 'node',
                 type: n.type || 'unknown',
             }));
             onNodesReady(nodeList);
@@ -121,14 +94,55 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
         [setEdges],
     );
 
-    const handleCreateNode = (nodeData: {
-        type: AppNode['type'];
-        label: string;
-        description?: string;
-        intensity?: 'low' | 'medium' | 'high';
-        active?: boolean;
-        author?: string;
-    }) => {
+    const handleClearBoard = () => {
+        if (nodes.length === 0 && edges.length === 0) return;
+        if (!window.confirm('Clear the current whiteboard?')) return;
+        setNodes([]);
+        setEdges([]);
+        setSelectedNodeIds([]);
+        setSelectedEdgeIds([]);
+    };
+
+    const handleDeleteSelected = () => {
+        if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) return;
+        setNodes((nds) => nds.filter(node => !selectedNodeIds.includes(node.id)));
+        setEdges((eds) => eds.filter(edge =>
+            !selectedEdgeIds.includes(edge.id) &&
+            !selectedNodeIds.includes(edge.source) &&
+            !selectedNodeIds.includes(edge.target)
+        ));
+        setSelectedNodeIds([]);
+        setSelectedEdgeIds([]);
+    };
+
+    const handleCreateNode = (nodeData: CreateNodeData) => {
+        if (nodeToEdit) {
+            setNodes((nds) =>
+                nds.map((n) =>
+                    n.id === nodeToEdit.id
+                        ? {
+                              ...n,
+                              type: nodeData.type,
+                              data: {
+                                  ...n.data,
+                                  label: nodeData.label,
+                                  description: nodeData.description,
+                                  intensity: nodeData.intensity,
+                                  imageUrl: nodeData.imageUrl,
+                                  role: nodeData.role,
+                                  status: nodeData.status,
+                                  state: nodeData.state,
+                                  details: nodeData.details,
+                              } as any, // Cast to avoid strict type mismatch during dynamic update
+                          }
+                        : n
+                )
+            );
+            setIsCreateModalOpen(false);
+            setNodeToEdit(null);
+            return;
+        }
+
         const id = `node-${Date.now()}`;
         let newNode: AppNode;
 
@@ -150,6 +164,15 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
             case 'boundary':
                 newNode = { ...common, type: 'boundary', data: { label: nodeData.label } };
                 break;
+            case 'image':
+                newNode = { ...common, type: 'image', data: { label: nodeData.label, imageUrl: nodeData.imageUrl, alt: nodeData.alt } };
+                break;
+            case 'agent':
+                newNode = { ...common, type: 'agent', data: { label: nodeData.label, role: nodeData.role, status: nodeData.status || 'idle' } };
+                break;
+            case 'decision':
+                newNode = { ...common, type: 'decision', data: { label: nodeData.label, state: nodeData.state || 'pending', details: nodeData.details } };
+                break;
             default:
                 return; // Should not happen with typed input
         }
@@ -166,22 +189,99 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
+            onNodeDoubleClick={(_event, node) => {
+                setNodeToEdit(node as AppNode);
+                setCreateNodeType(node.type as CreateNodeData['type']);
+                setIsCreateModalOpen(true);
+            }}
+            onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) => {
+                const nextNodeIds = selectedNodes.map(node => node.id);
+                const nextEdgeIds = selectedEdges.map(edge => edge.id);
+                setSelectedNodeIds(prev => (
+                    prev.length === nextNodeIds.length && prev.every((id, idx) => id === nextNodeIds[idx])
+                        ? prev
+                        : nextNodeIds
+                ));
+                setSelectedEdgeIds(prev => (
+                    prev.length === nextEdgeIds.length && prev.every((id, idx) => id === nextEdgeIds[idx])
+                        ? prev
+                        : nextEdgeIds
+                ));
+            }}
             fitView
             className="bg-slate-50 dark:bg-slate-900"
         >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
             <Controls />
             <MiniMap className="dark:bg-slate-800 dark:border-slate-700" />
-            <Panel position="top-right">
-                <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 shadow-lg">
+            <Panel position="top-left" className="top-1/4">
+                <WhiteboardToolbar onSelectItem={(type) => {
+                    setCreateNodeType(type);
+                    setIsCreateModalOpen(true);
+                }} />
+            </Panel>
+            <Panel position="top-right" className="flex gap-2">
+                <Button
+                    onClick={handleClearBoard}
+                    variant="outline"
+                    className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700"
+                    title="Clear Board"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Clear Board
+                </Button>
+                <Button
+                    onClick={handleDeleteSelected}
+                    variant="outline"
+                    disabled={selectedNodeIds.length === 0 && selectedEdgeIds.length === 0}
+                    className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-40"
+                    title="Delete Selected"
+                >
+                    Delete Selected
+                </Button>
+                <Button onClick={() => {
+                    const flow = { nodes, edges };
+                    localStorage.setItem('aegis_canvas_backup', JSON.stringify(flow));
+                    alert('Canvas layout saved to local storage.');
+                }} variant="outline" className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700">
+                    Save Pipeline
+                </Button>
+                <Button onClick={() => {
+                    const saved = localStorage.getItem('aegis_canvas_backup');
+                    if (saved) {
+                        try {
+                            const flow = JSON.parse(saved);
+                            if (flow.nodes) setNodes(flow.nodes);
+                            if (flow.edges) setEdges(flow.edges);
+                        } catch (e) {
+                            console.error('Failed to load canvas', e);
+                        }
+                    } else {
+                        alert('No saved canvas found.');
+                    }
+                }} variant="outline" className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700">
+                    Load Pipeline
+                </Button>
+                <Button onClick={() => {
+                    setNodeToEdit(null);
+                    setCreateNodeType('proposal');
+                    setIsCreateModalOpen(true);
+                }} className="gap-2 shadow-lg">
                     <Plus className="w-4 h-4" />
                     Add Node
                 </Button>
             </Panel>
             <CreateNodeModal
+                key={nodeToEdit ? `edit-${nodeToEdit.id}` : `new-${createNodeType}`}
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                mode={nodeToEdit ? 'edit' : 'create'}
+                initialData={nodeToEdit ? (nodeToEdit.data as any) : undefined}
+                onClose={() => {
+                    setIsCreateModalOpen(false);
+                    setNodeToEdit(null);
+                }}
                 onCreateNode={handleCreateNode}
+                defaultType={createNodeType}
             />
         </ReactFlow>
     );

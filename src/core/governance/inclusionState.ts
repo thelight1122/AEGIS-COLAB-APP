@@ -12,9 +12,15 @@ import type {
 import { detectShadowAffects } from "./shadowSentinel";
 import { RATIONAL_SYNTHESIS_LENS, AFFECTIVE_SYNTHESIS_LENS } from "./systemLenses";
 
-const uniq = (arr: string[]) => Array.from(new Set(arr));
-const intersect = (a: string[], b: string[]) => a.filter((x) => b.includes(x));
-const intersectNonEmpty = (a: string[], b: string[]) => a.some((x) => b.includes(x));
+const uniq = (arr: string[]) => Array.from(new Set(arr.map(s => s.trim())));
+const intersect = (a: string[], b: string[]) => {
+    const bSet = new Set(b.map(s => s.toLowerCase().trim()));
+    return a.filter(x => bSet.has(x.toLowerCase().trim()));
+};
+const intersectNonEmpty = (a: string[], b: string[]) => {
+    const bSet = new Set(b.map(s => s.toLowerCase().trim()));
+    return a.some(x => bSet.has(x.toLowerCase().trim()));
+};
 
 export function computeInclusionState(
     artifact: Artifact,
@@ -86,10 +92,10 @@ export function computeInclusionState(
     const hasAffective = representedLenses.includes(AFFECTIVE_SYNTHESIS_LENS);
     const synthesisSatisfied = !isHighImpact || (hasRational && hasAffective);
 
-    const deferEvents = events.filter((e) => e.type === "DEFER_LENS") as Extract<
+    const deferEvents = events.filter((e) => e.type === "DEFER_LENS" || e.type === "lens_deferral_with_rationale") as (Extract<
         GovernanceEvent,
         { type: "DEFER_LENS" }
-    >[];
+    > | Extract<GovernanceEvent, { type: "lens_deferral_with_rationale" }>)[];
 
     const deferredLenses = uniq(
         deferEvents
