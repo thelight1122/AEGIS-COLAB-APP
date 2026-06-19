@@ -34,6 +34,9 @@
  * Conscience: steward-conscience.ts
  */
 
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import {
     runPipeline,
@@ -54,14 +57,68 @@ export type {
     SessionState,
 } from './steward-core.js';
 
-const STEWARD_PORT = 8789;
+const DEFAULT_STEWARD_PORT = Number.parseInt(process.env.STEWARD_PORT ?? '8789', 10);
+const PORT_ATTEMPTS = Number.parseInt(process.env.STEWARD_PORT_ATTEMPTS ?? '25', 10);
+const RUNTIME_DIR = path.resolve(process.cwd(), '.aegis-runtime');
+const STEWARD_PORT_FILE = path.join(RUNTIME_DIR, 'steward-port.json');
+
+function writeStewardPort(port: number): void {
+    fs.mkdirSync(RUNTIME_DIR, { recursive: true });
+    fs.writeFileSync(
+        STEWARD_PORT_FILE,
+        JSON.stringify({
+            port,
+            url: `ws://localhost:${port}`,
+            updatedAt: new Date().toISOString(),
+        }, null, 2),
+    );
+}
+
+function listenWithFallback(serverInstance: http.Server, startPort: number, attempts: number): void {
+    let port = startPort;
+    const maxPort = startPort + Math.max(0, attempts - 1);
+
+    const tryListen = (): void => {
+        const handleListening = (): void => {
+            serverInstance.off('error', handleError);
+            writeStewardPort(port);
+            console.log(`[STEWARD] Daemon running on ws://localhost:${port}`);
+            console.log('[STEWARD] Observing. Not leading.');
+        };
+
+        const handleError = (error: NodeJS.ErrnoException): void => {
+            serverInstance.off('error', handleError);
+            serverInstance.off('listening', handleListening);
+
+            if (error.code === 'EADDRINUSE' && port < maxPort) {
+                console.warn(`[STEWARD] Port ${port} is busy; trying ${port + 1}`);
+                port += 1;
+                tryListen();
+                return;
+            }
+
+            throw error;
+        };
+
+        serverInstance.once('error', handleError);
+        serverInstance.once('listening', handleListening);
+        serverInstance.listen(port);
+    };
+
+    tryListen();
+}
 
 // ── WebSocket Server ──────────────────────────────────────────────────────────
 
-const wss = new WebSocketServer({ port: STEWARD_PORT });
+const server = http.createServer();
+const wss = new WebSocketServer({ server });
 
-console.log(`[STEWARD] Daemon running on ws://localhost:${STEWARD_PORT}`);
-console.log('[STEWARD] Observing. Not leading.');
+wss.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') return;
+    console.error('[STEWARD] WebSocket server error:', error);
+});
+
+listenWithFallback(server, DEFAULT_STEWARD_PORT, PORT_ATTEMPTS);
 
 wss.on('connection', (ws: WebSocket) => {
     console.log('[STEWARD] Chamber connected');

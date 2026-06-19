@@ -15,6 +15,7 @@ interface IDSContextType {
     addCard: (type: IDSCard['type'], content: string) => void;
     beginNewChat: () => void;
     attachNode: (cardId: string, nodeId: string) => void;
+    removeCard: (cardId: string) => void;
     removeAttachment: (cardId: string, attachmentId: string) => void;
     setNodes: (nodes: NodeOption[]) => void;
     setFocusNode: (nodeId: string | null) => void;
@@ -65,6 +66,10 @@ export function IDSProvider({ children }: { children: ReactNode }) {
         }));
     }, [canvasNodes]);
 
+    const removeCard = useCallback((cardId: string) => {
+        setIdsCards(prev => prev.filter(card => card.id !== cardId));
+    }, []);
+
     const removeAttachment = useCallback((cardId: string, attachmentId: string) => {
         setIdsCards(prev => prev.map(card => {
             if (card.id !== cardId) return card;
@@ -76,11 +81,41 @@ export function IDSProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const setNodes = useCallback((nodes: NodeOption[]) => {
-        setCanvasNodes(nodes);
+        setCanvasNodes(prev => {
+            if (
+                prev.length === nodes.length &&
+                prev.every((node, idx) => (
+                    node.id === nodes[idx]?.id &&
+                    node.label === nodes[idx]?.label &&
+                    node.type === nodes[idx]?.type
+                ))
+            ) {
+                return prev;
+            }
+            return nodes;
+        });
     }, []);
 
     const setFocusNode = useCallback((nodeId: string | null) => {
         setFocusNodeId(nodeId);
+    }, []);
+
+    const replaceIdsCards = useCallback((cards: IDSCard[]) => {
+        setIdsCards(prev => {
+            if (
+                prev.length === cards.length &&
+                prev.every((card, idx) => (
+                    card.id === cards[idx]?.id &&
+                    card.type === cards[idx]?.type &&
+                    card.content === cards[idx]?.content &&
+                    card.authorId === cards[idx]?.authorId &&
+                    card.timestamp === cards[idx]?.timestamp
+                ))
+            ) {
+                return prev;
+            }
+            return cards;
+        });
     }, []);
 
     return (
@@ -91,10 +126,11 @@ export function IDSProvider({ children }: { children: ReactNode }) {
             addCard,
             beginNewChat,
             attachNode,
+            removeCard,
             removeAttachment,
             setNodes,
             setFocusNode,
-            setIdsCards
+            setIdsCards: replaceIdsCards
         }}>
             {children}
         </IDSContext.Provider>

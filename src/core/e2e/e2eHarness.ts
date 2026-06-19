@@ -6,17 +6,21 @@ import { PEER_STORAGE_KEY } from '../../lib/peerStore';
  */
 export const e2eHarness = {
     /**
-     * Resets all relevant local storage keys to a clean state.
+     * Resets only deterministic E2E keys. Never clear all browser storage:
+     * production preferences, peer prompts, vaults, and archives may share the
+     * same origin during local testing.
      */
     resetAppState: () => {
-        localStorage.clear();
-        // Specifically clear the keys we know about to be safe
-        localStorage.removeItem('aegis.sessions.v0');
-        localStorage.removeItem('aegis-peers-registry');
-        localStorage.removeItem('aegis_events_current-artifact');
-        localStorage.removeItem('aegis_metadata_current-artifact');
-        localStorage.removeItem('aegis_ops_current-artifact');
-        sessionStorage.removeItem('aegis.activeTeam.session.v1');
+        [
+            'aegis.sessions.v0',
+            'aegis-peers-registry',
+            'aegis_events_current-artifact',
+            'aegis_metadata_current-artifact',
+            'aegis_ops_current-artifact',
+        ].forEach(key => localStorage.removeItem(key));
+        [
+            'aegis.activeTeam.session.v1',
+        ].forEach(key => sessionStorage.removeItem(key));
         console.log('[E2E] App state reset performed.');
     },
 

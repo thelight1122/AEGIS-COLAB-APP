@@ -9,7 +9,14 @@ test.describe('Session Stabilization Integrity', () => {
             if (window.__AEGIS_E2E__) {
                 window.__AEGIS_E2E__.resetAppState();
             } else {
-                localStorage.clear();
+                [
+                    'aegis.sessions.v0',
+                    'aegis-peers-registry',
+                    'aegis_events_current-artifact',
+                    'aegis_metadata_current-artifact',
+                    'aegis_ops_current-artifact',
+                ].forEach(key => localStorage.removeItem(key));
+                sessionStorage.removeItem('aegis.activeTeam.session.v1');
             }
             // Seed a closed session to prepopulate the Artifact Matrix
             const mockSession = {

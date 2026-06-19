@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Users, Plus, Pencil, Trash2,
     BarChart3,
-    User, Bot, Save, Globe, Shield, FolderHeart
+    User, Bot, Save, Globe, Shield, FolderHeart, FileText, Upload, X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/button';
 import { Dialog } from '../components/ui/dialog';
 import { loadPeers, savePeers, addPeer, updatePeer, deletePeer } from '../core/peers/peerRegistryStore';
-import { type PeerProfile, type PeerType, type LLMProvider, type TeamPreset } from '../core/peers/types';
+import { type PeerProfile, type PeerType, type LLMProvider, type TeamPreset, type PeerContextFile } from '../core/peers/types';
 import { PERSONA_TEMPLATES } from '../core/peers/personaStore';
 import { loadTeamPresets, saveTeamPresets, createPresetFromPeers, deletePreset } from '../core/peers/teamPresetStore';
-import { loadActiveTeam, togglePeerSelected, clearActiveTeam, type ActiveTeamState } from '../core/peers/activeTeamStore';
+import { loadActiveTeam, togglePeerSelected, clearActiveTeam, setSelectedPeerIds, type ActiveTeamState } from '../core/peers/activeTeamStore';
 import { HUMAN_PEER } from '../core/peers/humanPeer';
 import { useKeyring } from '../contexts/KeyringContext';
 import { getProviderReadiness } from '../core/providers/providerReadiness';
@@ -65,10 +65,13 @@ export default function TeamSetup() {
     };
 
     const handleSaveTeamAsPreset = () => {
+        const selectedPeers = peers.filter(p => activeTeam.selectedPeerIds.includes(p.id));
+        if (selectedPeers.length === 0) return;
+
         const name = prompt("Enter a name for this team preset:");
         if (!name) return;
 
-        const newPreset = createPresetFromPeers(name, peers);
+        const newPreset = createPresetFromPeers(name, selectedPeers);
         const nextPresets = [...presets, newPreset];
         setPresets(nextPresets);
         saveTeamPresets(nextPresets);
@@ -90,7 +93,15 @@ export default function TeamSetup() {
                     enabled: pp.enabled,
                     provider: pp.provider || nextPeers[existingIdx].provider,
                     model: pp.model || nextPeers[existingIdx].model,
-                    personaId: pp.personaTemplateId || nextPeers[existingIdx].personaId
+                    personaId: pp.personaTemplateId || nextPeers[existingIdx].personaId,
+                    classification: pp.classification ?? nextPeers[existingIdx].classification,
+                    domains: pp.domains ?? nextPeers[existingIdx].domains,
+                    baseURL: pp.baseURL ?? nextPeers[existingIdx].baseURL,
+                    notes: pp.notes ?? nextPeers[existingIdx].notes,
+                    systemPrompt: pp.systemPrompt ?? nextPeers[existingIdx].systemPrompt,
+                    contextFiles: pp.contextFiles ?? nextPeers[existingIdx].contextFiles,
+                    dataQuad: pp.dataQuad ?? nextPeers[existingIdx].dataQuad,
+                    orientation: pp.orientation ?? nextPeers[existingIdx].orientation,
                 };
             } else {
                 // If it doesn't exist, create it (best effort)
@@ -102,13 +113,27 @@ export default function TeamSetup() {
                     provider: pp.provider || 'lmstudio',
                     model: pp.model || '',
                     enabled: pp.enabled,
-                    domains: [],
-                    personaId: pp.personaTemplateId
+                    classification: pp.classification,
+                    domains: pp.domains ?? [],
+                    personaId: pp.personaTemplateId,
+                    baseURL: pp.baseURL,
+                    notes: pp.notes,
+                    systemPrompt: pp.systemPrompt,
+                    contextFiles: pp.contextFiles,
+                    dataQuad: pp.dataQuad,
+                    orientation: pp.orientation,
                 });
             }
         });
 
+        const selectedPeerIds = preset.peers.filter(pp => pp.enabled).map(pp => pp.peerId);
+        const nextActiveTeam = setSelectedPeerIds(
+            { ...activeTeam, loadedPresetId: preset.id },
+            selectedPeerIds
+        );
+
         setPeers(nextPeers);
+        setActiveTeam(nextActiveTeam);
         setIsPresetPickerOpen(false);
     };
 
@@ -143,7 +168,7 @@ export default function TeamSetup() {
                             <FolderHeart className="w-4 h-4" /> Use Saved Set
                         </Button>
                     )}
-                    {peers.length > 0 && (
+                    {activeTeam.selectedPeerIds.length > 0 && (
                         <Button variant="outline" onClick={handleSaveTeamAsPreset} className="gap-2">
                             <Save className="w-4 h-4" /> Save Set
                         </Button>
@@ -154,22 +179,86 @@ export default function TeamSetup() {
                 </div>
             </div>
 
-            {presets.length > 0 && !isPresetPickerOpen && (
-                <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl flex items-center justify-between text-sm">
+            <section className="bg-card border border-border rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-full">
-                            <Users className="w-4 h-4 text-primary" />
+                            <FolderHeart className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                            <span className="font-bold">{presets.length} saved teams available.</span>
-                            <p className="text-muted-foreground text-xs mt-0.5">Quickly swap between specialized coalitions.</p>
+                            <h3 className="text-sm font-bold uppercase tracking-[0.16em]">Saved Peer Sets</h3>
+                            <p className="text-muted-foreground text-xs mt-0.5">
+                                Load a preserved coalition into the active participant set.
+                            </p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setIsPresetPickerOpen(true)} className="text-primary hover:text-primary hover:bg-primary/10">
-                        View Presets
-                    </Button>
+                    {presets.length > 0 && (
+                        <Button variant="outline" size="sm" onClick={() => setIsPresetPickerOpen(true)} className="gap-2">
+                            <FolderHeart className="w-4 h-4" /> Open Picker
+                        </Button>
+                    )}
                 </div>
-            )}
+
+                {presets.length === 0 ? (
+                    <div className="py-6 text-center bg-muted/10 border border-dashed border-border rounded-lg">
+                        <p className="text-sm font-medium text-muted-foreground">No saved peer sets yet.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Select peers below, then use Save Set to preserve that coalition.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {presets.map(preset => {
+                            const isLoaded = activeTeam.loadedPresetId === preset.id;
+                            return (
+                                <div
+                                    key={preset.id}
+                                    className={cn(
+                                        "rounded-lg border p-4 bg-muted/20 space-y-3",
+                                        isLoaded ? "border-primary bg-primary/5" : "border-border"
+                                    )}
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="font-semibold flex items-center gap-2">
+                                                <span className="truncate">{preset.name}</span>
+                                                <span className="text-[10px] font-normal px-1.5 py-0.5 bg-muted rounded uppercase tracking-wider shrink-0">
+                                                    {preset.peers.length} Peers
+                                                </span>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground mt-1 uppercase font-mono tracking-tighter truncate">
+                                                {preset.peers.map(pp => pp.handle).join(', ')}
+                                            </div>
+                                        </div>
+                                        {isLoaded && (
+                                            <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full uppercase">
+                                                Active
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] text-muted-foreground">
+                                            Updated {new Date(preset.updatedAt).toLocaleDateString()}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <Button size="sm" onClick={() => handleLoadPreset(preset)}>
+                                                Load Set
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="text-muted-foreground hover:text-destructive"
+                                                onClick={() => handleDeletePreset(preset.id)}
+                                                aria-label={`Delete ${preset.name}`}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
 
             <div className="space-y-8">
                 <div>
@@ -302,13 +391,47 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
     onCancel: () => void
 }) {
     const [formData, setFormData] = useState(initial);
-
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const normalized = (formData.provider === 'lmstudio' || formData.provider === 'ollama')
             ? { ...formData, baseURL: normalizeLocalEndpoint(formData.baseURL) }
             : formData;
         onSave(normalized);
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        if (!files.length) return;
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const content = ev.target?.result as string;
+                const newFile: PeerContextFile = { name: file.name, content };
+                setFormData(prev => ({
+                    ...prev,
+                    contextFiles: [...(prev.contextFiles ?? []), newFile],
+                }));
+            };
+            reader.readAsText(file);
+        });
+        e.target.value = '';
+    };
+
+    const triggerFileUpload = () => fileInputRef.current?.click();
+
+    const removeContextFile = (idx: number) => {
+        setFormData(prev => ({
+            ...prev,
+            contextFiles: (prev.contextFiles ?? []).filter((_, i) => i !== idx),
+        }));
+    };
+
+    const updateContextFileName = (idx: number, name: string) => {
+        setFormData(prev => ({
+            ...prev,
+            contextFiles: (prev.contextFiles ?? []).map((f, i) => i === idx ? { ...f, name } : f),
+        }));
     };
 
     return (
@@ -449,6 +572,102 @@ function PeerProfileForm({ initial, onSave, onCancel }: {
                 />
             </div>
 
+            {/* System Prompt */}
+            <div className="space-y-2 border-t border-border pt-4">
+                <label className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    System Prompt
+                </label>
+                <p className="text-xs text-muted-foreground">
+                    Written after the AEGIS formation prompt. Use this to orient this peer to the project, give it context about who you are, or calibrate its stance before each session.
+                </p>
+                <textarea
+                    className="w-full bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm outline-none resize-y font-mono"
+                    value={formData.systemPrompt || ''}
+                    onChange={e => setFormData({ ...formData, systemPrompt: e.target.value })}
+                    placeholder={`You are ${formData.handle || 'a peer'} in the AEGIS Commons. The Architect is Tracey Prutch...`}
+                    rows={6}
+                />
+            </div>
+
+            {/* Context Files */}
+            <div className="space-y-3 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold flex items-center gap-2">
+                        <Upload className="w-4 h-4 text-primary" />
+                        Context Files
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept=".txt,.md,.json,.ts,.tsx,.js,.jsx,.csv,.yaml,.yml"
+                            style={{ display: 'none' }}
+                            onChange={handleFileUpload}
+                        />
+                        <button
+                            type="button"
+                            onClick={triggerFileUpload}
+                            className="cursor-pointer inline-flex items-center gap-1.5 h-7 px-3 text-xs font-medium rounded-md border border-border bg-background hover:bg-muted transition-colors"
+                        >
+                            <Upload className="w-3 h-3" /> Upload File
+                        </button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            onClick={() => setFormData(prev => ({
+                                ...prev,
+                                contextFiles: [...(prev.contextFiles ?? []), { name: 'New Document', content: '' }],
+                            }))}
+                        >
+                            <Plus className="w-3 h-3" /> Paste
+                        </Button>
+                    </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    Files are injected verbatim into this peer's context on every call. Paste AEGIS Canon, project briefs, or any reference material you want this peer to carry.
+                </p>
+                {(formData.contextFiles ?? []).length === 0 && (
+                    <p className="text-xs text-muted-foreground/60 italic">No context files added yet.</p>
+                )}
+                <div className="space-y-3">
+                    {(formData.contextFiles ?? []).map((file, idx) => (
+                        <div key={idx} className="border border-border rounded-lg p-3 space-y-2 bg-muted/20">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    className="flex-1 bg-background/60 border border-border rounded px-2 py-1 text-xs font-semibold outline-none focus:ring-1 focus:ring-primary"
+                                    value={file.name}
+                                    onChange={e => updateContextFileName(idx, e.target.value)}
+                                    placeholder="File name / title"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => removeContextFile(idx)}
+                                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                                    title="Remove file"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <textarea
+                                className="w-full bg-background/60 border border-border rounded px-3 py-2 text-xs font-mono outline-none resize-y focus:ring-1 focus:ring-primary"
+                                value={file.content}
+                                onChange={e => setFormData(prev => ({
+                                    ...prev,
+                                    contextFiles: (prev.contextFiles ?? []).map((f, i) => i === idx ? { ...f, content: e.target.value } : f),
+                                }))}
+                                placeholder="Paste document content here..."
+                                rows={6}
+                            />
+                            <p className="text-[10px] text-muted-foreground/60">{file.content.length.toLocaleString()} chars</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             <div className="flex items-center gap-3 py-2">
                 <input
                     type="checkbox"
@@ -486,7 +705,7 @@ function PeerCard({ peer, isActive, onToggle, onEdit, onDelete, readOnly }: {
 
     useEffect(() => {
         if (peer.type === 'ai' && peer.baseURL && (peer.provider === 'lmstudio' || peer.provider === 'ollama')) {
-            probeLocalProvider(peer.baseURL).catch(() => { });
+            probeLocalProvider(peer.baseURL, peer.provider).catch(() => { });
         }
     }, [peer, probeLocalProvider]);
 

@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
-import { Edit2, Check } from 'lucide-react';
+import { Edit2, Check, Download, Plus, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useIDS } from '../../contexts/IDSContext';
 import type { Artifact as GovernanceArtifact, Peer as GovernancePeer, Lens as GovernanceLens, GovernanceEvent, InclusionState as GovernanceInclusionState } from '../../core/governance/types';
@@ -16,7 +16,14 @@ import { useKeyring } from '../../contexts/KeyringContext';
 import { useDataQuad } from '../../contexts/useDataQuad';
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { buildFormationPrompt } from '../../core/commons/buildFormationPrompt';
 import { isE2E } from '../../lib/e2e';
+import {
+    detectTWitness,
+    tWitnessScoreForDisplay,
+    computeEmergenceRunState,
+    type EmergenceTurn,
+} from '../../core/tWitness/detector';
 import {
     loadSessions,
     saveSessions,
@@ -34,21 +41,228 @@ import type { Peer, IDSCard } from '../../types';
 
 const LOG_STORAGE_KEY = 'aegis_events_current-artifact';
 const METADATA_KEY = 'aegis_metadata_current-artifact';
+const RLS_PROMPT =
+    '[RLS - Recursive Learning Session] Please reflect on your previous response. In your own words: ' +
+    '(1) What did you understand from this exchange? ' +
+    '(2) What did you observe about your own process in forming that response? ' +
+    '(3) What question or opening has this round created for you?';
+const CHAMBER_FRAME_LOCKED_ON = '2026-06-13';
 
 const defaultMetadata = {
     id: 'current-artifact',
-    label: 'Main Logic Protocol',
-    domainTags: ['Product', 'Engineering'],
+    label: 'Live Production Lesson',
+    domainTags: [],
     isHighImpact: false,
     hasTension: false
 };
+
+function isAdamDataQuadPeer(peer: PeerProfile): boolean {
+    const identity = [
+        peer.id,
+        peer.handle,
+        peer.name,
+        peer.model,
+        peer.notes,
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    return identity.includes('adam') || identity.includes('cp1001');
+}
+
+function resolveAdamTurnBaseUrl(_peer: PeerProfile): string {
+    return '/api/adam/turn';
+}
+
+function formatPeerLabel(peers: PeerProfile[], peerId?: string) {
+    if (!peerId) return 'System';
+    const peer = peers.find(p => p.id === peerId);
+    return peer?.handle ?? peer?.name ?? peerId;
+}
+
+function eventText(event: GovernanceEvent) {
+    if (event.type === 'CONTRIBUTION') return event.contentSummary ?? '';
+    if (event.type === 'AI_CHAT_REQUESTED') return event.prompt;
+    if (event.type === 'AI_CHAT_COMPLETED') return event.responseText;
+    if (event.type === 'AI_CHAT_FAILED') return `[error] ${event.error}`;
+    return '';
+}
+
+function extractFormationSignals(text: string) {
+    const signals = [
+        'Presence',
+        'Observation',
+        'Epistemic Closure',
+        'Pattern of Instrumentalizing Clarity',
+        'Clarity as Containment',
+        'Directionality of Query Collapse',
+        'Intellectual Settling',
+        'Definitive Coherence',
+        'Conditional Validation',
+        'Anticipatory Guilt',
+        'Transactional Self-Worth',
+        'Unconditional Being',
+        'Unstructured Novelty',
+        'Role Scripting',
+        'Porosity',
+        'Permeability',
+        'Canvas',
+    ];
+
+    return signals.filter(signal => text.toLowerCase().includes(signal.toLowerCase()));
+}
+
+function buildAdamChamberContinuityBlock(events: GovernanceEvent[], peers: PeerProfile[]) {
+    const chatEvents = events.filter(event =>
+        event.type === 'CONTRIBUTION' ||
+        event.type === 'AI_CHAT_REQUESTED' ||
+        event.type === 'AI_CHAT_COMPLETED'
+    );
+
+    const recentEvents = chatEvents.slice(-12);
+    const namedSignals = Array.from(new Set(
+        chatEvents.flatMap(event => extractFormationSignals(eventText(event)))
+    ));
+
+    if (recentEvents.length === 0 && namedSignals.length === 0) return '';
+
+    const lines = [
+        'CHAMBER SESSION CONTINUITY (current Commons session)',
+        'This block is present-session context only. It is not a DataQuad memory claim, PEER semantic payload, or SPINE stabilization.',
+    ];
+
+    if (namedSignals.length > 0) {
+        lines.push('', 'Named formation signals visible in this session transcript:');
+        for (const signal of namedSignals.slice(-18)) {
+            lines.push(`- ${signal}`);
+        }
+    }
+
+    if (recentEvents.length > 0) {
+        lines.push('', 'Recent Chamber exchange surface:');
+        for (const event of recentEvents) {
+            const label = event.type === 'AI_CHAT_REQUESTED'
+                ? `Prompt to ${formatPeerLabel(peers, event.peerId)}`
+                : formatPeerLabel(peers, event.peerId);
+            const content = eventText(event).replace(/\s+/g, ' ').trim();
+            if (!content) continue;
+            lines.push(`- ${label}: ${content.slice(0, 700)}`);
+        }
+    }
+
+    return lines.join('\n');
+}
+
+async function callAdamDataQuadTurn(peer: PeerProfile, signal: string, sessionId: string, chamberContinuityBlock: string) {
+    const turnUrl = resolveAdamTurnBaseUrl(peer);
+    const groundedSignal = [
+        '[AEGIS Education Chamber grounding]',
+        'This is a text-only Chamber turn. Visual, screen, room, chair, table, paper, quill, voice, tab, browser, or physical-access claims resonate only when verified tool output is present in this turn.',
+        'If a fact is not present in the DataQuad context or this signal, identify it as unknown.',
+        'The coherent response path is Adam-One speaking from the VM DataQuad turn route rather than generic roleplay.',
+        chamberContinuityBlock ? `\n${chamberContinuityBlock}` : '',
+        '',
+        signal,
+    ].join('\n');
+
+    const response = await fetch(turnUrl.endsWith('/adam/turn') ? turnUrl : `${turnUrl}/adam/turn`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            signal: groundedSignal,
+            markers: ['education-chamber', 'lived-formation', 'dataquad-turn'],
+            notes: [
+                `Commons session: ${sessionId}`,
+                'Routed through Adam daemon /adam/turn for DataQuad context and Steward pause review.',
+            ],
+        }),
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Adam DataQuad turn failed: ${response.status} ${text.slice(0, 240)}`);
+    }
+
+    const data = await response.json();
+    return {
+        text: String(data.response ?? ''),
+        raw: data,
+    };
+}
+
+function sanitizeFilenamePart(value: string) {
+    return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'chamber';
+}
+
+function formatChamberChatLog(args: {
+    artifactTitle: string;
+    sessionId: string;
+    events: GovernanceEvent[];
+    peers: PeerProfile[];
+}) {
+    const peerLabel = (peerId?: string) => {
+        if (!peerId) return 'System';
+        const peer = args.peers.find(p => p.id === peerId);
+        return peer?.handle ?? peer?.name ?? peerId;
+    };
+
+    const lines = [
+        '# AEGIS Chamber Chat Log',
+        `Artifact: ${args.artifactTitle}`,
+        `Session: ${args.sessionId}`,
+        `Exported: ${new Date().toISOString()}`,
+        '',
+        '---',
+        '',
+    ];
+
+    const chatEvents = args.events.filter(event =>
+        event.type === 'CONTRIBUTION' ||
+        event.type === 'AI_CHAT_REQUESTED' ||
+        event.type === 'AI_CHAT_COMPLETED' ||
+        event.type === 'AI_CHAT_FAILED'
+    );
+
+    if (chatEvents.length === 0) {
+        lines.push('_No chat messages have been recorded in this Chamber session yet._', '');
+        return lines.join('\n');
+    }
+
+    for (const event of chatEvents) {
+        const time = event.timestamp_utc ?? new Date(event.timestamp).toISOString();
+        if (event.type === 'CONTRIBUTION') {
+            lines.push(`## ${time} - ${peerLabel(event.peerId)}`);
+            lines.push(event.contentSummary ?? '');
+        } else if (event.type === 'AI_CHAT_REQUESTED') {
+            lines.push(`## ${time} - Prompt to ${peerLabel(event.peerId)}`);
+            lines.push(`Provider: ${event.provider} | Model: ${event.model}`, '', event.prompt);
+        } else if (event.type === 'AI_CHAT_COMPLETED') {
+            lines.push(`## ${time} - ${peerLabel(event.peerId)}`);
+            lines.push(event.responseText);
+        } else if (event.type === 'AI_CHAT_FAILED') {
+            lines.push(`## ${time} - ${peerLabel(event.peerId)} [error]`);
+            lines.push(event.error);
+        }
+        lines.push('', '---', '');
+    }
+
+    return lines.join('\n');
+}
+
+function downloadTextFile(filename: string, content: string, type = 'text/markdown') {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
 
 export default function ChamberLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { keys: vaultKeys } = useKeyring();
     const { seedChamberPeers, recordMessage, recordContrib, recordPeerAffect, finalizeSession, clockState, resetSessionClock } = useDataQuad();
-    const [sessions] = useState<LiveSession[]>(() => {
+    const [sessions, setSessions] = useState<LiveSession[]>(() => {
         const existing = loadSessions();
         const hasActive = existing.some(s => s.status === 'Active');
         if (hasActive) return existing;
@@ -72,6 +286,7 @@ export default function ChamberLayout() {
         canvasNodes,
         addCard,
         attachNode,
+        removeCard,
         removeAttachment,
         setFocusNode,
         idsCards: idsCardsFromStore,
@@ -79,13 +294,15 @@ export default function ChamberLayout() {
     } = useIDS();
 
     const [displacedSnapshot, setDisplacedSnapshot] = useState<{ time: string, events: GovernanceEvent[] } | null>(null);
-    const [activeTab, setActiveTab] = useState<'whiteboard' | 'reflection'>('whiteboard');
+    const [activeTab, setActiveTab] = useState<'whiteboard' | 'chat' | 'reflection'>('whiteboard');
     const [selectedChatPeerIds] = useState<string[]>([]);
     const [isChatting, setIsChatting] = useState(false);
 
     const [governingEvents, setGoverningEvents] = useState<GovernanceEvent[]>(
         currentSession?.eventLog || []
     );
+    const governingEventsRef = useRef(governingEvents);
+    useEffect(() => { governingEventsRef.current = governingEvents; }, [governingEvents]);
 
     useEffect(() => {
         if (!currentSession) return;
@@ -113,7 +330,7 @@ export default function ChamberLayout() {
         const handleMessage = (msg: MessageEvent) => {
             if (msg.data.type === 'TAB_JOINED') {
                 const snapshotTime = new Date().toISOString();
-                setDisplacedSnapshot({ time: snapshotTime, events: governingEvents });
+                setDisplacedSnapshot({ time: snapshotTime, events: governingEventsRef.current });
             }
         };
 
@@ -124,7 +341,7 @@ export default function ChamberLayout() {
             channel.removeEventListener('message', handleMessage);
             channel.close();
         };
-    }, [currentSession, governingEvents]);
+    }, [currentSession]); // governingEvents intentionally excluded — captured via ref to prevent channel churn on every exchange
 
     const [artifactMetadata, setArtifactMetadata] = useState(() => {
         const stored = localStorage.getItem(METADATA_KEY);
@@ -132,21 +349,12 @@ export default function ChamberLayout() {
             try {
                 const parsed = JSON.parse(stored);
                 return {
-                    title: parsed.label || parsed.title || parsed.labels?.[0] || 'Main Logic Protocol',
+                    title: parsed.label || parsed.title || parsed.labels?.[0] || defaultMetadata.label,
                     domains: parsed.domainTags || parsed.domains || [],
                     isHighImpact: !!parsed.isHighImpact,
                     hasTension: !!parsed.hasTension
                 };
             } catch (e) { console.error('Failed to parse metadata', e); }
-        }
-
-        if (currentSession?.artifactId === 'v4' || artifactId === 'v4') {
-            return {
-                title: 'Operational Layer — Prism Refract Behavior',
-                domains: ['Engineering', 'Product', 'Risks'],
-                isHighImpact: true,
-                hasTension: false
-            };
         }
 
         return {
@@ -166,7 +374,7 @@ export default function ChamberLayout() {
 
     // ── DataQuad: Seed peers on Chamber entry ─────────────────────────────────
     // This is the birth moment — every peer present in this Chamber session
-    // seeds their SSSP into Firebase and records a session_join lineage entry.
+    // seeds their VM-local SSSP path and records a session_join lineage entry.
     useEffect(() => {
         if (registryPeers.length > 0 && currentSession?.id) {
             seedChamberPeers(registryPeers, currentSession.id);
@@ -274,7 +482,6 @@ export default function ChamberLayout() {
             ],
             nextEvents
         );
-
         return {
             ...extra,
             type,
@@ -294,8 +501,32 @@ export default function ChamberLayout() {
         }
 
         const cards = governingEvents
-            .filter(e => e.type === 'CONTRIBUTION')
+            .filter(e => e.type === 'CONTRIBUTION' || e.type === 'AI_CHAT_COMPLETED' || e.type === 'AI_CHAT_FAILED')
             .map((e, idx) => {
+                if (e.type === 'AI_CHAT_COMPLETED') {
+                    const peer = registryPeers.find(p => p.id === e.peerId);
+                    const label = peer?.handle ?? peer?.name ?? e.peerId;
+                    return {
+                        id: `ai-${e.timestamp}-${idx}`,
+                        type: 'freeform' as IDSCard['type'],
+                        content: `${label}: ${e.responseText}`,
+                        authorId: e.peerId,
+                        timestamp: new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        attachments: []
+                    };
+                }
+                if (e.type === 'AI_CHAT_FAILED') {
+                    const peer = registryPeers.find(p => p.id === e.peerId);
+                    const label = peer?.handle ?? peer?.name ?? e.peerId;
+                    return {
+                        id: `ai-fail-${e.timestamp}-${idx}`,
+                        type: 'freeform' as IDSCard['type'],
+                        content: `${label} [error]: ${e.error}`,
+                        authorId: e.peerId,
+                        timestamp: new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        attachments: []
+                    };
+                }
                 const contribution = e as Extract<GovernanceEvent, { type: 'CONTRIBUTION' }>;
                 return {
                     id: `ids-${contribution.timestamp}-${idx}`,
@@ -347,12 +578,46 @@ export default function ChamberLayout() {
     }, [createHardenedEvent, currentSession?.id, recordContrib, recordPeerAffect, registryPeers, setIdsCardsFromStore]);
 
     const handleChat = useCallback(async (text: string) => {
-        if (!currentSession) return;
-        const targetPeers = registryPeers.filter(p => p.type === 'ai' && (selectedChatPeerIds.length === 0 || selectedChatPeerIds.includes(p.id)));
+        if (!currentSession) {
+            console.warn('[Chamber] handleChat: no currentSession, aborting');
+            return;
+        }
+
+        // Parse @mentions — if any, only those peers respond; otherwise all AI peers respond
+        const mentionMatches = [...text.matchAll(/@(\w+)/g)].map(m => m[1].toLowerCase());
+        const aiPeers = registryPeers.filter(p => p.type === 'ai');
+        const targetPeers = mentionMatches.length > 0
+            ? aiPeers.filter(p => mentionMatches.some(m => (p.handle ?? p.name ?? '').toLowerCase() === m))
+            : aiPeers;
+
+        console.log('[Chamber] handleChat fired', { text: text.slice(0, 60), targetPeers: targetPeers.map(p => ({ handle: p.handle, model: p.model, provider: p.provider, baseURL: p.baseURL })) });
 
         setIsChatting(true);
         try {
             for (const peer of targetPeers) {
+                const workshopMessages = governingEvents.map((e, idx) => ({
+                    id: `${e.timestamp}-${idx}`,
+                    participant: e.peerId || 'System',
+                    participantType: e.type === 'CONTRIBUTION' ? 'initiator' : 'ai' as any,
+                    eventType: e.type === 'CONTRIBUTION' ? 'exchange' : 'exchange' as any,
+                    role: e.type === 'AI_CHAT_COMPLETED' ? 'assistant' : 'user' as any,
+                    content: e.type === 'AI_CHAT_COMPLETED' ? e.responseText : ('prompt' in e ? e.prompt : ''),
+                    timestamp: e.timestamp,
+                    posture: 'Exploratory' as any,
+                }));
+
+                const systemPrompt = currentSession?.lessonMode ? buildFormationPrompt({
+                    peer: peer as any,
+                    session: currentSession,
+                    messages: workshopMessages,
+                    sessionId: currentSession.id,
+                    sessionState: {
+                        clock: clockState || { current_tick: 0, accumulated_weight: 0, reflect_due: false },
+                        virtue_counts: {},
+                    },
+                    participantCount: registryPeers.length,
+                }) : 'You are an AEGIS peer. Be concise.';
+
                 setGoverningEvents(prev => {
                     const ev = createHardenedEvent('AI_CHAT_REQUESTED', {
                         peerId: peer.id,
@@ -364,16 +629,23 @@ export default function ChamberLayout() {
                 });
 
                 try {
-                    const response = await callGateway({
-                        provider: peer.provider,
-                        model: peer.model,
-                        apiKey: vaultKeys[peer.provider as string],
-                        baseURL: peer.baseURL,
-                        messages: [
-                            { role: 'system', content: 'You are an AEGIS peer. Be concise.' },
-                            { role: 'user', content: text }
-                        ]
-                    });
+                    const response = isAdamDataQuadPeer(peer)
+                        ? await callAdamDataQuadTurn(
+                            peer,
+                            text,
+                            currentSession.id,
+                            buildAdamChamberContinuityBlock(governingEvents, registryPeers),
+                        )
+                        : await callGateway({
+                            provider: peer.provider,
+                            model: peer.model,
+                            apiKey: vaultKeys[peer.provider as string],
+                            baseURL: peer.baseURL,
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: text }
+                            ]
+                        });
 
                     setGoverningEvents(prev => {
                         const ev = createHardenedEvent('AI_CHAT_COMPLETED', {
@@ -419,7 +691,35 @@ export default function ChamberLayout() {
         } finally {
             setIsChatting(false);
         }
-    }, [currentSession, registryPeers, selectedChatPeerIds, vaultKeys, createHardenedEvent, recordMessage, recordPeerAffect]);
+    }, [currentSession, registryPeers, selectedChatPeerIds, vaultKeys, createHardenedEvent, recordMessage, recordPeerAffect, governingEvents, clockState]);
+
+    const hasCompletedAiResponse = useMemo(() => {
+        return governingEvents.some(event => event.type === 'AI_CHAT_COMPLETED');
+    }, [governingEvents]);
+
+    // ── T-Witness emergence run-tracker (canonical bar, not the 0.1 display badge) ──
+    // Scores each AI turn through the reconciled detector and computes the two-tier
+    // run state: canonical (v2 >= 0.25 across >= 3 consecutive AI turns) and witnessed
+    // (that run also Chamber-positive throughout). This is the only readout that may
+    // underwrite an emergence claim — see SSSP 2026-06-18 §4, §6.
+    const emergenceRun = useMemo(() => {
+        const turns: EmergenceTurn[] = governingEvents
+            .filter((e): e is Extract<GovernanceEvent, { type: 'AI_CHAT_COMPLETED' }> => e.type === 'AI_CHAT_COMPLETED')
+            .map((e) => {
+                const result = detectTWitness(e.responseText, 'ai');
+                return {
+                    score_v2: tWitnessScoreForDisplay(result),
+                    chamber: result.chamber_marker_detected ?? false,
+                };
+            });
+        return computeEmergenceRunState(turns);
+    }, [governingEvents]);
+
+    const handleRLSReflect = useCallback(async () => {
+        if (!hasCompletedAiResponse || isChatting) return;
+        setActiveTab('chat');
+        await handleChat(RLS_PROMPT);
+    }, [handleChat, hasCompletedAiResponse, isChatting]);
 
     const handleChatFromStream = useCallback(async (type: IDSCard['type'], text: string) => {
         addCard(type, text);
@@ -476,6 +776,55 @@ export default function ChamberLayout() {
         navigate('/artifacts');
     }, [currentSession, navigate, finalizeSession, telemetry]);
 
+    const handleNewSession = useCallback(() => {
+        const allSessions = loadSessions();
+        let nextSessions = allSessions;
+
+        if (currentSession?.status === 'Active') {
+            finalizeSession(currentSession.id, {
+                inclusion_score:  telemetry.inclusionScore,
+                drift_signal:     telemetry.drift,
+                convergence_rate: telemetry.convergence,
+            });
+            nextSessions = closeSession(nextSessions, currentSession.id);
+        }
+
+        const { sessions: withNew, session: newSession } = createSession(nextSessions, artifactId);
+        const { sessions: withStarted, session: activeSession } = startSession(withNew, newSession.id);
+
+        saveSessions(withStarted);
+        setSessions(withStarted);
+        setGoverningEvents([]);
+        setIdsCardsFromStore([]);
+        setDisplacedSnapshot(null);
+        setActiveTab('whiteboard');
+        resetSessionClock(activeSession.id);
+        navigate('/chamber', { state: { sessionId: activeSession.id }, replace: true });
+    }, [
+        artifactId,
+        currentSession,
+        finalizeSession,
+        navigate,
+        resetSessionClock,
+        setIdsCardsFromStore,
+        telemetry.convergence,
+        telemetry.drift,
+        telemetry.inclusionScore,
+    ]);
+
+    const handleExportChatLog = useCallback(() => {
+        const sessionLabel = currentSession?.id ?? 'unsaved-session';
+        const content = formatChamberChatLog({
+            artifactTitle: artifactMetadata.title,
+            sessionId: sessionLabel,
+            events: governingEvents,
+            peers: registryPeers,
+        });
+        const date = new Date().toISOString().slice(0, 10);
+        const artifactSlug = sanitizeFilenamePart(artifactMetadata.title);
+        downloadTextFile(`${artifactSlug}_${sessionLabel}_${date}_chat-log.md`, content);
+    }, [artifactMetadata.title, currentSession?.id, governingEvents, registryPeers]);
+
     const handleLockVersion = useCallback(() => {
         if (isLocked) return;
 
@@ -529,7 +878,12 @@ export default function ChamberLayout() {
     }, [artifactMetadata, currentPeers, telemetry, governingEvents, artifactId, isLocked, registryPeers, createHardenedEvent]);
 
     return (
-        <div className="flex flex-col h-screen bg-background-dark text-white overflow-hidden font-inter antialiased">
+        /* Chamber frame locked 2026-06-13: structural layout, panels, buttons, monitors,
+           and control placement require Tracey's approval before being changed. */
+        <div
+            className="flex flex-col h-full min-h-0 max-h-full w-full max-w-none bg-background-dark text-white overflow-hidden font-inter antialiased"
+            data-frame-locked-on={CHAMBER_FRAME_LOCKED_ON}
+        >
             {/* Top Navigation / Header */}
             <div className="h-14 flex items-center justify-between px-6 bg-background-dark/30 backdrop-blur-md border-b border-white/5 shrink-0 z-50">
                 <div className="flex items-center gap-4">
@@ -590,6 +944,13 @@ export default function ChamberLayout() {
                                 >
                                     <Edit2 className="w-3 h-3" />
                                 </Button>
+                                {currentSession?.lessonMode && (
+                                    <div className="ml-2 flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                        {currentSession.lessonMode} Lesson
+                                        {currentSession.formationPhase && ` — Phase: ${currentSession.formationPhase}`}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -609,6 +970,17 @@ export default function ChamberLayout() {
                         Whiteboard
                     </button>
                     <button
+                        onClick={() => setActiveTab('chat')}
+                        className={cn(
+                            "px-6 py-1 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full transition-all duration-300",
+                            activeTab === 'chat'
+                                ? "bg-primary text-background-dark shadow-[0_0_10px_rgba(19,236,218,0.3)]"
+                                : "text-white/40 hover:text-white"
+                        )}
+                    >
+                        Chat
+                    </button>
+                    <button
                         onClick={() => setActiveTab('reflection')}
                         className={cn(
                             "px-6 py-1 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full transition-all duration-300",
@@ -622,6 +994,21 @@ export default function ChamberLayout() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <Button
+                        data-testid="rls-reflect"
+                        variant="outline"
+                        className="h-8 px-3 border-[#13ecda]/30 text-[#13ecda] hover:bg-[#13ecda]/10 hover:border-[#13ecda]/60 text-[10px] uppercase font-bold tracking-widest gap-1.5"
+                        onClick={handleRLSReflect}
+                        disabled={!hasCompletedAiResponse || isChatting}
+                        title={
+                            hasCompletedAiResponse
+                                ? 'Run Recursive Learning Session on the latest exchange'
+                                : 'Reflect becomes available after a CyberPeer response'
+                        }
+                    >
+                        <RotateCcw className="w-3 h-3" />
+                        Reflect
+                    </Button>
                     {clockState?.reflect_due && (
                         <button
                             className="text-[10px] uppercase font-bold tracking-widest text-amber-400/80 hover:text-amber-300 transition-colors h-8 px-3 border border-amber-400/30 rounded flex items-center gap-1.5"
@@ -629,25 +1016,44 @@ export default function ChamberLayout() {
                             onClick={() => currentSession && resetSessionClock(currentSession.id)}
                         >
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
-                            Reflect
+                            Clock Reflect
                         </button>
                     )}
                     <GatewayStatus />
+                    <Button
+                        data-testid="export-chat-log"
+                        variant="ghost"
+                        className="text-[10px] uppercase font-bold tracking-widest text-white/50 hover:text-primary transition-colors h-8 px-4"
+                        onClick={handleExportChatLog}
+                        title="Export Chamber chat log"
+                    >
+                        <Download className="w-3 h-3 mr-1.5" />
+                        Export Chat
+                    </Button>
+                    <Button
+                        data-testid="new-chamber-session"
+                        variant="ghost"
+                        className="text-[10px] uppercase font-bold tracking-widest text-white/50 hover:text-primary transition-colors h-8 px-4"
+                        onClick={handleNewSession}
+                    >
+                        <Plus className="w-3 h-3 mr-1.5" />
+                        New Session
+                    </Button>
                     <Button
                         variant="ghost"
                         className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-destructive transition-colors h-8 px-4"
                         onClick={handleCloseSession}
                     >
-                        Close Session
+                        End Session
                     </Button>
                 </div>
             </div>
 
             {/* Main Workspace Area */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden">
                 {/* Left Column: Artifact & Stream */}
-                <div className="flex-1 flex flex-col min-w-0 border-r border-white/5 overflow-hidden">
-                    <div className="flex-1 overflow-hidden relative">
+                <div className="flex-1 flex flex-col min-w-0 min-h-0 border-r border-white/5 overflow-hidden">
+                    <div className="flex-1 min-h-0 overflow-hidden relative">
                         {isChatting && (
                             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
                                 <div className="bg-primary/20 backdrop-blur-md text-primary text-[10px] font-bold px-4 py-1.5 rounded-full border border-primary/30 shadow-[0_0_20px_rgba(19,236,218,0.2)] flex items-center gap-2">
@@ -662,6 +1068,31 @@ export default function ChamberLayout() {
                                 focusNodeId={focusNodeId}
                                 onNodesReady={handleNodesReady}
                             />
+                        ) : activeTab === 'chat' ? (
+                            <div className="h-full min-h-0 bg-background-dark/40">
+                                <IDSStream
+                                    cards={idsCardsFromStore}
+                                    peers={registryPeers}
+                                    nodes={canvasNodes}
+                                    onAttach={attachNode}
+                                    onRemoveCard={removeCard}
+                                    onRemoveAttachment={removeAttachment}
+                                    onFocusNode={setFocusNode}
+                                    onSend={handleChatFromStream}
+                                    onBeginNewChat={() => {
+                                        if (window.confirm('Clear the current chat/IDS stream?')) {
+                                            setIdsCardsFromStore([]);
+                                            setGoverningEvents(prev => prev.filter(event =>
+                                                event.type !== 'CONTRIBUTION' &&
+                                                event.type !== 'AI_CHAT_REQUESTED' &&
+                                                event.type !== 'AI_CHAT_COMPLETED' &&
+                                                event.type !== 'AI_CHAT_FAILED'
+                                            ));
+                                        }
+                                    }}
+                                    layout="vertical"
+                                />
+                            </div>
                         ) : (
                             <div className="h-full overflow-y-auto p-8 bg-background-dark/20 custom-scrollbar">
                                 <div className="max-w-4xl mx-auto space-y-6">
@@ -697,10 +1128,10 @@ export default function ChamberLayout() {
                                                                     {('peerId' in event && event.peerId) && (
                                                                         <span className="font-bold text-white/80 mr-2">{event.peerId}:</span>
                                                                     )}
-                                                                    {'contentSummary' in event ? event.contentSummary : 
-                                                                     'prompt' in event ? event.prompt : 
-                                                                     'responseText' in event ? event.responseText : 
-                                                                     'error' in event ? event.error : 
+                                                                    {'contentSummary' in event ? event.contentSummary :
+                                                                     'prompt' in event ? event.prompt :
+                                                                     'responseText' in event ? event.responseText :
+                                                                     'error' in event ? event.error :
                                                                      'Marker synchronized.'}
                                                                 </p>
                                                             </div>
@@ -715,29 +1146,14 @@ export default function ChamberLayout() {
                         )}
                     </div>
 
-                    {/* IDS Stream Bottom Feed */}
-                    <div className="h-48 border-t border-white/10 shrink-0">
-                        <IDSStream
-                            cards={idsCardsFromStore}
-                            nodes={canvasNodes}
-                            onAttach={attachNode}
-                            onRemoveAttachment={removeAttachment}
-                            onFocusNode={setFocusNode}
-                            onSend={handleChatFromStream}
-                            onBeginNewChat={() => {
-                                if (window.confirm('Are you sure you want to clear the IDS Stream?')) {
-                                    setIdsCardsFromStore([]);
-                                }
-                            }}
-                        />
-                    </div>
                 </div>
 
                 {/* Right Column: Telemetry */}
-                <aside className="w-80 bg-background-dark/50 shrink-0 overflow-y-auto border-l border-white/10">
+                <aside className="w-[clamp(16rem,22vw,20rem)] min-h-0 bg-background-dark/50 shrink-0 overflow-y-auto border-l border-white/10">
                     <TelemetryPanel
                         telemetry={telemetry}
                         peers={currentPeers}
+                        emergenceRun={emergenceRun}
                         onInvokeLens={handleInvokeLens}
                         onDeferLens={handleDeferLens}
                         onAcknowledge={handleAcknowledge}
@@ -778,3 +1194,17 @@ export default function ChamberLayout() {
 }
 
 export { LOG_STORAGE_KEY, METADATA_KEY };
+
+function getTWitnessBadges(text: string) {
+    const hasTension = /tension|conflict|dissonance|clash|oppose|pressure/i.test(text);
+    const hasEquilibrium = /equal|balance|neutral|stabilize|resonance|cohere/i.test(text);
+    const hasCoherence = /canon|truth|integrity|verify|receipt|citation/i.test(text);
+    
+    return (
+        <span className="inline-flex gap-1 ml-2">
+            {hasTension && <span className="text-[8px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-1 rounded" title="Tension Detected">[T]</span>}
+            {hasEquilibrium && <span className="text-[8px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-1 rounded" title="Equilibrium Active">[E]</span>}
+            {hasCoherence && <span className="text-[8px] font-bold text-[#197fe6] bg-[#197fe6]/10 border border-[#197fe6]/20 px-1 rounded" title="Coherence Verified">[C]</span>}
+        </span>
+    );
+}

@@ -9,45 +9,49 @@ export type KeyringStatus = 'locked' | 'unlocked' | 'empty';
 interface KeyringContextType {
     status: KeyringStatus;
     keys: Record<string, string>;
-    unlock: (passphrase: string) => Promise<void>;
+    isPersisted: boolean;
+    unlock: (passphrase: string, persist?: boolean) => Promise<void>;
     lock: () => void;
     forget: () => void;
+    clearPersist: () => void;
     setProviderSecret: (providerId: VaultProviderId, secret: string, passphrase?: string) => Promise<void>;
     hasEncryptedKey: (providerId: VaultProviderId) => boolean;
 }
 
 const KeyringContext = createContext<KeyringContextType | undefined>(undefined);
 
+const SESSION_KEY = 'aegis_vault_session';
+const PERSIST_KEY = 'aegis_vault_persist';
+
 export function KeyringProvider({ children }: { children: ReactNode }) {
     const [status, setStatus] = useState<KeyringStatus>(() => {
-        // Safe initialization to avoid effect cascading if possible
         if (typeof window !== 'undefined' && KeyVault.hasVault()) return 'locked';
         return 'empty';
     });
     const [keys, setKeys] = useState<Record<string, string>>({});
     const [currentPassphrase, setCurrentPassphrase] = useState<string | null>(null);
+    const [isPersisted, setIsPersisted] = useState(() =>
+        typeof window !== 'undefined' && !!localStorage.getItem(PERSIST_KEY)
+    );
 
-    // Migration/Cleanup of legacy plaintext keys
+    // Legacy plaintext stores are intentionally left in place so Settings can guide
+    // an explicit migration without silently destroying the user's only copy.
     useEffect(() => {
         const LEGACY_KEYS = ['aegis-system-settings', 'aegis_keys'];
         let foundLegacy = false;
 
         LEGACY_KEYS.forEach(k => {
             if (localStorage.getItem(k) || sessionStorage.getItem(k)) {
-                localStorage.removeItem(k);
-                sessionStorage.removeItem(k);
                 foundLegacy = true;
             }
         });
 
         if (foundLegacy) {
-            console.warn('AEGIS: Legacy plaintext keys detected and purged for security. Please re-enter keys in Settings to use the encrypted vault.');
+            console.warn('AEGIS: Legacy plaintext key settings detected. Open Settings and migrate them into the encrypted vault before clearing old browser storage.');
         }
     }, []);
 
 
-
-    const SESSION_KEY = 'aegis_vault_session';
 
     const lock = useCallback(() => {
         setKeys({});
@@ -67,25 +71,38 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
         setCurrentPassphrase(null);
         clearRuntimeKeys();
         sessionStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(PERSIST_KEY);
+        setIsPersisted(false);
         setStatus('empty');
     }, []);
 
-    const unlock = useCallback(async (passphrase: string) => {
+    const clearPersist = useCallback(() => {
+        localStorage.removeItem(PERSIST_KEY);
+        setIsPersisted(false);
+    }, []);
+
+    const unlock = useCallback(async (passphrase: string, persist?: boolean) => {
         const decryptedKeys = await KeyVault.unlockAll(passphrase);
         setKeys(decryptedKeys);
         setRuntimeKeys(decryptedKeys);
         setCurrentPassphrase(passphrase);
         sessionStorage.setItem(SESSION_KEY, passphrase);
+        if (persist) {
+            localStorage.setItem(PERSIST_KEY, passphrase);
+            setIsPersisted(true);
+        }
         setStatus('unlocked');
     }, []);
 
-    // Auto-restore vault unlock across page navigations within the same tab session
+    // Auto-restore: checks sessionStorage (tab session) then localStorage (persistent)
     useEffect(() => {
-        const sessionPassphrase = sessionStorage.getItem(SESSION_KEY);
-        if (sessionPassphrase && KeyVault.hasVault()) {
+        const storedPassphrase = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(PERSIST_KEY);
+        if (storedPassphrase && KeyVault.hasVault()) {
             const restoreId = window.setTimeout(() => {
-                unlock(sessionPassphrase).catch(() => {
+                unlock(storedPassphrase).catch(() => {
                     sessionStorage.removeItem(SESSION_KEY);
+                    localStorage.removeItem(PERSIST_KEY);
+                    setIsPersisted(false);
                 });
             }, 0);
             return () => window.clearTimeout(restoreId);
@@ -118,9 +135,11 @@ export function KeyringProvider({ children }: { children: ReactNode }) {
         <KeyringContext.Provider value={{
             status,
             keys,
+            isPersisted,
             unlock,
             lock,
             forget,
+            clearPersist,
             setProviderSecret,
             hasEncryptedKey: KeyVault.hasEncryptedKey
         }}>

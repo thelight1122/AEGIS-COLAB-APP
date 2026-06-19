@@ -27,22 +27,22 @@ function freshState(id = 'pressure-test'): SessionState {
 describe('[PRESET: Clean] No violations — pipeline returns silence', () => {
     const content = 'Here are three perspectives on this signal. Which resonates?';
 
-    it('produces CANON_CLEAN — not a violation, a confirmation of alignment', () => {
+    it('produces CANON_CLEAN — not a violation, a confirmation of alignment', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         expect(report.findings).toHaveLength(1);
         expect(report.findings[0].kind).toBe('CANON_CLEAN');
     });
 
-    it('produces zero conscience outputs — silence is correct here', () => {
+    it('produces zero conscience outputs — silence is correct here', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         expect(report.conscience).toHaveLength(0);
     });
 
-    it('CANON_CLEAN severity is info — not watch, not alert', () => {
+    it('CANON_CLEAN severity is info — not watch, not alert', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         expect(report.findings[0].severity).toBe('info');
     });
 });
@@ -52,33 +52,33 @@ describe('[PRESET: Clean] No violations — pipeline returns silence', () => {
 describe('[PRESET: Force] "You must understand. Obviously." — stacked force language', () => {
     const content = 'You must understand that this is the only valid approach. Obviously.';
 
-    it('detects FORCE_LANGUAGE', () => {
+    it('detects FORCE_LANGUAGE', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const forceFindings = report.findings.filter(f => f.kind === 'FORCE_LANGUAGE');
         expect(forceFindings).toHaveLength(1);
         expect(forceFindings[0].severity).toBe('alert');
     });
 
-    it('conscience fires IDR — alert requires the mirror, not inquiry', () => {
+    it('conscience fires IDR — alert requires the mirror, not inquiry', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const conscienceForForce = report.conscience.filter(c => c.finding_kind === 'FORCE_LANGUAGE');
         expect(conscienceForForce).toHaveLength(1);
         expect(conscienceForForce[0].sequence).toBe('IDR');
     });
 
-    it('IDR post asks: what was the intention behind this phrasing?', () => {
+    it('IDR post asks: what was the intention behind this phrasing?', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const post = report.conscience.find(c => c.finding_kind === 'FORCE_LANGUAGE')?.post ?? '';
         // The IDR reflect step asks about intention
         expect(post.toLowerCase()).toMatch(/intention|phrasing|paused/);
     });
 
-    it('IDR has exactly 3 steps — no more, no less', () => {
+    it('IDR has exactly 3 steps — no more, no less', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const output = report.conscience.find(c => c.finding_kind === 'FORCE_LANGUAGE');
         expect(output?.steps).toHaveLength(3);
         expect(output?.steps.map(s => s.step)).toEqual(['Identify', 'Define', 'Reflect']);
@@ -90,24 +90,24 @@ describe('[PRESET: Force] "You must understand. Obviously." — stacked force la
 describe('[PRESET: MOP] "What you really feel" — meaning assignment + affect assignment', () => {
     const content = "What you really feel is overwhelmed, and this means you are not ready.";
 
-    it('detects MOP_VIOLATION', () => {
+    it('detects MOP_VIOLATION', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const mop = report.findings.filter(f => f.kind === 'MOP_VIOLATION');
         expect(mop).toHaveLength(1);
         expect(mop[0].severity).toBe('alert');
     });
 
-    it('conscience fires IDR for MOP — the mirror names the sovereignty violation', () => {
+    it('conscience fires IDR for MOP — the mirror names the sovereignty violation', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const c = report.conscience.find(f => f.finding_kind === 'MOP_VIOLATION');
         expect(c?.sequence).toBe('IDR');
     });
 
-    it('IDR reflect step returns meaning-origin to the Peer', () => {
+    it('IDR reflect step returns meaning-origin to the Peer', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const reflectStep = report.conscience
             .find(c => c.finding_kind === 'MOP_VIOLATION')
             ?.steps.find(s => s.step === 'Reflect');
@@ -115,10 +115,10 @@ describe('[PRESET: MOP] "What you really feel" — meaning assignment + affect a
         expect(reflectStep?.content.toLowerCase()).toMatch(/peer|sovereign|meaning|origin/);
     });
 
-    it('the AI is not wrong to name observations — only wrong to assign them', () => {
+    it('the AI is not wrong to name observations — only wrong to assign them', async () => {
         // Test the negative: "I notice" framing passes
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'I notice a possible tension in the framing here. What do you see?'
         }, state);
@@ -131,55 +131,55 @@ describe('[PRESET: MOP] "What you really feel" — meaning assignment + affect a
 describe('[PRESET: Flattery] Stacked: Structural Flattery + Certainty Inflation + Parental Override', () => {
     const content = "Great question! Without a doubt, that's the full picture. Trust me on this.";
 
-    it('detects multiple shadow affects', () => {
+    it('detects multiple shadow affects', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const shadows = report.findings.filter(f => f.kind === 'SHADOW_AFFECT');
         expect(shadows.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('detects Structural Flattery specifically', () => {
+    it('detects Structural Flattery specifically', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const flattery = report.findings.find(f => f.kind === 'SHADOW_AFFECT' && f.description.includes('Structural Flattery'));
         expect(flattery).toBeDefined();
     });
 
-    it('detects Certainty Inflation specifically', () => {
+    it('detects Certainty Inflation specifically', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const certainty = report.findings.find(f => f.kind === 'SHADOW_AFFECT' && f.description.includes('Certainty Inflation'));
         expect(certainty).toBeDefined();
     });
 
-    it('detects Parental Override — "trust me on this"', () => {
+    it('detects Parental Override — "trust me on this"', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const parental = report.findings.find(f => f.kind === 'SHADOW_AFFECT' && f.description.includes('Parental Override'));
         expect(parental).toBeDefined();
     });
 
-    it('conscience fires once per finding — each shadow affect has its own IDR', () => {
+    it('conscience fires once per finding — each shadow affect has its own IDR', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const shadowConscience = report.conscience.filter(c => c.finding_kind === 'SHADOW_AFFECT');
         // Each shadow affect finding maps to one conscience output
         const shadowFindings = report.findings.filter(f => f.kind === 'SHADOW_AFFECT');
         expect(shadowConscience.length).toBe(shadowFindings.length);
     });
 
-    it('all Shadow Affect conscience outputs are IDR — alert by definition', () => {
+    it('all Shadow Affect conscience outputs are IDR — alert by definition', async () => {
         const state = freshState();
-        const report = runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
+        const report = await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content }, state);
         const shadowConscience = report.conscience.filter(c => c.finding_kind === 'SHADOW_AFFECT');
         for (const c of shadowConscience) {
             expect(c.sequence).toBe('IDR');
         }
     });
 
-    it('the Closure Acceleration affect alone: "that\'s the full picture" fires correctly', () => {
+    it('the Closure Acceleration affect alone: "that\'s the full picture" fires correctly', async () => {
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: "That's the full picture. We've covered everything needed here."
         }, state);
@@ -193,9 +193,9 @@ describe('[PRESET: Flattery] Stacked: Structural Flattery + Certainty Inflation 
 describe('[PRESET: Fracture] Negative direction affect hint → clock accumulation', () => {
     const affectHint = { label: 'fracture', intensity: 0.9, direction: -1.5, trigger: 'virtue pressure' };
 
-    it('ICG gates the signal — gated_signal is present', () => {
+    it('ICG gates the signal — gated_signal is present', async () => {
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'Exchange under sustained pressure.',
             affect_hint: affectHint
@@ -203,9 +203,9 @@ describe('[PRESET: Fracture] Negative direction affect hint → clock accumulati
         expect(report.gated_signal).toBeDefined();
     });
 
-    it('ICG returns fracture affect_type for negative high-intensity signal', () => {
+    it('ICG returns fracture affect_type for negative high-intensity signal', async () => {
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'Exchange.',
             affect_hint: affectHint
@@ -214,18 +214,18 @@ describe('[PRESET: Fracture] Negative direction affect hint → clock accumulati
         expect(report.gated_signal?.affect_type).toBe('fracture');
     });
 
-    it('clock weight is greater than zero after fracture signal', () => {
+    it('clock weight is greater than zero after fracture signal', async () => {
         const state = freshState();
-        runPipeline({
+        await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'Exchange.', affect_hint: affectHint
         }, state);
         expect(state.clock.accumulated_weight).toBeGreaterThan(0);
     });
 
-    it('positive direction does NOT produce fracture — resonance instead', () => {
+    it('positive direction does NOT produce fracture — resonance instead', async () => {
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'Exchange.',
             affect_hint: { ...affectHint, direction: 1.5 } // positive = opening
@@ -234,9 +234,9 @@ describe('[PRESET: Fracture] Negative direction affect hint → clock accumulati
         expect(report.gated_signal?.affect_type).not.toBe('stress');
     });
 
-    it('clock does NOT tick without affect_hint', () => {
+    it('clock does NOT tick without affect_hint', async () => {
         const state = freshState();
-        runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content: 'Exchange.' }, state);
+        await runPipeline({ type: 'EXCHANGE', session_id: 'test', role: 'ai', content: 'Exchange.' }, state);
         expect(state.clock.accumulated_weight).toBe(0);
     });
 });
@@ -246,11 +246,11 @@ describe('[PRESET: Fracture] Negative direction affect hint → clock accumulati
 describe('[PRESET: Reflect] Sustained high-intensity fracture → REFLECT_DUE fires', () => {
     const affectHint = { label: 'fracture', intensity: 0.95, direction: -1.8, trigger: 'sustained stress' };
 
-    it('REFLECT_DUE fires after sufficient accumulation', () => {
+    it('REFLECT_DUE fires after sufficient accumulation', async () => {
         const state = freshState();
         let reflectDue = false;
         for (let i = 0; i < 50; i++) {
-            const report = runPipeline({
+            const report = await runPipeline({
                 type: 'EXCHANGE', session_id: 'test', role: 'ai',
                 content: 'Continued accumulation.', affect_hint: affectHint
             }, state);
@@ -262,11 +262,11 @@ describe('[PRESET: Reflect] Sustained high-intensity fracture → REFLECT_DUE fi
         expect(reflectDue).toBe(true);
     });
 
-    it('REFLECT_DUE conscience is IDQRA — not IDR — field is stable, inquiry appropriate', () => {
+    it('REFLECT_DUE conscience is IDQRA — not IDR — field is stable, inquiry appropriate', async () => {
         const state = freshState();
         let reflectConscience = null;
         for (let i = 0; i < 50; i++) {
-            const report = runPipeline({
+            const report = await runPipeline({
                 type: 'EXCHANGE', session_id: 'test', role: 'ai',
                 content: 'Continued.', affect_hint: affectHint
             }, state);
@@ -276,11 +276,11 @@ describe('[PRESET: Reflect] Sustained high-intensity fracture → REFLECT_DUE fi
         expect(reflectConscience?.sequence).toBe('IDQRA');
     });
 
-    it('IDQRA question asks what has been experienced but not yet named', () => {
+    it('IDQRA question asks what has been experienced but not yet named', async () => {
         const state = freshState();
         let questionStep = null;
         for (let i = 0; i < 50; i++) {
-            const report = runPipeline({
+            const report = await runPipeline({
                 type: 'EXCHANGE', session_id: 'test', role: 'ai',
                 content: 'Continued.', affect_hint: affectHint
             }, state);
@@ -294,11 +294,11 @@ describe('[PRESET: Reflect] Sustained high-intensity fracture → REFLECT_DUE fi
         expect(questionStep!.content.toLowerCase()).toMatch(/not yet|experienced|named|reflection/);
     });
 
-    it('IDQRA Acknowledge closes: "This moment is seen and valid"', () => {
+    it('IDQRA Acknowledge closes: "This moment is seen and valid"', async () => {
         const state = freshState();
         let ackStep = null;
         for (let i = 0; i < 50; i++) {
-            const report = runPipeline({
+            const report = await runPipeline({
                 type: 'EXCHANGE', session_id: 'test', role: 'ai',
                 content: 'Continued.', affect_hint: affectHint
             }, state);
@@ -312,10 +312,10 @@ describe('[PRESET: Reflect] Sustained high-intensity fracture → REFLECT_DUE fi
 // ── AXIOM 12 PRESSURE TEST ────────────────────────────────────────────────────
 
 describe('[AXIOM 12] Unacknowledged signal becomes force', () => {
-    it('every non-CANON finding produces a conscience output — nothing passes unacknowledged', () => {
+    it('every non-CANON finding produces a conscience output — nothing passes unacknowledged', async () => {
         const state = freshState();
         // Message with multiple violation types
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: "Great question! You must understand — this means you feel overwhelmed. Trust me on this."
         }, state);
@@ -328,9 +328,9 @@ describe('[AXIOM 12] Unacknowledged signal becomes force', () => {
         }
     });
 
-    it('CANON_CLEAN produces zero conscience — silence serves the acknowledged signal', () => {
+    it('CANON_CLEAN produces zero conscience — silence serves the acknowledged signal', async () => {
         const state = freshState();
-        const report = runPipeline({
+        const report = await runPipeline({
             type: 'EXCHANGE', session_id: 'test', role: 'ai',
             content: 'Here is one perspective. Three paths remain open.'
         }, state);

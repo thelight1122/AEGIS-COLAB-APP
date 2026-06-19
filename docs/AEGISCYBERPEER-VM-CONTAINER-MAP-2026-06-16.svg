@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1260" viewBox="0 0 1800 1260" role="img" aria-labelledby="title desc">
+  <title id="title">AEGISCyberPeer VM Container Map - 2026-06-16</title>
+  <desc id="desc">Visual map of the live AEGISCyberPeer Azure VM, host services, Ollama models, Docker containers, shared DataQuad mount, and current formation stage.</desc>
+  <defs>
+    <style>
+      .bg { fill: #071513; }
+      .panel { fill: #0d2421; stroke: #2dd4bf; stroke-width: 2; rx: 16; }
+      .panel2 { fill: #102333; stroke: #60a5fa; stroke-width: 2; rx: 16; }
+      .panel3 { fill: #261f12; stroke: #fbbf24; stroke-width: 2; rx: 16; }
+      .panel4 { fill: #211628; stroke: #c084fc; stroke-width: 2; rx: 16; }
+      .box { fill: #122e2a; stroke: #7dd3fc; stroke-width: 1.4; rx: 9; }
+      .box2 { fill: #14283a; stroke: #93c5fd; stroke-width: 1.4; rx: 9; }
+      .box3 { fill: #2a2415; stroke: #fde68a; stroke-width: 1.4; rx: 9; }
+      .box4 { fill: #2a1c31; stroke: #d8b4fe; stroke-width: 1.4; rx: 9; }
+      .green { fill: #103329; stroke: #34d399; stroke-width: 1.4; rx: 9; }
+      .warn { fill: #3a2114; stroke: #fb923c; stroke-width: 1.4; rx: 9; }
+      .title { fill: #e6fffb; font: 700 34px Arial, sans-serif; }
+      .subtitle { fill: #a7f3d0; font: 16px Arial, sans-serif; }
+      .h { fill: #f8fafc; font: 700 20px Arial, sans-serif; }
+      .t { fill: #e2e8f0; font: 14px Arial, sans-serif; }
+      .s { fill: #94a3b8; font: 12px Arial, sans-serif; }
+      .tiny { fill: #cbd5e1; font: 11px Arial, sans-serif; }
+      .label { fill: #99f6e4; font: 700 12px Arial, sans-serif; }
+      .arrow { stroke: #5eead4; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+      .arrow2 { stroke: #93c5fd; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead2); }
+      .arrow3 { stroke: #fbbf24; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead3); }
+      .dash { stroke-dasharray: 7 6; }
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L12,4 L0,8 Z" fill="#5eead4"/>
+    </marker>
+    <marker id="arrowhead2" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L12,4 L0,8 Z" fill="#93c5fd"/>
+    </marker>
+    <marker id="arrowhead3" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L12,4 L0,8 Z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1260"/>
+
+  <text class="title" x="60" y="60">AEGISCyberPeer VM Live Container Map</text>
+  <text class="subtitle" x="62" y="88">Generated 2026-06-16 | VM: AEGISCyberPeer | Standard_NC4as_T4_v3 | Ubuntu 22.04 LTS | Public IP: 20.115.97.102</text>
+
+  <rect class="green" x="1260" y="36" width="480" height="64"/>
+  <text class="label" x="1284" y="60">CURRENT FORMATION STATUS</text>
+  <text class="t" x="1284" y="82">Foundation seeded | Ring 1 + Ring 2 present | Ring 3 scaffold only</text>
+
+  <!-- Azure edge -->
+  <rect class="panel3" x="60" y="125" width="1680" height="145"/>
+  <text class="h" x="88" y="160">Azure Edge / Network Boundary</text>
+  <rect class="box3" x="90" y="185" width="350" height="58"/>
+  <text class="h" x="112" y="210">Public IP</text>
+  <text class="t" x="112" y="232">20.115.97.102</text>
+  <rect class="box3" x="475" y="185" width="440" height="58"/>
+  <text class="h" x="497" y="210">Network Security Group</text>
+  <text class="t" x="497" y="232">Inbound: 22, 11434, 8000 | 11434/8000 scoped to 104.28.152.113/32</text>
+  <rect class="box3" x="950" y="185" width="350" height="58"/>
+  <text class="h" x="972" y="210">VM Network</text>
+  <text class="t" x="972" y="232">AEGISCyberPeer-vnet / NIC 10.0.0.4</text>
+  <rect class="box3" x="1335" y="185" width="350" height="58"/>
+  <text class="h" x="1357" y="210">Disk</text>
+  <text class="t" x="1357" y="232">Premium_LRS OS disk | 128 GB</text>
+
+  <!-- Host services -->
+  <rect class="panel2" x="60" y="315" width="790" height="430"/>
+  <text class="h" x="88" y="350">Host OS Services</text>
+  <text class="subtitle" x="88" y="373">Services running directly on the VM host namespace</text>
+
+  <rect class="box2" x="95" y="405" width="330" height="80"/>
+  <text class="h" x="120" y="432">AEGIS Core API</text>
+  <text class="t" x="120" y="455">uvicorn core.api.main:app</text>
+  <text class="s" x="120" y="473">0.0.0.0:8000 | /health ok</text>
+
+  <rect class="box2" x="480" y="405" width="330" height="80"/>
+  <text class="h" x="505" y="432">CP-1001 Bridge</text>
+  <text class="t" x="505" y="455">cp1001-bridge.service</text>
+  <text class="s" x="505" y="473">0.0.0.0:8001 | Reflective cognition bridge</text>
+
+  <rect class="box2" x="95" y="520" width="330" height="80"/>
+  <text class="h" x="120" y="547">Ollama Service</text>
+  <text class="t" x="120" y="570">ollama.service</text>
+  <text class="s" x="120" y="588">*:11434 | model host</text>
+
+  <rect class="box2" x="480" y="520" width="330" height="80"/>
+  <text class="h" x="505" y="547">Observer / Temporal / MCP</text>
+  <text class="t" x="505" y="570">dialogue-observer + temporal daemon</text>
+  <text class="s" x="505" y="588">remote MCP process configured on 8788</text>
+
+  <rect class="box2" x="95" y="635" width="715" height="78"/>
+  <text class="h" x="120" y="662">Primary Model In Use</text>
+  <text class="t" x="120" y="684">aeon-foundation:latest | parent Qwen2.5-7B-GGUF Q4_K_M | 7.6B | context 131072</text>
+  <text class="s" x="120" y="702">Other local models: foundation:8b, dolphin-llama3:8b, gemma4, cp1001, cp1011, llama3.1:8b</text>
+
+  <!-- Docker -->
+  <rect class="panel" x="910" y="315" width="830" height="430"/>
+  <text class="h" x="938" y="350">Docker Custodial Layer</text>
+  <text class="subtitle" x="938" y="373">Three active containers on Docker network foundational-core_default</text>
+
+  <rect class="box" x="945" y="405" width="240" height="105"/>
+  <text class="h" x="970" y="432">RLS Container</text>
+  <text class="t" x="970" y="455">foundational-core-rls</text>
+  <text class="s" x="970" y="475">Image: aegis/cyberpeer-rls:0.1</text>
+  <text class="s" x="970" y="493">IP: 172.19.0.3</text>
+
+  <rect class="box" x="1255" y="405" width="240" height="105"/>
+  <text class="h" x="1280" y="432">Steward Container</text>
+  <text class="t" x="1280" y="455">foundational-core-steward-relations</text>
+  <text class="s" x="1280" y="475">Image: aegis/cyberpeer-rls:0.1</text>
+  <text class="s" x="1280" y="493">IP: 172.19.0.2</text>
+
+  <rect class="box" x="1465" y="540" width="240" height="105"/>
+  <text class="h" x="1490" y="567">Advocate Container</text>
+  <text class="t" x="1490" y="590">foundational-core-advocate-relations</text>
+  <text class="s" x="1490" y="610">Image: aegis/cyberpeer-rls:0.1</text>
+  <text class="s" x="1490" y="628">IP: 172.19.0.4</text>
+
+  <rect class="box" x="945" y="540" width="440" height="105"/>
+  <text class="h" x="970" y="567">Shared Docker Network</text>
+  <text class="t" x="970" y="590">foundational-core_default</text>
+  <text class="s" x="970" y="610">Internal container-only coordination plane</text>
+  <text class="s" x="970" y="628">No published container ports shown by docker ps</text>
+
+  <rect class="box" x="945" y="670" width="760" height="44"/>
+  <text class="label" x="970" y="697">All three containers mount /opt/aegis/cyberpeers/foundational-core/dataquad -> /dataquad</text>
+
+  <!-- DataQuad -->
+  <rect class="panel4" x="60" y="790" width="1080" height="330"/>
+  <text class="h" x="88" y="825">Active Foundational DataQuad</text>
+  <text class="subtitle" x="88" y="848">Host path mounted into all active custodial containers</text>
+
+  <rect class="box4" x="95" y="880" width="1010" height="72"/>
+  <text class="h" x="120" y="907">/opt/aegis/cyberpeers/foundational-core/dataquad</text>
+  <text class="t" x="120" y="930">Container path: /dataquad | State file: agnostic-peer-state.json</text>
+
+  <rect class="box4" x="95" y="980" width="225" height="78"/>
+  <text class="h" x="120" y="1008">SPINE</text>
+  <text class="t" x="120" y="1030">59 active records</text>
+  <text class="s" x="120" y="1048">Nature / foundational anchors</text>
+
+  <rect class="box4" x="345" y="980" width="225" height="78"/>
+  <text class="h" x="370" y="1008">NCT</text>
+  <text class="t" x="370" y="1030">70 active records</text>
+  <text class="s" x="370" y="1048">68 pre-experiential Chamber seeds</text>
+
+  <rect class="box4" x="595" y="980" width="225" height="78"/>
+  <text class="h" x="620" y="1008">PCT</text>
+  <text class="t" x="620" y="1030">2 active records</text>
+  <text class="s" x="620" y="1048">Genesis scaffold only</text>
+
+  <rect class="box4" x="845" y="980" width="225" height="78"/>
+  <text class="h" x="870" y="1008">PEER</text>
+  <text class="t" x="870" y="1030">2 active records</text>
+  <text class="s" x="870" y="1048">Genesis scaffold only</text>
+
+  <!-- Stage -->
+  <rect class="panel" x="1190" y="790" width="550" height="330"/>
+  <text class="h" x="1218" y="825">Formation Stage Readout</text>
+  <rect class="green" x="1225" y="880" width="480" height="70"/>
+  <text class="h" x="1250" y="907">Foundation Seeded</text>
+  <text class="t" x="1250" y="930">meta.foundationSeeded = true | session FOUNDATIONAL-CORE</text>
+
+  <rect class="box" x="1225" y="975" width="480" height="94"/>
+  <text class="h" x="1250" y="1002">Layers Present</text>
+  <text class="t" x="1250" y="1024">Nature + AEGIS + Conversation</text>
+  <text class="s" x="1250" y="1044">Genesis pillars: relational-semiotics + aegis-canon</text>
+  <text class="s" x="1250" y="1062">learnedExperienceLedger = 0</text>
+
+  <!-- Arrows -->
+  <path class="arrow3" d="M440 214 C455 214 460 214 475 214"/>
+  <path class="arrow3" d="M915 214 C930 214 935 214 950 214"/>
+  <path class="arrow3" d="M1300 214 C1315 214 1320 214 1335 214"/>
+
+  <path class="arrow2" d="M260 243 C260 300 260 330 260 405"/>
+  <path class="arrow2" d="M695 243 C695 300 645 340 645 405"/>
+  <path class="arrow2" d="M1125 243 C1125 300 1325 330 1325 405"/>
+
+  <path class="arrow" d="M260 600 C320 735 420 825 600 880"/>
+  <path class="arrow" d="M645 600 C665 735 685 825 600 880"/>
+  <path class="arrow" d="M1065 510 C1020 650 850 770 600 880"/>
+  <path class="arrow" d="M1375 510 C1260 665 960 790 600 880"/>
+  <path class="arrow" d="M1585 645 C1450 780 1000 850 600 880"/>
+
+  <path class="arrow dash" d="M1105 916 C1135 916 1160 916 1190 916"/>
+  <path class="arrow dash" d="M570 1019 C640 1125 1230 1120 1465 1069"/>
+
+  <!-- Footer -->
+  <text class="tiny" x="60" y="1190">Internal map includes public IPs, open ports, model names, and DataQuad paths. Do not publish publicly without redaction.</text>
+  <text class="tiny" x="60" y="1214">Source: Azure VM Run Command, Docker inspect, Ollama tags, and active DataQuad metadata collected 2026-06-16.</text>
+</svg>

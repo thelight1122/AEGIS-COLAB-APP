@@ -7,14 +7,16 @@ import {
     Send, 
     Paperclip, 
     Bot, 
-    User
+    User,
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 
 export function AIAdvisor() {
     const [isOpen, setIsOpen] = useState(false);
     const [messageText, setMessageText] = useState('');
     const [attachments, setAttachments] = useState<{ name: string; type: string; url: string }[]>([]);
-    const { messages, addMessage } = useAdvisor();
+    const { messages, addMessage, isResponding, advisorError } = useAdvisor();
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,9 +26,9 @@ export function AIAdvisor() {
         }
     }, [messages, isOpen]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!messageText.trim() && attachments.length === 0) return;
-        addMessage(messageText, 'user', attachments.length > 0 ? attachments : undefined);
+        await addMessage(messageText, 'user', attachments.length > 0 ? attachments : undefined);
         setMessageText('');
         setAttachments([]);
     };
@@ -52,7 +54,10 @@ export function AIAdvisor() {
                         <div className="flex items-center gap-2">
                             <Bot className="w-5 h-5 text-emerald-400" />
                             <div className="font-semibold text-sm text-slate-200">AI Advisor</div>
-                            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <div
+                                className={`w-2 h-2 rounded-full ${advisorError ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`}
+                                title={advisorError ? 'Advisor needs attention' : 'Gemini Advisor ready'}
+                            />
                         </div>
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-slate-700" onClick={() => setIsOpen(false)} title="Minimize">
@@ -81,6 +86,19 @@ export function AIAdvisor() {
                                 </div>
                             </div>
                         ))}
+                        {isResponding && (
+                            <div className="flex justify-start">
+                                <div className="flex gap-2 max-w-[80%]">
+                                    <div className="p-1 w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400">
+                                        <Bot className="w-4 h-4" />
+                                    </div>
+                                    <div className="p-3 rounded-2xl text-xs leading-relaxed bg-slate-800 text-slate-300 rounded-tl-none flex items-center gap-2">
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        Gemini is responding
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div ref={chatEndRef} />
                     </div>
 
@@ -96,6 +114,13 @@ export function AIAdvisor() {
                                     </button>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {advisorError && (
+                        <div className="px-4 py-2 bg-amber-500/10 border-t border-amber-500/20 text-[10px] text-amber-200 flex items-center gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{advisorError}</span>
                         </div>
                     )}
 
@@ -124,15 +149,17 @@ export function AIAdvisor() {
                             onChange={(e) => setMessageText(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder="Ask Advisor..." 
+                            disabled={isResponding}
                             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                         />
                         <Button 
                             size="icon" 
                             className="w-8 h-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white"
                             onClick={handleSend}
+                            disabled={isResponding}
                             title="Send Message"
                         >
-                            <Send className="w-3.5 h-3.5" />
+                            {isResponding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                         </Button>
                     </div>
                 </div>

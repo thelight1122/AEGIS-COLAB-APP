@@ -34,7 +34,15 @@ export function createPresetFromPeers(name: string, peers: PeerProfile[]): TeamP
             provider: p.provider,
             model: p.model,
             personaTemplateId: p.personaId,
-            enabled: p.enabled
+            enabled: p.enabled,
+            classification: p.classification,
+            domains: p.domains,
+            baseURL: p.baseURL,
+            notes: p.notes,
+            systemPrompt: p.systemPrompt,
+            contextFiles: p.contextFiles,
+            dataQuad: p.dataQuad,
+            orientation: p.orientation,
         }))
     };
 }

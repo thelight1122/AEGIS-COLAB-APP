@@ -110,7 +110,8 @@ export interface PeerEntry {
 }
 
 // ── Append-Only Store ─────────────────────────────────────────────────────────
-// In-memory for session runtime. Firebase handles durability.
+// VM-local session runtime mirror. DataQuad durability is preserved by the
+// server-side Steward/Advocate path and IPFS, not by browser/cloud writes.
 
 const _peer: PeerEntry[] = [];
 
@@ -303,8 +304,8 @@ export function peerCount(): number {
 
 /**
  * Load a pre-existing PeerEntry into the in-memory store.
- * Used for cross-session hydration from Firebase — preserves all original fields
- * including the original event_id and timestamp.
+ * Used for VM-local/IPFS hydration — preserves all original fields including
+ * the original event_id and timestamp.
  * Skips if an entry with the same event_id is already present (idempotent).
  */
 export function loadPeerEntry(entry: PeerEntry): void {

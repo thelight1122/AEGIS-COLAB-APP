@@ -4,7 +4,9 @@ export type ActiveTeamState = {
     updatedAt?: number;
 };
 
-const STORAGE_KEY = "aegis.activeTeam.session.v1";
+const STORAGE_KEY = "aegis.activeTeam.v1";
+// Legacy key used sessionStorage (cleared on browser restart); migrate if present.
+const LEGACY_SESSION_KEY = "aegis.activeTeam.session.v1";
 
 function safeParse<T>(raw: string | null): T | null {
     if (!raw) return null;
@@ -16,7 +18,14 @@ function safeParse<T>(raw: string | null): T | null {
 }
 
 export function loadActiveTeam(): ActiveTeamState {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    // Migrate from old sessionStorage key if present
+    const legacyRaw = sessionStorage.getItem(LEGACY_SESSION_KEY);
+    if (legacyRaw) {
+        localStorage.setItem(STORAGE_KEY, legacyRaw);
+        sessionStorage.removeItem(LEGACY_SESSION_KEY);
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEY);
     const data = safeParse<ActiveTeamState>(raw);
 
     if (data && Array.isArray(data.selectedPeerIds)) {
@@ -28,7 +37,7 @@ export function loadActiveTeam(): ActiveTeamState {
 
 export function saveActiveTeam(state: ActiveTeamState): void {
     const newState = { ...state, updatedAt: Date.now() };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
 }
 
 export function clearActiveTeam(): ActiveTeamState {

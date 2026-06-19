@@ -2,9 +2,9 @@ import type { ATEVerdict, DominantAxis, IntentPosture, SoulQuality, StewardRepor
 import type { OrientationStatus } from '../core/peers/types';
 
 export type ModelProvider = 'openai' | 'gemini' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
-export type WorkshopParticipantType = 'human' | 'ai' | 'custodian' | 'system';
+export type WorkshopParticipantType = 'initiator' | 'ai' | 'custodian' | 'system';
 export type WorkshopPosture = 'Identify' | 'Define' | 'Suggest';
-export type WorkshopEventType = 'exchange' | 'reflection' | 'session';
+export type WorkshopEventType = 'exchange' | 'reflection' | 'session' | 'rls_reflection';
 export type SourceFidelityState = 'verbatim' | 'derived' | 'interpreted' | 'generated' | 'mixed';
 export type InquiryDisposition = 'inquiry' | 'contribution' | 'mixed';
 
@@ -14,6 +14,8 @@ export interface ConnectedModel {
     handle?: string;
     facetId?: string;
     dataQuad?: string[];
+    systemPrompt?: string;
+    contextFiles?: Array<{ name: string; content: string }>;
     provider: ModelProvider;
     model: string;
     apiKey?: string;

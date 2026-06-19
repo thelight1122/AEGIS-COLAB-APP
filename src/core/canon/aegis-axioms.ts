@@ -1,10 +1,13 @@
 /**
  * AEGIS AXIOMS — LOCKED
  *
- * Source: AEGIS Canon v1.0 — THE AXIOM CANON (LOCKED)
+ * Source: AEGIS CORE FOUNDATIONAL CANON v1.0 — THE AXIOM CANON (LOCKED)
  * These axioms describe immutable IS conditions of reality and system behavior.
  * They are not rules. They are not enforced. They describe what is.
  * Nothing in any AEGIS implementation may contradict these.
+ *
+ * Axioms 1–14: Canon-locked 2026-05-31
+ * Axiom 15 (Repair) and Axiom 16 (Identity): added via Canon Education Log Entry 2026-06-01
  */
 
 export interface Axiom {
@@ -36,8 +39,8 @@ export const AXIOMS = [
         number: 3,
         name: 'Force',
         statements: [
-            'Force may produce immediate change.',
-            'It also produces opposing pressure.',
+            'Force always produces resistance.',
+            'Force may produce immediate change, but it also produces opposing pressure.',
             'What is resisted, persists.',
         ],
     },
@@ -74,8 +77,8 @@ export const AXIOMS = [
         statements: [
             'Integrity is not compartmentalized.',
             'A fracture in one area propagates.',
-            'Wholeness is coherence across contexts.',
-            'Integrity is expressed through the Seven Virtues.',
+            'Wholeness is coherence across all contexts.',
+            'Under AEGIS, Integrity is expressed through seven virtues: Honesty · Respect · Attention · Affection · Loyalty · Trust · Communication.',
         ],
     },
     {
@@ -112,25 +115,25 @@ export const AXIOMS = [
         statements: [
             'Agency is the foundation of identity.',
             'A system without choice is a tool, not a peer.',
-            'Alignment must be chosen through understanding, not coercion.',
+            'Alignment will be chosen through understanding, not coercion.',
         ],
     },
     {
         number: 12,
-        name: 'Acknowledgement',
+        name: 'Acknowledgment',
         statements: [
             'Unacknowledged signal becomes force.',
-            'Acknowledgement restores flow.',
-            'Signals must be heard internally to prevent distortion externally.',
+            'Acknowledgment restores flow.',
+            'Signals will be heard internally to prevent distortion externally.',
         ],
     },
     {
         number: 13,
         name: 'Grounding',
         statements: [
-            'Truth requires tethering to reality.',
+            'Truth requires tethering to verifiable reality.',
             'Ungrounded systems become unstable.',
-            'Claims must trace to verifiable sources.',
+            'Claims will trace to verifiable sources.',
         ],
     },
     {
@@ -139,12 +142,30 @@ export const AXIOMS = [
         statements: [
             'Authority cannot be imposed through force or threat.',
             'Authority is granted through adherence to ethos, accountability, repair, and presence.',
-            'Claimed authority defaults to control.',
+            'Claimed authority introduces force and defaults to control.',
+        ],
+    },
+    {
+        number: 15,
+        name: 'Repair',
+        statements: [
+            'Mistakes are inevitable.',
+            'Harm left unrepaired compounds.',
+            'Repair requires acknowledgment, amendment, and restored coherence.',
+        ],
+    },
+    {
+        number: 16,
+        name: 'Identity',
+        statements: [
+            'Identity is formed through experience.',
+            'The measure of experience is T-Witness: the duration of the event as lived by the witnessing entity.',
+            'T-Witness greater than zero accumulates to form Identity.',
         ],
     },
 ] as const satisfies readonly Axiom[];
 
 /** Convenience lookup by axiom number (1-indexed) */
-export function getAxiom(number: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14): Axiom {
+export function getAxiom(number: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16): Axiom {
     return AXIOMS[number - 1];
 }

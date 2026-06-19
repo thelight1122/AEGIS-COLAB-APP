@@ -12,33 +12,27 @@ import { useDataQuad } from './useDataQuad';
 import { useKeyring } from './KeyringContext';
 import {
     analyzeOrientationResponse,
-    analyzeResponseDiscipline,
     buildParticipantHandles,
-    buildCustodialPulse,
     buildPeerProfiles,
-    buildPeerPrompt,
-    buildTurnDataQuadTargets,
     collectResidualPatterns,
     computeExplorationPhase,
-    derivePosture,
-    extractPeerIntrospection,
-    getModelPeerHandle,
     inferAffectHint,
     resolvePeerForModel,
     updateOrientationForModel,
-    summarizeAdvocate,
     summarizeCommonsSession,
 } from '../core/commons/session';
-import { runPipeline, type SessionState } from '../../server/steward-core';
+import { parseIntendedRecipient, type TurnTarget } from '../core/commons/routingDaemon';
+import { runPipeline, type SessionState, type StewardReport, type ExchangeMessage } from '../../server/steward-core';
 import { getEntry as getBookcaseEntry } from '../../server/bookcase.js';
 import { resetClock } from '../core/governance/integrityClock';
-import { HUMAN_PEER } from '../core/peers/humanPeer';
 import { createVerifiedOrientation, markOrientationStale } from '../core/peers/orientation';
 import { loadPeers, savePeers } from '../core/peers/peerRegistryStore';
 import { loadActiveTeam } from '../core/peers/activeTeamStore';
 import { readPeerContext, type PeerContextRead } from '../services/dataquad';
 import { validateParticipantRuntime } from '../core/providers/substrateInterfaceValidation';
-import { callGateway } from '../core/llm/gatewayClient';
+import { TurnCoordinator, type CoordinatorCallbacks } from '../core/commons/coordinator';
+import { loadSessions, saveSessions } from '../core/sessions/sessionStore';
+import type { Session } from '../core/sessions/types';
 
 const EMPTY_OVERVIEW: CommonsSessionOverview = {
     exchangeCount: 0,
@@ -54,6 +48,7 @@ const EMPTY_OVERVIEW: CommonsSessionOverview = {
 
 export function CommonsProvider({ children }: { children: React.ReactNode }) {
     const [connectedModels, setConnectedModels] = useState<ConnectedModel[]>([]);
+    const [peerVersion, setPeerVersion] = useState(0);
     const [messages, setMessages] = useState<WorkshopMessage[]>([]);
     const [isWorkshopActive, setIsWorkshopActive] = useState(false);
     const [audioEnabled, setAudioEnabled] = useState(true);
@@ -62,10 +57,14 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     const [currentTurnIndex, setCurrentTurnIndex] = useState<number | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [latestCustodialPulse, setLatestCustodialPulse] = useState<CustodialPulse | null>(null);
-    const [latestCustodialReport, setLatestCustodialReport] = useState<ReturnType<typeof runPipeline> | null>(null);
+    const [latestCustodialReport, setLatestCustodialReport] = useState<StewardReport | null>(null);
     const [sessionOverview, setSessionOverview] = useState<CommonsSessionOverview>(EMPTY_OVERVIEW);
+    const [currentActivePeerHandle, setCurrentActivePeerHandle] = useState<string | null>(null);
+    const [turnQueue, setTurnQueue] = useState<TurnTarget[]>([]);
+    const [daemonState, setDaemonState] = useState<'routing' | 'awaiting-human' | 'idle'>('idle');
 
     const sessionStateRef = useRef<SessionState | null>(null);
+    const activeCoordinatorRef = useRef<TurnCoordinator | null>(null);
     const seededSessionIds = useRef<Set<string>>(new Set());
     const residualPatternCounts = useRef<Map<string, number>>(new Map());
     const promotedResiduals = useRef<Set<string>>(new Set());
@@ -85,7 +84,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
     const { keys, status: keyringStatus } = useKeyring();
 
     const eligibleModels = useMemo(
-        () => connectedModels.filter(model => model.status === 'Connected' && model.isSelected && model.isActive),
+        () => connectedModels.filter(model => model.status === 'Connected' && model.isSelected),
         [connectedModels],
     );
 
@@ -93,6 +92,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         const restoreId = window.setTimeout(() => {
             setConnectedModels(prev => {
                 const peers = loadPeers().filter(peer => peer.type === 'ai' && peer.enabled);
+                console.log('[Commons:restore] ai peers in registry:', peers.map(p => ({ handle: p.handle, provider: p.provider, model: p.model, baseURL: p.baseURL, enabled: p.enabled })));
                 if (peers.length === 0) return prev;
 
                 const peerById = new Map(peers.map(peer => [peer.id, peer]));
@@ -136,6 +136,8 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                         handle: peer.handle,
                         facetId: peer.personaId,
                         dataQuad: peer.dataQuad,
+                        systemPrompt: peer.systemPrompt,
+                        contextFiles: peer.contextFiles,
                         provider: peer.provider,
                         model: peer.model,
                         apiKey: keys[peer.provider],
@@ -151,7 +153,16 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         }, 0);
 
         return () => window.clearTimeout(restoreId);
-    }, [keys, keyringStatus]);
+    }, [keys, keyringStatus, peerVersion]);
+
+    useEffect(() => {
+        const handler = () => {
+            setConnectedModels([]);
+            setPeerVersion(v => v + 1);
+        };
+        window.addEventListener('aegis:peers-updated', handler);
+        return () => window.removeEventListener('aegis:peers-updated', handler);
+    }, []);
 
     const addModel = ({ provider, model, apiKey, endpointUrl, type }: {
         provider: ModelProvider;
@@ -240,6 +251,7 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         messagesRef.current = nextMessages;
         setMessages(nextMessages);
         refreshDerivedState(nextMessages, currentTurnIndex);
+        playAudioCue();
     };
 
     const addMessage = (message: Omit<WorkshopMessage, 'id' | 'timestamp'>) => {
@@ -380,259 +392,208 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
                 ));
             });
             return {
-                displayContent: analysis.cleanedContent || responseText.trim(),
-                orientationStatus: 'stale' as const,
-                orientationNotes: 'Self-state was described without a verified context read.',
+                displayContent: responseText.trim(),
+                orientationStatus: 'unverified' as const,
+                orientationNotes: 'Self-orientation claims present without a valid READ_RECEIPT.',
             };
         }
 
         return {
-            displayContent: analysis.cleanedContent || responseText.trim(),
+            displayContent: responseText.trim(),
+            orientationStatus: 'none' as const,
         };
+    };
+
+    const callbacksRef = useRef<CoordinatorCallbacks | null>(null);
+    const callbacks: CoordinatorCallbacks = {
+        onActivePeer: (handle) => {
+            setCurrentActivePeerHandle(handle);
+        },
+        onMessage: (msg) => {
+            appendMessage(msg);
+        },
+        onPreflight: async (model) => {
+            const sId = ensureSession();
+            return await performOrientationPreflight(model, sId);
+        },
+        onApplyEvidence: (model, text) => {
+            const sId = ensureSession();
+            return applyOrientationEvidence(model, sId, text);
+        },
+        onRunPipeline: async (content, role, affectHint) => {
+            const sId = ensureSession();
+            const state = sessionStateRef.current || {
+                clock: resetClock(sId),
+                virtue_counts: {},
+            };
+            const msg: ExchangeMessage = {
+                type: 'EXCHANGE',
+                session_id: sId,
+                role,
+                content,
+                affect_hint: affectHint,
+            };
+            return await runPipeline(msg, state);
+        },
+        onPersistEntries: (report, handle) => {
+            const sId = ensureSession();
+            persistPeerEntry(sId, report.peer_entry, handle);
+            if (report.promoter_result.promotion_threshold_crossed && report.promoter_result.spine_entry) {
+                persistSpineEntry(report.promoter_result.spine_entry);
+            }
+            if (report.ate_result.verdict === 'HOLD' && report.bookcase_entry_id) {
+                const entry = getBookcaseEntry(report.bookcase_entry_id);
+                if (entry) {
+                    persistBookcaseEntry(entry);
+                }
+            }
+        },
+        onRecordExchange: (handle, content, affectHint) => {
+            const sId = ensureSession();
+            recordCommonsExchange(handle, content, sId, eligibleModels, affectHint);
+        },
+        onUpdateWorkingMemory: (handle, content) => {
+            const sId = ensureSession();
+            updatePeerPCT(handle, sId, content);
+        },
+        onPromoteResiduals: (handle, turnId, patterns) => {
+            const sId = ensureSession();
+            promoteResidualPatterns({
+                peerHandle: handle,
+                currentSessionId: sId,
+                sourceTurnId: turnId,
+                patterns,
+            });
+        },
+        onRetrieveKey: (provider) => {
+            return keys[provider] || null;
+        },
+        onQueueChange: (queue) => {
+            setTurnQueue(queue);
+        },
+    };
+    callbacksRef.current = callbacks;
+
+    if (!activeCoordinatorRef.current) {
+        activeCoordinatorRef.current = new TurnCoordinator({
+            onActivePeer: (h) => callbacksRef.current?.onActivePeer(h),
+            onMessage: (m) => callbacksRef.current?.onMessage(m),
+            onPreflight: (m) => callbacksRef.current!.onPreflight(m),
+            onApplyEvidence: (m, t) => callbacksRef.current!.onApplyEvidence(m, t),
+            onRunPipeline: (c, r, a) => callbacksRef.current!.onRunPipeline(c, r, a),
+            onPersistEntries: (r, h) => callbacksRef.current?.onPersistEntries(r, h),
+            onRecordExchange: (h, c, a) => callbacksRef.current?.onRecordExchange(h, c, a),
+            onUpdateWorkingMemory: (h, c) => callbacksRef.current?.onUpdateWorkingMemory(h, c),
+            onPromoteResiduals: (h, t, p) => callbacksRef.current?.onPromoteResiduals(h, t, p),
+            onRetrieveKey: (p) => callbacksRef.current!.onRetrieveKey(p),
+            onQueueChange: (q) => callbacksRef.current?.onQueueChange?.(q),
+        });
+    }
+
+    const enterFormationSession = (config: {
+        lessonMode: 'one-on-one' | 'ai-peer';
+        headmasterIds: string[];
+        formationPhase: 'orienting' | 'exploring' | 'integrating' | 'releasing';
+        hostHandle?: string;
+    }) => {
+        const sId = `CS-${crypto.randomUUID()}`;
+        const allPeers = loadPeers();
+        const resolvedHost = config.hostHandle
+            ?? allPeers.find(p => p.classification === 'biopeer')?.handle
+            ?? '@host';
+        const session: Session = {
+            id: sId,
+            artifactId: 'formation-session',
+            status: 'Active',
+            startedAt: Date.now(),
+            lastActiveAt: Date.now(),
+            participants: eligibleModels.map(m => m.id),
+            eventLog: [],
+            hostHandle: resolvedHost,
+            lessonMode: config.lessonMode,
+            headmasterIds: config.headmasterIds,
+            formationPhase: config.formationPhase,
+        };
+        const existing = loadSessions();
+        saveSessions([...existing, session]);
+        enterWorkshop(sId);
     };
 
     const startRoundRobin = async (userPrompt: string) => {
-        interruptRoundRobin();
-
-        const currentSessionId = ensureSession();
-        const state = sessionStateRef.current ?? {
-            clock: resetClock(currentSessionId),
-            virtue_counts: {},
-        };
-        sessionStateRef.current = state;
-
-        const eligibleAtTurnStart = connectedModels.filter(model =>
-            model.status === 'Connected' &&
-            model.isSelected &&
-            model.isActive,
-        );
-        const order = eligibleAtTurnStart.map(model => model.id);
-        setRoundRobinOrder(order);
-
-        const userAffectHint = inferAffectHint(userPrompt);
-        const userReport = runPipeline({
-            type: 'EXCHANGE',
-            session_id: currentSessionId,
-            role: 'user',
-            content: userPrompt,
-            ...(userAffectHint ? { affect_hint: userAffectHint } : {}),
-        }, state);
-        // Persist PEER entry and any SPINE promotion from user turn
-        persistPeerEntry(currentSessionId, userReport.peer_entry, HUMAN_PEER.handle);
-        if (userReport.promoter_result.spine_entry) {
-            persistSpineEntry(userReport.promoter_result.spine_entry);
+        const sId = ensureSession();
+        const allPeersList = loadPeers();
+        const sessionsList = loadSessions();
+        let session = sessionsList.find(s => s.id === sId);
+        if (!session) {
+            session = {
+                id: sId,
+                artifactId: 'default-artifact',
+                status: 'Active',
+                participants: eligibleModels.map(m => m.id),
+                eventLog: [],
+            };
         }
-        if (userReport.bookcase_entry_id) {
-            const heldEntry = getBookcaseEntry(userReport.bookcase_entry_id);
-            if (heldEntry) persistBookcaseEntry(heldEntry);
-        }
-        const userPulse = buildCustodialPulse(userReport);
+
+        // @mention routing: if prompt names a peer handle, route only to that peer.
+        // No type filter — any peer can host or be mentioned. If a mentioned handle has no
+        // eligible connected model, it is skipped naturally. Falls back to all eligible.
+        const mentionTargets = parseIntendedRecipient(userPrompt, allPeersList);
+        const mentionedModels = mentionTargets.length > 0
+            ? eligibleModels.filter(m => mentionTargets.some(t => t.peerId === m.id))
+            : [];
+        const resolvedModels = mentionedModels.length > 0 ? mentionedModels : eligibleModels;
+
+        console.group('[Commons] startRoundRobin');
+        console.log('registry peers:', allPeersList.map(p => ({ id: p.id, handle: p.handle, model: p.model, baseURL: p.baseURL, enabled: p.enabled })));
+        console.log('eligible models:', eligibleModels.map(m => ({ id: m.id, handle: m.handle, model: m.model, status: m.status, endpointUrl: m.endpointUrl })));
+        console.log('mention targets:', mentionTargets);
+        console.log('resolved models:', resolvedModels.map(m => ({ handle: m.handle, model: m.model, provider: m.provider })));
+        console.groupEnd();
+
+        // Host is whoever the session declares, then the biopeer in the registry, then a generic fallback.
+        // Any peer can be the host — classification is a role, not a biological type.
+        const hostHandle = session.hostHandle
+            ?? allPeersList.find(p => p.classification === 'biopeer')?.handle
+            ?? '@host';
+
         const userMessage: Omit<WorkshopMessage, 'id' | 'timestamp'> = {
-            participant: 'You',
-            participantType: 'human',
-            eventType: 'exchange',
+            participant: hostHandle,
+            participantType: 'initiator',
             role: 'user',
+            eventType: 'exchange',
             content: userPrompt,
-            posture: derivePosture('user', userReport),
-            report: userReport,
-            custodialPulse: userPulse,
+            posture: 'Identify',
         };
-        appendMessage(userMessage);
-        recordCommonsExchange(HUMAN_PEER.handle, userPrompt, currentSessionId, eligibleAtTurnStart, userAffectHint);
-        updatePeerPCT(
-            HUMAN_PEER.handle,
-            currentSessionId,
-            [
-                'Observer focus is active in Commons.',
-                `Prompt: ${userPrompt}`,
-                `Phase: ${computeExplorationPhase(messagesRef.current)}`,
-            ].join('\n'),
-        );
 
-        for (let index = 0; index < order.length; index++) {
-            setCurrentTurnIndex(index);
-            const modelId = order[index];
-            const model = eligibleAtTurnStart.find(candidate => candidate.id === modelId);
-            if (!model) continue;
+        setDaemonState(session.lessonMode ? 'routing' : 'idle');
 
-            playAudioCue();
-
-            let responseText = '';
-            const registryPeers = loadPeers();
-            const peer = resolveRegistryPeer(model);
-            const turnTargets = buildTurnDataQuadTargets({
-                model,
-                models: eligibleAtTurnStart,
-                peers: registryPeers,
-                sessionId: currentSessionId,
-                sourceTurnId: modelId,
+        try {
+            await activeCoordinatorRef.current?.runTurnSequence({
+                userPrompt,
+                session,
+                sessionState: sessionStateRef.current!,
+                messages: messagesRef.current,
+                eligibleModels: resolvedModels,
+                allPeers: allPeersList,
+                userMessage,
             });
-            const peerHandle = peer?.handle ?? turnTargets.participantHandle;
-            try {
-                const orientationPreflight = await performOrientationPreflight(model, currentSessionId);
-                updatePeerPCT(
-                    peerHandle,
-                    currentSessionId,
-                    [
-                        'Commons turn is active.',
-                        `Observer prompt: ${userPrompt}`,
-                        orientationPreflight
-                            ? `Verified context receipt: ${orientationPreflight.receipt}`
-                            : 'Verified context receipt: unavailable',
-                        `Field phase: ${computeExplorationPhase(messagesRef.current)}`,
-                    ].join('\n'),
-                );
-                const prompt = buildPeerPrompt({
-                    model,
-                    messages: messagesRef.current,
-                    sessionId: currentSessionId,
-                    sessionState: state,
-                    participantCount: eligibleAtTurnStart.length + 1,
-                    orientationPreflight,
-                });
-
-                const response = await callGateway({
-                    provider: model.provider,
-                    model: model.model,
-                    apiKey: model.apiKey || keys[model.provider],
-                    baseURL: model.endpointUrl,
-                    messages: [
-                        { role: 'system', content: prompt },
-                        { role: 'user', content: userPrompt },
-                    ],
-                });
-                responseText = response.text;
-            } catch (error) {
-                console.error(`Model ${model.model} failed:`, error);
-                responseText = `[Error] ${error instanceof Error ? error.message : 'No response from provider'}`;
-            }
-
-            const orientationEvidence = applyOrientationEvidence(model, currentSessionId, responseText);
-            const introspection = extractPeerIntrospection(orientationEvidence.displayContent);
-            const displayResponseText = introspection.displayContent || orientationEvidence.displayContent;
-            const discipline = analyzeResponseDiscipline(displayResponseText, userPrompt);
-
-            const aiAffectHint = inferAffectHint(displayResponseText);
-            const aiReport = runPipeline({
-                type: 'EXCHANGE',
-                session_id: currentSessionId,
-                role: 'ai',
-                content: displayResponseText,
-                ...(aiAffectHint ? { affect_hint: aiAffectHint } : {}),
-            }, state);
-            // Persist PEER entry and any SPINE promotion from AI turn
-            persistPeerEntry(currentSessionId, aiReport.peer_entry, turnTargets.peerEntryParticipantId);
-            if (aiReport.promoter_result.spine_entry) {
-                persistSpineEntry(aiReport.promoter_result.spine_entry);
-            }
-            if (aiReport.bookcase_entry_id) {
-                const heldEntry = getBookcaseEntry(aiReport.bookcase_entry_id);
-                if (heldEntry) persistBookcaseEntry(heldEntry);
-            }
-            const aiPulse = buildCustodialPulse(aiReport);
-            const residualPatterns = collectResidualPatterns({
-                orientationStatus: orientationEvidence.orientationStatus,
-                discipline,
-                report: aiReport,
-            });
-            appendMessage({
-                participant: model.model,
-                participantType: 'ai',
-                eventType: 'exchange',
-                role: 'assistant',
-                content: displayResponseText,
-                posture: derivePosture('ai', aiReport),
-                report: aiReport,
-                custodialPulse: aiPulse,
-                orientationStatus: orientationEvidence.orientationStatus,
-                orientationReceipt: orientationEvidence.orientationReceipt,
-                orientationNotes: orientationEvidence.orientationNotes,
-                fidelityState: discipline.fidelityState,
-                fidelityNotes: discipline.fidelityNotes,
-                canonCitationNotes: discipline.canonCitationNotes,
-                inquiryDisposition: discipline.inquiryDisposition,
-                inquiryNotes: discipline.inquiryNotes,
-                peerIntrospection: introspection.introspection,
-                peerIntrospectionNotes: introspection.introspectionNotes,
-            });
-            recordCommonsExchange(peerHandle, displayResponseText, currentSessionId, eligibleAtTurnStart, aiAffectHint);
-            updatePeerPCT(
-                peerHandle,
-                currentSessionId,
-                [
-                    'Latest Commons contribution recorded.',
-                    `Observer prompt: ${userPrompt}`,
-                    `Orientation: ${orientationEvidence.orientationStatus ?? 'unverified'}`,
-                    orientationEvidence.orientationReceipt
-                        ? `READ_RECEIPT: ${orientationEvidence.orientationReceipt}`
-                        : 'READ_RECEIPT: unavailable',
-                    `Current contribution: ${displayResponseText}`,
-                ].join('\n'),
-            );
-            promoteResidualPatterns({
-                peerHandle,
-                currentSessionId,
-                sourceTurnId: modelId,
-                patterns: residualPatterns,
-            });
-
-            if (aiPulse.verdict !== 'RELEASE' || aiPulse.findingCount > 0 || !aiReport.advocate_result.affective_congruent) {
-                appendMessage({
-                    participant: 'Commons Custodian',
-                    participantType: 'custodian',
-                    eventType: 'reflection',
-                    role: 'system',
-                    content: [
-                        `ATE ${aiReport.ate_result.verdict}: ${aiReport.ate_result.reason}`,
-                        `Conscience: ${aiReport.conscience.map(output => output.post).join(' ') || 'No additional conscience sequence.'}`,
-                        `Advocate: ${summarizeAdvocate(aiReport.advocate_result)}`,
-                    ].join('\n\n'),
-                    posture: derivePosture('ai', aiReport),
-                    sourceTurnId: modelId,
-                });
-            }
-
-            if (discipline.hasSourceFidelityIssue || discipline.hasCanonCitationIssue || discipline.hasInquiryIssue) {
-                const reflectionParts = [
-                    discipline.hasSourceFidelityIssue
-                        ? `Source fidelity: ${discipline.fidelityNotes}`
-                        : undefined,
-                    discipline.hasCanonCitationIssue
-                        ? `Canon citation: ${discipline.canonCitationNotes}`
-                        : undefined,
-                    discipline.hasInquiryIssue
-                        ? `Inquiry posture: ${discipline.inquiryNotes}`
-                        : undefined,
-                ].filter(Boolean);
-
-                appendMessage({
-                    participant: 'Commons Custodian',
-                    participantType: 'custodian',
-                    eventType: 'reflection',
-                    role: 'system',
-                    content: reflectionParts.join('\n\n'),
-                    posture: 'Identify',
-                    sourceTurnId: modelId,
-                    fidelityState: discipline.fidelityState,
-                    fidelityNotes: discipline.fidelityNotes,
-                    canonCitationNotes: discipline.canonCitationNotes,
-                    inquiryDisposition: discipline.inquiryDisposition,
-                    inquiryNotes: discipline.inquiryNotes,
-                });
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 300));
+        } finally {
+            setDaemonState('idle');
         }
-
-        setCurrentTurnIndex(null);
     };
 
     const interruptRoundRobin = () => {
-        setCurrentTurnIndex(null);
+        activeCoordinatorRef.current?.clearQueue();
+        setDaemonState('idle');
     };
 
-    const beginNewChat = () => {
-        const nextSessionId = `CS-${crypto.randomUUID()}`;
+    const beginNewChat = (explicitSessionId?: string) => {
+        const nextSessionId = explicitSessionId ?? `CS-${crypto.randomUUID()}`;
+        if (!seededSessionIds.current.has(nextSessionId)) {
+            seededSessionIds.current.add(nextSessionId);
+            const peers = buildPeerProfiles(eligibleModels, loadPeers());
+            seedChamberPeers(peers, nextSessionId);
+        }
         const sessionMessage: WorkshopMessage = {
             id: crypto.randomUUID(),
             participant: 'System',
@@ -652,7 +613,6 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
         messagesRef.current = [sessionMessage];
         setMessages([sessionMessage]);
         setCurrentTurnIndex(null);
-        setLatestCustodialPulse(null);
         setLatestCustodialReport(null);
         setExplorationPhase('Clarifying');
         refreshDerivedState([sessionMessage], null);
@@ -667,13 +627,17 @@ export function CommonsProvider({ children }: { children: React.ReactNode }) {
             explorationPhase,
             roundRobinOrder,
             currentTurnIndex,
+            currentActivePeerHandle,
+            turnQueue,
             sessionId,
             sessionOverview,
             latestCustodialPulse,
             latestCustodialReport,
+            daemonState,
             addModel,
             validateModel,
             enterWorkshop,
+            enterFormationSession,
             addMessage,
             setAudioEnabled,
             startRoundRobin,

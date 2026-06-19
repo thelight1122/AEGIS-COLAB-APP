@@ -62,7 +62,7 @@ describe('AuthCallbackPage', () => {
 
         // Wait for the setTimeout redirect
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+            expect(mockNavigate).toHaveBeenCalledWith('/commons', { replace: true });
         }, { timeout: 3000 });
     });
 

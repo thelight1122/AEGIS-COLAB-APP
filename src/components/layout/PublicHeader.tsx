@@ -14,19 +14,23 @@ export function PublicHeader() {
                         <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Aegis Peer Commons</span>
                     </Link>
                 </div>
-                <nav className="hidden md:flex items-center gap-10">
+                <nav className="hidden md:flex items-center gap-8">
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/framework">Framework</Link>
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/governance">Governance</Link>
-                    <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/artifacts">Artifacts</Link>
-                    <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/buildmaster">Buildmaster Workshop</Link>
+                    <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/buildmaster">Buildmaster</Link>
                     <Link className="text-sm font-medium text-slate-500 hover:text-[#197fe6] transition-colors" to="/commons">Commons</Link>
                 </nav>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <Link to="/commons">
-                        <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-6">
-                            Enter Commons Workshop
+                        <Button variant="outline" className="hidden sm:flex border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold px-5 h-9 text-sm hover:border-[#197fe6]/40 transition-all">
+                            Commons Workshop
                         </Button>
                     </Link>
+                    <a href="https://adamalign.com" target="_blank" rel="noopener noreferrer">
+                        <Button className="bg-[#197fe6] hover:bg-[#197fe6]/90 text-white font-bold px-5 h-9 text-sm">
+                            Enter EcoVerse
+                        </Button>
+                    </a>
                 </div>
             </div>
         </header>

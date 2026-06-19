@@ -18,7 +18,7 @@ import {
     Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { ProposalNode } from './nodes/ProposalNode';
 import { TensionNode } from './nodes/TensionNode';
@@ -42,49 +42,9 @@ const nodeTypes: NodeTypes = {
     decision: DecisionNode,
 };
 
-const initialNodes: AppNode[] = [
-    {
-        id: '1',
-        type: 'proposal',
-        position: { x: 250, y: 100 },
-        data: {
-            label: 'Implement RAG Pipeline',
-            description: 'Connect vector DB to improved context window',
-            author: 'Architect'
-        },
-    },
-    {
-        id: '2',
-        type: 'tension',
-        position: { x: 100, y: 300 },
-        data: {
-            label: 'Latency Concerns',
-            description: 'Vector search adding 200ms overhead',
-            intensity: 'medium'
-        },
-    },
-    {
-        id: '3',
-        type: 'scenario',
-        position: { x: 500, y: 200 },
-        data: {
-            label: 'Q4 Deployment',
-            active: true
-        },
-    },
-    {
-        id: '4',
-        type: 'boundary',
-        position: { x: 400, y: 50 },
-        data: {
-            label: 'Infrastructure Scope',
-        },
-    },
-];
+const initialNodes: AppNode[] = [];
 
-const initialEdges: Edge[] = [
-    { id: 'e1-2', source: '1', target: '2', animated: true },
-];
+const initialEdges: Edge[] = [];
 
 interface WhiteboardAreaProps {
     focusNodeId?: string | null;
@@ -97,6 +57,8 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [createNodeType, setCreateNodeType] = useState<CreateNodeData['type']>('proposal');
     const [nodeToEdit, setNodeToEdit] = useState<AppNode | null>(null);
+    const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+    const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
     const { fitView } = useReactFlow();
     const prevFocusRef = useRef<string | null>(null);
 
@@ -131,6 +93,27 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
         (params: Connection) => setEdges((eds) => addEdge(params, eds)),
         [setEdges],
     );
+
+    const handleClearBoard = () => {
+        if (nodes.length === 0 && edges.length === 0) return;
+        if (!window.confirm('Clear the current whiteboard?')) return;
+        setNodes([]);
+        setEdges([]);
+        setSelectedNodeIds([]);
+        setSelectedEdgeIds([]);
+    };
+
+    const handleDeleteSelected = () => {
+        if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) return;
+        setNodes((nds) => nds.filter(node => !selectedNodeIds.includes(node.id)));
+        setEdges((eds) => eds.filter(edge =>
+            !selectedEdgeIds.includes(edge.id) &&
+            !selectedNodeIds.includes(edge.source) &&
+            !selectedNodeIds.includes(edge.target)
+        ));
+        setSelectedNodeIds([]);
+        setSelectedEdgeIds([]);
+    };
 
     const handleCreateNode = (nodeData: CreateNodeData) => {
         if (nodeToEdit) {
@@ -211,6 +194,20 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
                 setCreateNodeType(node.type as CreateNodeData['type']);
                 setIsCreateModalOpen(true);
             }}
+            onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) => {
+                const nextNodeIds = selectedNodes.map(node => node.id);
+                const nextEdgeIds = selectedEdges.map(edge => edge.id);
+                setSelectedNodeIds(prev => (
+                    prev.length === nextNodeIds.length && prev.every((id, idx) => id === nextNodeIds[idx])
+                        ? prev
+                        : nextNodeIds
+                ));
+                setSelectedEdgeIds(prev => (
+                    prev.length === nextEdgeIds.length && prev.every((id, idx) => id === nextEdgeIds[idx])
+                        ? prev
+                        : nextEdgeIds
+                ));
+            }}
             fitView
             className="bg-slate-50 dark:bg-slate-900"
         >
@@ -224,6 +221,24 @@ function WhiteboardCanvas({ focusNodeId, onNodesReady }: WhiteboardAreaProps) {
                 }} />
             </Panel>
             <Panel position="top-right" className="flex gap-2">
+                <Button
+                    onClick={handleClearBoard}
+                    variant="outline"
+                    className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700"
+                    title="Clear Board"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Clear Board
+                </Button>
+                <Button
+                    onClick={handleDeleteSelected}
+                    variant="outline"
+                    disabled={selectedNodeIds.length === 0 && selectedEdgeIds.length === 0}
+                    className="gap-2 shadow-sm bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-40"
+                    title="Delete Selected"
+                >
+                    Delete Selected
+                </Button>
                 <Button onClick={() => {
                     const flow = { nodes, edges };
                     localStorage.setItem('aegis_canvas_backup', JSON.stringify(flow));

@@ -17,10 +17,13 @@ export interface CommonsContextType {
     explorationPhase: ExplorationPhase;
     roundRobinOrder: string[];
     currentTurnIndex: number | null;
+    currentActivePeerHandle: string | null;
+    turnQueue: { peerId: string; handle: string; type: 'ai' | 'human'; classification?: string }[];
     sessionId: string | null;
     sessionOverview: CommonsSessionOverview;
     latestCustodialPulse: CustodialPulse | null;
     latestCustodialReport: StewardReport | null;
+    daemonState: 'routing' | 'awaiting-human' | 'idle';
 
     addModel: (params: {
         provider: ModelProvider,
@@ -31,6 +34,11 @@ export interface CommonsContextType {
     }) => void;
     validateModel: (id: string) => Promise<boolean>;
     enterWorkshop: (explicitSessionId?: string) => void;
+    enterFormationSession: (config: {
+        lessonMode: 'one-on-one' | 'ai-peer';
+        headmasterIds: string[];
+        formationPhase: 'orienting' | 'exploring' | 'integrating' | 'releasing';
+    }) => void;
     addMessage: (message: Omit<WorkshopMessage, 'id' | 'timestamp'>) => void;
     setAudioEnabled: (enabled: boolean) => void;
     startRoundRobin: (userPrompt: string) => Promise<void>;

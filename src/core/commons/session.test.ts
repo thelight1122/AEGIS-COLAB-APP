@@ -83,7 +83,7 @@ describe('commons session helpers', () => {
 
     it('computes exploration phase from exchange postures', () => {
         const messages: WorkshopMessage[] = [
-            { id: '1', participant: 'You', participantType: 'human', eventType: 'exchange', role: 'user', content: 'Question', timestamp: 1, posture: 'Identify' },
+            { id: '1', participant: 'You', participantType: 'initiator', eventType: 'exchange', role: 'user', content: 'Question', timestamp: 1, posture: 'Identify' },
             { id: '2', participant: 'Vespar', participantType: 'ai', eventType: 'exchange', role: 'assistant', content: 'Response', timestamp: 2, posture: 'Suggest' },
             { id: '3', participant: 'Lumin', participantType: 'ai', eventType: 'exchange', role: 'assistant', content: 'Response', timestamp: 3, posture: 'Suggest' },
         ];
@@ -96,7 +96,7 @@ describe('commons session helpers', () => {
             {
                 id: '1',
                 participant: 'You',
-                participantType: 'human',
+                participantType: 'initiator',
                 eventType: 'exchange',
                 role: 'user',
                 content: 'Question',
@@ -146,7 +146,7 @@ describe('commons session helpers', () => {
         const messages: WorkshopMessage[] = [{
             id: '1',
             participant: 'You',
-            participantType: 'human',
+            participantType: 'initiator',
             eventType: 'exchange',
             role: 'user',
             content: 'How should the Commons coordinate AI peers?',

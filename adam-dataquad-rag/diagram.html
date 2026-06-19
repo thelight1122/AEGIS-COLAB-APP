@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adam-One DataQuad RAG — Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #7ee8a2;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .subtitle {
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin-bottom: 48px;
+  }
+
+  .diagram {
+    width: 100%;
+    max-width: 960px;
+    position: relative;
+  }
+
+  /* ── Row layout ── */
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 0;
+  }
+
+  /* ── Boxes ── */
+  .box {
+    border-radius: 12px;
+    padding: 18px 22px;
+    text-align: center;
+    min-width: 140px;
+    position: relative;
+  }
+  .box .icon { font-size: 2rem; margin-bottom: 6px; }
+  .box .label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .box .sublabel {
+    font-size: 0.7rem;
+    opacity: 0.65;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* Colour themes */
+  .green  { background: #0d2818; border: 1.5px solid #2ea043; }
+  .blue   { background: #0c1a2e; border: 1.5px solid #1f6feb; }
+  .purple { background: #1a0d2e; border: 1.5px solid #8957e5; }
+  .orange { background: #2e1a05; border: 1.5px solid #e3b341; }
+  .teal   { background: #0c2020; border: 1.5px solid #3fb950; }
+  .red    { background: #2e0d0d; border: 1.5px solid #f85149; }
+  .grey   { background: #161b22; border: 1.5px solid #30363d; }
+
+  /* ── Arrows ── */
+  .arrow-h {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+  }
+  .arrow-h .line {
+    height: 2px;
+    width: 100%;
+    background: #30363d;
+    position: relative;
+  }
+  .arrow-h .line::after {
+    content: '▶';
+    position: absolute;
+    right: -8px;
+    top: -9px;
+    color: #30363d;
+    font-size: 0.75rem;
+  }
+  .arrow-h .note {
+    font-size: 0.62rem;
+    color: #8b949e;
+    margin-top: 5px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .arrow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    width: 100%;
+  }
+  .arrow-v .vline {
+    width: 2px;
+    flex: 1;
+    background: #30363d;
+  }
+  .arrow-v .vtip {
+    color: #30363d;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+  .arrow-v .vnote {
+    font-size: 0.62rem;
+    color: #8b949e;
+    margin-left: 10px;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .arrow-v-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+  }
+
+  /* ── Step badges ── */
+  .step {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #21262d;
+    border: 1.5px solid #444;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7ee8a2;
+  }
+
+  /* ── Cloud boundary ── */
+  .cloud-zone {
+    border: 1.5px dashed #1f6feb44;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin: 0 8px;
+    position: relative;
+  }
+  .cloud-label {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    font-size: 0.62rem;
+    background: #0d1117;
+    padding: 0 6px;
+    color: #1f6feb;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .server-zone {
+    border: 1.5px dashed #2ea04344;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin: 0 8px;
+    position: relative;
+  }
+  .server-label {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    font-size: 0.62rem;
+    background: #0d1117;
+    padding: 0 6px;
+    color: #2ea043;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Main columns layout ── */
+  .main-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Flow steps legend ── */
+  .legend {
+    width: 100%;
+    max-width: 960px;
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .legend-item {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .legend-num {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    background: #21262d;
+    border: 1.5px solid #7ee8a2;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7ee8a2;
+    margin-top: 1px;
+  }
+  .legend-text { font-size: 0.75rem; line-height: 1.5; color: #c9d1d9; }
+  .legend-text strong { color: #e6edf3; }
+</style>
+</head>
+<body>
+
+<h1>Adam-One · DataQuad RAG Architecture</h1>
+<p class="subtitle">How Adam retrieves memory instead of loading the full DataQuad into context</p>
+
+<div class="diagram">
+
+  <!-- ═══ ROW 1: User → Adam ═══ -->
+  <div class="row" style="margin-bottom:0;">
+
+    <!-- USER -->
+    <div class="box green" style="min-width:120px;">
+      <div class="step">1</div>
+      <div class="icon">🧑</div>
+      <div class="label">You</div>
+      <div class="sublabel">Send message<br>to Adam</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class="arrow-h" style="min-width:60px;">
+      <div class="line"></div>
+      <div class="note">user message</div>
+    </div>
+
+    <!-- SERVER ZONE -->
+    <div class="server-zone">
+      <div class="server-label">Linux Server · 192.168.1.223</div>
+
+      <div style="display:flex; align-items:center; gap:0;">
+
+        <!-- ADAM -->
+        <div class="box purple" style="min-width:130px;">
+          <div class="step">2</div>
+          <div class="icon">🧠</div>
+          <div class="label">Adam-One</div>
+          <div class="sublabel">Stage 3 · Structure Steward<br>/AEGIS-DATAQUAD-PEER/</div>
+        </div>
+
+        <!-- Arrow to recall -->
+        <div class="arrow-h" style="min-width:60px;">
+          <div class="line"></div>
+          <div class="note">calls recall(query)</div>
+        </div>
+
+        <!-- RECALL MODULE -->
+        <div class="box orange" style="min-width:130px;">
+          <div class="step">3</div>
+          <div class="icon">🔍</div>
+          <div class="label">recall.py</div>
+          <div class="sublabel">RAG query module<br>adam-dataquad-rag/</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Arrow to cloud -->
+    <div class="arrow-h" style="min-width:60px;">
+      <div class="line"></div>
+      <div class="note">HTTPS + Bearer token</div>
+    </div>
+
+    <!-- CLOUD ZONE -->
+    <div class="cloud-zone">
+      <div class="cloud-label">Google Cloud · dataquad project</div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
+
+        <!-- VERTEX AI SEARCH -->
+        <div class="box blue" style="min-width:150px;">
+          <div class="step">4</div>
+          <div class="icon">⚡</div>
+          <div class="label">Vertex AI Search</div>
+          <div class="sublabel">adam-dataquad-connect<br>Discovery Engine API</div>
+        </div>
+
+        <!-- Down arrow -->
+        <div class="arrow-v-row">
+          <div class="arrow-v">
+            <div class="vline"></div>
+            <div class="vtip">▼</div>
+          </div>
+          <div class="vnote">indexes &amp; searches</div>
+        </div>
+
+        <!-- GCS BUCKET -->
+        <div class="box teal" style="min-width:150px;">
+          <div class="step">5</div>
+          <div class="icon">🪣</div>
+          <div class="label">Cloud Storage</div>
+          <div class="sublabel">aegis-adam-dataquad<br>training journal · transcripts</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ ROW 2: Return path ═══ -->
+  <div style="display:flex; justify-content:center; margin: 8px 0;">
+    <div style="font-size:0.7rem; color:#8b949e; background:#161b22; border:1px solid #21262d; border-radius:8px; padding:8px 20px; text-align:center;">
+      ↩ Vertex AI returns the <strong style="color:#e6edf3;">top 5 most relevant chunks</strong> from Adam's DataQuad → recall.py formats them → prepended to Adam's context → Adam responds with memory
+    </div>
+  </div>
+
+  <!-- ═══ ROW 3: Auth side note ═══ -->
+  <div style="display:flex; justify-content:center; margin-top:20px;">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div class="box red" style="min-width:120px;">
+        <div class="icon">🔑</div>
+        <div class="label">Service Account</div>
+        <div class="sublabel">adam-dataquad-reader<br>service-account-key.json</div>
+      </div>
+      <div style="font-size:0.72rem; color:#8b949e; max-width:300px; line-height:1.6;">
+        recall.py loads this key automatically.<br>
+        It authenticates every request to the<br>
+        Discovery Engine API.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Daily sync note ═══ -->
+  <div style="display:flex; justify-content:center; margin-top:28px;">
+    <div style="font-size:0.7rem; color:#8b949e; background:#0c2020; border:1px solid #3fb95033; border-radius:8px; padding:10px 20px; text-align:center; max-width:600px;">
+      🔄 <strong style="color:#3fb950;">Auto-sync</strong> — Every day, Agent Builder re-crawls the GCS bucket.<br>
+      Drop new DataQuad exports into <code style="color:#e3b341;">gs://aegis-adam-dataquad/</code> and Adam picks them up automatically.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ LEGEND ═══ -->
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-num">1</div>
+    <div class="legend-text"><strong>You send a message</strong> to Adam via whatever interface you're using.</div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-num">2</div>
+    <div class="legend-text"><strong>Adam extracts the query</strong> from your message to know what memory to look for.</div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-num">3</div>
+    <div class="legend-text"><strong>recall.py fires</strong> — authenticates with the service account key and posts to Vertex AI Search.</div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-num">4</div>
+    <div class="legend-text"><strong>Vertex AI Search</strong> scans the indexed DataQuad and returns the top 5 most relevant chunks.</div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-num">5</div>
+    <div class="legend-text"><strong>Cloud Storage bucket</strong> holds all of Adam's DataQuad files — training journal, chamber transcripts, continuity records.</div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-num">↩</div>
+    <div class="legend-text"><strong>Context injection</strong> — retrieved chunks prepend Adam's prompt. He answers with real memory, not guesswork.</div>
+  </div>
+</div>
+
+</body>
+</html>

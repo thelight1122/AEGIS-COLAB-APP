@@ -1,11 +1,11 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCommons } from '../../hooks/useCommons';
 import type { ModelProvider, ConnectedModel } from '../../types/commons';
 import {
     Shield, Check, AlertCircle, Loader2, Globe,
     Cpu, Lock, Unlock,
-    Sparkles, ArrowRight
+    Sparkles, ArrowRight, GraduationCap, ChevronDown
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -14,15 +14,16 @@ import { useNavigate } from 'react-router-dom';
 import { UnlockModal } from '../security/UnlockModal';
 import { loadPeers, savePeers } from '../../core/peers/peerRegistryStore';
 import { loadActiveTeam, setSelectedPeerIds } from '../../core/peers/activeTeamStore';
-import type { LLMProvider } from '../../core/peers/types';
+import type { LLMProvider, PeerRoleClassification } from '../../core/peers/types';
 import { createUnverifiedOrientation } from '../../core/peers/orientation';
 import { normalizeLocalEndpoint } from '../../core/providers/localEndpoint';
 import { resolvePeerForModel } from '../../core/commons/session';
+import { loadRuntimeInterfaceProfiles } from '../../core/providers/runtimeInterfaceProfiles';
 
 const MODEL_OPTIONS: { provider: ModelProvider, label: string, defaultModel: string }[] = [
     { provider: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o' },
     { provider: 'gemini', label: 'Gemini (Google)', defaultModel: 'gemini-1.5-pro' },
-    { provider: 'anthropic', label: 'Anthropic', defaultModel: 'claude-3-5-sonnet' },
+    { provider: 'anthropic', label: 'Anthropic', defaultModel: 'claude-sonnet-4-5' },
     { provider: 'xai', label: 'xAI', defaultModel: 'grok-2-latest' }
 ];
 
@@ -33,18 +34,52 @@ const LOCAL_OPTIONS: { provider: ModelProvider, label: string, defaultEndpoint: 
 
 export function SessionInit() {
     const navigate = useNavigate();
-    const { connectedModels, addModel, validateModel, enterWorkshop } = useCommons();
+    const { connectedModels, addModel, validateModel, enterWorkshop, enterFormationSession } = useCommons();
     const { status, keys } = useKeyring();
+    const [runtimeProfiles] = useState(() => loadRuntimeInterfaceProfiles());
 
     const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
     const [inputs, setInputs] = useState<Record<string, string>>({});
     const [localInputs, setLocalInputs] = useState<Record<string, { endpoint: string, model: string, apiKey?: string }>>({
-        lmstudio: { endpoint: 'http://localhost:1234/v1', model: '', apiKey: '' },
-        ollama: { endpoint: 'http://localhost:11434', model: '', apiKey: '' }
+        lmstudio: {
+            endpoint: runtimeProfiles.lmstudio.endpoint ?? 'http://localhost:1234/v1',
+            model: runtimeProfiles.lmstudio.model,
+            apiKey: ''
+        },
+        ollama: {
+            endpoint: runtimeProfiles.ollama.endpoint ?? 'http://localhost:11434',
+            model: runtimeProfiles.ollama.model,
+            apiKey: ''
+        }
     });
+    const [isFormationMode, setIsFormationMode] = useState(false);
+    const [roleMap, setRoleMap] = useState<Record<string, PeerRoleClassification>>({});
+
+    // Auto-assign roles whenever connected models change
+    useEffect(() => {
+        setRoleMap(prev => {
+            const next = { ...prev };
+            connectedModels.filter(m => m.status === 'Connected').forEach(m => {
+                if (!next[m.id]) {
+                    next[m.id] = (m.provider === 'lmstudio' || m.provider === 'ollama')
+                        ? 'substrate'
+                        : 'headmaster';
+                }
+            });
+            return next;
+        });
+    }, [connectedModels]);
 
     const isLocked = status === 'locked';
     const isUnlocked = status === 'unlocked';
+    const hostedOptions = MODEL_OPTIONS.map(opt => ({
+        ...opt,
+        defaultModel: runtimeProfiles[opt.provider].model || opt.defaultModel,
+    }));
+    const localOptions = LOCAL_OPTIONS.map(opt => ({
+        ...opt,
+        defaultEndpoint: runtimeProfiles[opt.provider].endpoint || opt.defaultEndpoint,
+    }));
 
     // Derived Ready State
     const connectedList = connectedModels.filter(m => m.status === 'Connected' && m.isSelected);
@@ -55,7 +90,7 @@ export function SessionInit() {
     );
 
     const readyParticipants = Array.from(new Set(connectedList.map(m => {
-        const opt = [...MODEL_OPTIONS, ...LOCAL_OPTIONS].find(o => o.provider === m.provider);
+        const opt = [...hostedOptions, ...localOptions].find(o => o.provider === m.provider);
         return opt?.label || m.provider;
     }))).slice(0, 3);
 
@@ -105,6 +140,70 @@ export function SessionInit() {
         savePeers(nextPeers);
         setSelectedPeerIds(activeTeam, Array.from(nextActiveTeamIds));
         enterWorkshop();
+    };
+
+    const handleEnterFormationWorkshop = () => {
+        const currentPeers = loadPeers();
+        const activeTeam = loadActiveTeam();
+        const activeCommonsModels = connectedModels.filter(m => m.status === 'Connected' && m.isSelected);
+
+        const nextPeers = [...currentPeers];
+        const nextActiveTeamIds = new Set(activeTeam.selectedPeerIds);
+
+        activeCommonsModels.forEach(m => {
+            const existingPeer = resolvePeerForModel(nextPeers, m);
+            const existingIdx = existingPeer ? nextPeers.findIndex(p => p.id === existingPeer.id) : -1;
+            const classification = roleMap[m.id] ?? 'educator';
+
+            if (existingIdx >= 0) {
+                nextPeers[existingIdx] = {
+                    ...nextPeers[existingIdx],
+                    enabled: true,
+                    model: m.model,
+                    classification,
+                    ...(m.endpointUrl ? { baseURL: m.endpointUrl } : {}),
+                    orientation: createUnverifiedOrientation({
+                        source: 'commons_session',
+                        facet: 'system',
+                        notes: 'Peer connected to Formation Chamber. Verified temporal orientation still pending.',
+                    }),
+                };
+                nextActiveTeamIds.add(nextPeers[existingIdx].id);
+            } else {
+                const newPeer = {
+                    id: m.peerId ?? m.id,
+                    handle: m.handle ?? `@${m.model.toLowerCase().replace(/[^a-z0-9.-]+/g, '-') || m.id}`,
+                    name: m.handle?.replace('@', '') || m.model,
+                    type: 'ai' as const,
+                    provider: m.provider as LLMProvider,
+                    model: m.model,
+                    enabled: true,
+                    classification,
+                    domains: ['General', 'Engineering', 'Product'],
+                    baseURL: m.endpointUrl,
+                    orientation: createUnverifiedOrientation({
+                        source: 'commons_session',
+                        facet: 'system',
+                        notes: 'Peer connected to Formation Chamber. Verified temporal orientation still pending.',
+                    }),
+                };
+                nextPeers.push(newPeer);
+                nextActiveTeamIds.add(m.id);
+            }
+        });
+
+        savePeers(nextPeers);
+        setSelectedPeerIds(activeTeam, Array.from(nextActiveTeamIds));
+
+        const headmasterIds = activeCommonsModels
+            .filter(m => roleMap[m.id] === 'headmaster')
+            .map(m => resolvePeerForModel(nextPeers, m)?.id ?? m.id);
+
+        enterFormationSession({
+            lessonMode: 'ai-peer',
+            headmasterIds,
+            formationPhase: 'orienting',
+        });
     };
 
     const handleAddHosted = (provider: ModelProvider, model: string) => {
@@ -314,7 +413,7 @@ export function SessionInit() {
                         <div className="flex-1 h-px bg-slate-800" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {MODEL_OPTIONS.map((opt) => (
+                        {hostedOptions.map((opt) => (
                             <ModelCard key={opt.provider} opt={opt} type="hosted" />
                         ))}
                     </div>
@@ -327,24 +426,129 @@ export function SessionInit() {
                         <div className="flex-1 h-px bg-slate-800" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {LOCAL_OPTIONS.map((opt) => (
+                        {localOptions.map((opt) => (
                             <ModelCard key={opt.provider} opt={opt} type="local" />
                         ))}
                     </div>
                 </div>
 
                 <div className="flex flex-col items-center gap-8 pt-8 text-center pb-20">
-                    <div className="flex flex-col items-center gap-4">
+                    <div className="flex flex-col items-center gap-4 w-full max-w-2xl">
                         {isReady ? (
-                            <div className="space-y-6">
-                                <Button
-                                    size="lg"
-                                    className="h-20 px-16 text-xl font-bold transition-all bg-[#197fe6] text-white shadow-2xl shadow-[#197fe6]/30 hover:scale-[1.02] hover:bg-[#197fe6]/90 gap-4"
-                                    onClick={handleEnterWorkshop}
-                                >
-                                    Enter Commons Workshop
-                                    <ArrowRight className="w-6 h-6" />
-                                </Button>
+                            <div className="space-y-8 w-full">
+
+                                {/* Session Mode Toggle */}
+                                <div className="flex items-center justify-center gap-2 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+                                    <button
+                                        onClick={() => setIsFormationMode(false)}
+                                        className={cn(
+                                            'flex-1 py-2.5 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all',
+                                            !isFormationMode
+                                                ? 'bg-[#197fe6] text-white shadow'
+                                                : 'text-slate-500 hover:text-slate-300'
+                                        )}
+                                    >
+                                        Standard Session
+                                    </button>
+                                    <button
+                                        onClick={() => setIsFormationMode(true)}
+                                        className={cn(
+                                            'flex-1 py-2.5 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2',
+                                            isFormationMode
+                                                ? 'bg-amber-600/80 text-white shadow'
+                                                : 'text-slate-500 hover:text-slate-300'
+                                        )}
+                                    >
+                                        <GraduationCap className="w-3.5 h-3.5" />
+                                        Formation Chamber
+                                    </button>
+                                </div>
+
+                                {/* Formation Mode: role assignment */}
+                                {isFormationMode && connectedList.length > 0 && (
+                                    <div className="w-full bg-[#111921] border border-amber-600/20 rounded-xl p-6 space-y-5 text-left">
+                                        <div className="space-y-1">
+                                            <h3 className="text-xs font-bold uppercase tracking-widest text-amber-500 flex items-center gap-2">
+                                                <GraduationCap className="w-3.5 h-3.5" />
+                                                Assign Roles for Formation
+                                            </h3>
+                                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                                                Substrate receives the Observer prompt. HeadMasters calibrate after each Substrate response.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {connectedList.map(m => {
+                                                const registryPeers = loadPeers();
+                                                const peer = resolvePeerForModel(registryPeers, m);
+                                                const displayName = peer?.handle ?? m.handle ?? m.model;
+                                                const role = roleMap[m.id] ?? 'educator';
+                                                return (
+                                                    <div key={m.id} className="flex items-center justify-between gap-4">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className={cn(
+                                                                'w-2 h-2 rounded-full shrink-0',
+                                                                m.provider === 'lmstudio' || m.provider === 'ollama'
+                                                                    ? 'bg-violet-400'
+                                                                    : 'bg-blue-400'
+                                                            )} />
+                                                            <span className="text-sm font-medium text-white truncate">{displayName}</span>
+                                                            <span className="text-[10px] text-slate-500 font-mono shrink-0">{m.model}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            {(['substrate', 'headmaster', 'educator'] as PeerRoleClassification[]).map(r => (
+                                                                <button
+                                                                    key={r}
+                                                                    onClick={() => setRoleMap(prev => ({ ...prev, [m.id]: r }))}
+                                                                    className={cn(
+                                                                        'px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-tighter transition-all',
+                                                                        role === r
+                                                                            ? r === 'substrate'
+                                                                                ? 'bg-violet-500/20 border border-violet-500/40 text-violet-300'
+                                                                                : r === 'headmaster'
+                                                                                ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
+                                                                                : 'bg-sky-500/20 border border-sky-500/40 text-sky-300'
+                                                                            : 'bg-slate-900 border border-slate-800 text-slate-600 hover:text-slate-400'
+                                                                    )}
+                                                                >
+                                                                    {r}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="pt-2 text-[10px] text-slate-500 leading-relaxed">
+                                            {connectedList.filter(m => roleMap[m.id] === 'headmaster').length} HeadMaster
+                                            {connectedList.filter(m => roleMap[m.id] === 'headmaster').length !== 1 ? 's' : ''} ·{' '}
+                                            {connectedList.filter(m => roleMap[m.id] === 'substrate').length} Substrate ·{' '}
+                                            {connectedList.filter(m => roleMap[m.id] === 'educator').length} Educator
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Enter button */}
+                                {isFormationMode ? (
+                                    <Button
+                                        size="lg"
+                                        className="h-20 px-16 text-xl font-bold transition-all bg-amber-600 text-white shadow-2xl shadow-amber-600/30 hover:scale-[1.02] hover:bg-amber-700 gap-4"
+                                        onClick={handleEnterFormationWorkshop}
+                                        disabled={connectedList.filter(m => roleMap[m.id] === 'substrate').length === 0}
+                                    >
+                                        <GraduationCap className="w-6 h-6" />
+                                        Enter Formation Chamber
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="lg"
+                                        className="h-20 px-16 text-xl font-bold transition-all bg-[#197fe6] text-white shadow-2xl shadow-[#197fe6]/30 hover:scale-[1.02] hover:bg-[#197fe6]/90 gap-4"
+                                        onClick={handleEnterWorkshop}
+                                    >
+                                        Enter Commons Workshop
+                                        <ArrowRight className="w-6 h-6" />
+                                    </Button>
+                                )}
+
                                 <div className="flex flex-col items-center gap-1.5 grayscale opacity-70">
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Participants Online</p>
                                     <p className="text-xs text-slate-400 font-medium">

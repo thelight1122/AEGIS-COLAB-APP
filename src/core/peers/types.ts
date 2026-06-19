@@ -1,4 +1,5 @@
 export type PeerType = 'ai' | 'human';
+export type PeerRoleClassification = 'biopeer' | 'headmaster' | 'educator' | 'substrate';
 export type LLMProvider = 'gemini' | 'openai' | 'anthropic' | 'xai' | 'lmstudio' | 'ollama';
 export type OrientationStatus = 'unverified' | 'verified' | 'stale' | 'cloud';
 export type OrientationSource = 'peer_context' | 'commons_session' | 'manual' | 'system' | 'unknown';
@@ -15,11 +16,17 @@ export interface TemporalOrientationState {
     notes?: string;
 }
 
+export interface PeerContextFile {
+    name: string;    // display name, e.g. "AEGIS Canon v2"
+    content: string; // full text content
+}
+
 export interface PeerProfile {
     id: string;
     handle: string; // user-defined handle, e.g. "@atlas"
     name: string;   // human-readable name, for legacy compatibility
     type: PeerType;
+    classification?: PeerRoleClassification;
     provider: LLMProvider;
     model: string;
     personaId?: string;
@@ -27,6 +34,8 @@ export interface PeerProfile {
     domains: string[]; // integration with Governance
     baseURL?: string;
     notes?: string;
+    systemPrompt?: string;      // peer-specific instructions prepended to every call
+    contextFiles?: PeerContextFile[]; // knowledge files injected into context
     dataQuad?: string[]; // Foundational knowledge segments (e.g., AEGIS Canon)
     orientation?: TemporalOrientationState;
 }
@@ -44,5 +53,13 @@ export type TeamPreset = {
         model?: string;
         personaTemplateId?: string;
         enabled: boolean;
+        classification?: PeerRoleClassification;
+        domains?: string[];
+        baseURL?: string;
+        notes?: string;
+        systemPrompt?: string;
+        contextFiles?: PeerContextFile[];
+        dataQuad?: string[];
+        orientation?: TemporalOrientationState;
     }>;
 };

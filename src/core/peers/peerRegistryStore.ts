@@ -64,6 +64,7 @@ export function loadPeers(): PeerProfile[] {
 
 export function savePeers(peers: PeerProfile[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(peers));
+    window.dispatchEvent(new CustomEvent('aegis:peers-updated'));
 }
 
 export function addPeer(peers: PeerProfile[], profile: Omit<PeerProfile, "id">): PeerProfile[] {

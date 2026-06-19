@@ -1,0 +1,280 @@
+# AEGIS Adam-One — Docker Compose Stack
+# BM: SINGLE SOURCE OF ACTIVATION
+#
+# Identity-Safety Invariants:
+#   - dataquad-data volume is NEVER recreated or wiped
+#   - No service has write access to peer-state.json except steward-daemon
+#   - "docker compose down --volumes" is PROHIBITED by operator policy
+#   - Use "docker compose stop" for graceful shutdown only
+
+networks:
+  adam-one:
+    driver: bridge
+
+volumes:
+  dataquad-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/peer
+  ollama-models:
+  advocate-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../advocate/data
+
+x-adam-env: &adam-env
+  env_file:
+    - ./.env.compose
+
+services:
+  steward-daemon:
+    <<: *adam-env
+    build:
+      context: ..
+      dockerfile: adam-one-peer-project/Dockerfile
+    command: node --max-old-space-size=4096 src/host/steward-daemon.mjs
+    working_dir: /app/adam-one-peer-project
+    volumes:
+      - dataquad-data:/app/adam-one-peer-project/data/peer
+      - ./config:/app/adam-one-peer-project/config:ro
+    networks:
+      - adam-one
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:fs').accessSync('data/peer/peer-state.json')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  live-bridge-api:
+    <<: *adam-env
+    build:
+      context: ..
+      dockerfile: adam-one-peer-project/Dockerfile
+    command: node --max-old-space-size=4096 src/host/live-bridge-api.mjs
+    working_dir: /app/adam-one-peer-project
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:3030:3030"
+    environment:
+      PORT: "3030"
+    volumes:
+      - dataquad-data:/app/adam-one-peer-project/data/peer
+      - ./config:/app/adam-one-peer-project/config:ro
+      - ./data/security:/app/adam-one-peer-project/data/security:ro
+    networks:
+      - adam-one
+    depends_on:
+      steward-daemon:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const h=require('http');h.get('http://localhost:3030/api/live-bridge/system-health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  turn-submit-api:
+    <<: *adam-env
+    build:
+      context: ..
+      dockerfile: adam-one-peer-project/Dockerfile
+    command: node src/host/turn-submit-api.mjs
+    working_dir: /app/adam-one-peer-project
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:8787:8787"
+    environment:
+      ADAM_ONE_TURN_API_PORT: "8787"
+    volumes:
+      - dataquad-data:/app/adam-one-peer-project/data/peer
+      - ./config:/app/adam-one-peer-project/config:ro
+    networks:
+      - adam-one
+    depends_on:
+      live-bridge-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const h=require('http');h.get('http://localhost:8787/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  adam-daemon:
+    <<: *adam-env
+    build:
+      context: ..
+      dockerfile: adam-one-peer-project/Dockerfile
+    command: node src/adam-daemon/adam-daemon.mjs
+    working_dir: /app/adam-one-peer-project
+    environment:
+      ADAM_DAEMON_PORT: "8789"
+      ADAM_DAEMON_HOST: "0.0.0.0"
+      DATAQUAD_URL: "http://127.0.0.1:8787"
+      OLLAMA_URL: "http://127.0.0.1:11434/v1"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-cp1001:latest}"
+      LM_STUDIO_URL: "http://127.0.0.1:11434/v1"
+      LM_STUDIO_MODEL: "${OLLAMA_MODEL:-cp1001:latest}"
+      ADAM_DAEMON_NUM_PREDICT: "4096"
+      ADAM_DAEMON_NUM_CTX: "8192"
+      ADAM_DAEMON_RECORD_CHAR_LIMIT: "420"
+      ADAM_DAEMON_SIGNAL_CHAR_LIMIT: "3200"
+    volumes:
+      - dataquad-data:/app/adam-one-peer-project/data/peer:ro
+      - ./config:/app/adam-one-peer-project/config:ro
+    network_mode: host
+    depends_on:
+      turn-submit-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const h=require('http');h.get('http://localhost:8789/adam/status',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mcp-server:
+    <<: *adam-env
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    command: node remote-server.mjs
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:8788:8788"
+    environment:
+      MCP_REMOTE_PORT: "8788"
+      AEGIS_API_BASE_URL: "http://live-bridge-api:3030"
+    volumes:
+      - dataquad-data:/app/adam-one-peer-project/data/peer:ro
+    networks:
+      - adam-one
+    depends_on:
+      live-bridge-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const h=require('http');h.get('http://localhost:8788/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  actions-proxy:
+    <<: *adam-env
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    command: node action-proxy.mjs
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:8790:8790"
+    environment:
+      ACTION_PROXY_PORT: "8790"
+      AEGIS_API_BASE_URL: "http://live-bridge-api:3030"
+    networks:
+      - adam-one
+    depends_on:
+      live-bridge-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const h=require('http');h.get('http://localhost:8790/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  bm-bridge:
+    <<: *adam-env
+    build:
+      context: ..
+      dockerfile: adam-one-peer-project/bm-bridge.Dockerfile
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:8001:8001"
+    environment:
+      DATAQUAD_PATH: "/data/peer"
+    volumes:
+      - dataquad-data:/data/peer
+    networks:
+      - adam-one
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8001/health\").getcode()==200 else 1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  advocate:
+    build:
+      context: ../advocate
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:8002:8002"
+    environment:
+      PORT: "8002"
+      OLLAMA_URL: "http://host.docker.internal:11434"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-qwen2.5:1.5b}"
+      ADVOCATE_KEY: "${ADVOCATE_KEY:-advocate-spirit-key-v1}"
+      ADVOCATE_SESSION_ID: "adam-one-session"
+      ADVOCATE_DATA_DIR: "/app/data"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - advocate-data:/app/data
+    networks:
+      - adam-one
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8002/health\").getcode()==200 else 1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  advocate-processor:
+    build:
+      context: ../advocate
+    command: python3 advocate_processor.py /dataquad/peer --continuous --interval 60
+    environment:
+      PYTHONUNBUFFERED: "1"
+      ADVOCATE_MAX_SYNTHESIS_PER_CYCLE: "5"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - dataquad-data:/dataquad/peer:ro
+      - advocate-data:/app/data
+    networks:
+      - adam-one
+    depends_on:
+      - advocate
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles:
+      - cloudflare
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN:-missing-cloudflare-token}
+    networks:
+      - adam-one
+    depends_on:
+      live-bridge-api:
+        condition: service_healthy
+      actions-proxy:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ollama:
+    # Pinned version — do not change to 'latest' to avoid unexpected model redownloads.
+    # To upgrade: update the tag below, then run: docker compose pull ollama && node adamctl restart-all
+    image: ollama/ollama:0.6.8
+    profiles:
+      - ollama
+    ports:
+      - "${ADAM_BIND_ADDRESS:-127.0.0.1}:11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - adam-one
+    restart: unless-stopped

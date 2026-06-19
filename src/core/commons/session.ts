@@ -386,11 +386,6 @@ export function getPersonaPrompt(model: ConnectedModel): string {
     const explicitMatch = PERSONA_TEMPLATES.find(template => slug.includes(template.id.toLowerCase()) || slug.includes(template.name.toLowerCase()));
     if (explicitMatch) return explicitMatch.systemPrompt.trim();
 
-    if (model.provider === 'lmstudio' || model.provider === 'ollama') {
-        const vespar = PERSONA_TEMPLATES.find(template => template.id === 'vespar');
-        return vespar?.systemPrompt.trim() ?? '';
-    }
-
     return '';
 }
 

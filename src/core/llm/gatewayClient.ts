@@ -2,6 +2,8 @@ import { type ChatOptions, type ChatResponse } from './adapters';
 import { normalizeLocalEndpoint } from '../providers/localEndpoint';
 
 export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
+    let gatewayError: string | undefined;
+
     try {
         const response = await fetch('/api/llm/chat', {
             method: 'POST',
@@ -17,10 +19,16 @@ export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
 
         // If not OK, and it's a local provider, we might want to fallback if configured
         const errorText = await response.text();
-        console.warn('Gateway returned error, checking for fallback:', errorText);
+        gatewayError = `Gateway error ${response.status}`;
+        try {
+            const parsed = JSON.parse(errorText);
+            gatewayError = parsed.error ?? gatewayError;
+        } catch { gatewayError = errorText || gatewayError; }
+        console.warn('Gateway returned error, checking for fallback:', gatewayError);
 
     } catch (e) {
-        console.warn('Gateway unreachable, checking for fallback:', e);
+        gatewayError = e instanceof Error ? e.message : String(e);
+        console.warn('Gateway unreachable, checking for fallback:', gatewayError);
     }
 
     // Live turns prefer the gateway. Direct local calls are an explicit
@@ -56,5 +64,5 @@ export async function callGateway(options: ChatOptions): Promise<ChatResponse> {
         }
     }
 
-    throw new Error('Gateway request failed and no fallback available.');
+    throw new Error(gatewayError ?? 'Gateway request failed and no fallback available.');
 }

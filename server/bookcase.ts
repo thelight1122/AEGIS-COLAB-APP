@@ -85,7 +85,8 @@ export interface BookcaseEntry {
 export const UNANIMOUS_CONSENSUS_THRESHOLD = 0.95;
 
 // ── Append-Only Store ─────────────────────────────────────────────────────────
-// In-memory for this session. Persistence layer (Firebase) handles durability.
+// VM-local session runtime mirror. DataQuad durability is preserved by the
+// server-side Steward/Advocate path and IPFS, not by browser/cloud writes.
 
 const _bookcase: BookcaseEntry[] = [];
 
@@ -195,7 +196,7 @@ export function totalCount(): number {
 
 /**
  * Load a pre-existing BookcaseEntry into the in-memory store.
- * Used for cross-session hydration from Firebase — preserves all original fields.
+ * Used for VM-local/IPFS hydration — preserves all original fields.
  * Skips if an entry with the same entry_id is already present (idempotent).
  */
 export function loadBookcaseEntry(entry: BookcaseEntry): void {

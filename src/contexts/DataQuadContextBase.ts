@@ -16,11 +16,11 @@ export interface DataQuadContextValue {
     finalizeSession: (sessionId: string, coherence: CoherenceSnapshot) => void;
     clockState: ClockState | null;
     resetSessionClock: (sessionId: string) => void;
-    /** Persist a PEER entry from runPipeline to Firebase (fire-and-forget) */
+    /** Compatibility no-op: PEER writes belong to the VM-local Steward/Advocate path */
     persistPeerEntry: (sessionId: string, entry: PeerEntry, participantId?: string) => void;
-    /** Persist a promoted SPINE entry from the promoter to Firebase (fire-and-forget) */
+    /** Compatibility no-op: SPINE writes belong to the VM-local Steward/Advocate path */
     persistSpineEntry: (entry: SpineEntry) => void;
-    /** Persist a HOLD-state Bookcase entry to Firebase (fire-and-forget) */
+    /** Compatibility no-op: Bookcase writes belong to the VM-local Steward/Advocate path */
     persistBookcaseEntry: (entry: BookcaseEntry) => void;
 }
 

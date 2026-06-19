@@ -40,7 +40,7 @@ export function useCoherencePercent(): CoherenceResult {
         if (log.length === 0) {
             return { 
                 percent: 100, 
-                reason: "Perfect coherence. No requirement conflicts or friction logged in blank slate." 
+                reason: "Full coherence. No requirement conflicts or friction logged in blank slate."
             };
         }
 

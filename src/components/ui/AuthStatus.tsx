@@ -3,11 +3,13 @@ import { useAuthSession } from '../../core/auth/useAuthSession';
 import { Button } from './button';
 import { Dialog } from './dialog';
 import { AuthPanel } from './AuthPanel';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { Cloud, CloudOff, LogIn, Loader2, ShieldCheck } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useAccountStateSync } from '../../contexts/AccountStateSyncContext';
 
 export function AuthStatus() {
     const { session, user, loading } = useAuthSession();
+    const accountSync = useAccountStateSync();
     const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
     if (loading) {
@@ -17,6 +19,12 @@ export function AuthStatus() {
     }
 
     if (session) {
+        const SyncIcon = accountSync.status === 'syncing'
+            ? Loader2
+            : accountSync.status === 'error'
+                ? CloudOff
+                : Cloud;
+
         return (
             <div className="flex items-center gap-3 bg-muted/30 pl-1 pr-3 py-1 rounded-full border border-border/50 group hover:bg-muted/50 transition-colors">
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -28,6 +36,16 @@ export function AuthStatus() {
                         {user?.email?.split('@')[0]}
                     </span>
                 </div>
+                <SyncIcon
+                    className={cn(
+                        "w-3.5 h-3.5",
+                        accountSync.status === 'syncing' && "animate-spin text-primary",
+                        accountSync.status === 'error' && "text-destructive",
+                        accountSync.status === 'synced' && "text-primary/70",
+                        accountSync.status === 'idle' && "text-muted-foreground"
+                    )}
+                    aria-label={`Account data sync ${accountSync.status}`}
+                />
             </div>
         );
     }

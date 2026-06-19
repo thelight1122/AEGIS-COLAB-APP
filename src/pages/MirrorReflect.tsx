@@ -187,7 +187,7 @@ export default function MirrorReflect() {
         setReports([]);
     }, []);
 
-    const process = useCallback(() => {
+    const process = useCallback(async () => {
         if (!content.trim()) return;
         setProcessing(true);
 
@@ -206,12 +206,17 @@ export default function MirrorReflect() {
             } : {}),
         };
 
-        // Pipeline runs synchronously — state is mutable
+        // Pipeline runs asynchronously
         const stateCopy = { ...session, virtue_counts: { ...session.virtue_counts } };
-        const report = runPipeline(msg, stateCopy);
-        setSession(stateCopy);
-        setReports(prev => [report, ...prev]);
-        setProcessing(false);
+        try {
+            const report = await runPipeline(msg, stateCopy);
+            setSession(stateCopy);
+            setReports(prev => [report, ...prev]);
+        } catch (err) {
+            console.error('[MirrorReflect] Pipeline failed:', err);
+        } finally {
+            setProcessing(false);
+        }
     }, [content, role, affect, session, sessionId]);
 
     const loadPreset = useCallback((preset: typeof PRESETS[number]) => {
@@ -360,6 +365,8 @@ export default function MirrorReflect() {
                                         value={affect.label}
                                         onChange={e => setAffect(a => ({ ...a, label: e.target.value }))}
                                         className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-slate-500"
+                                        title="Affect Label"
+                                        aria-label="Affect Label"
                                     />
                                 </div>
                                 <div>
@@ -372,6 +379,8 @@ export default function MirrorReflect() {
                                         value={affect.intensity}
                                         onChange={e => setAffect(a => ({ ...a, intensity: parseFloat(e.target.value) }))}
                                         className="w-full accent-indigo-500"
+                                        title="Affect Intensity"
+                                        aria-label="Affect Intensity"
                                     />
                                 </div>
                                 <div>
@@ -386,6 +395,8 @@ export default function MirrorReflect() {
                                         value={affect.direction}
                                         onChange={e => setAffect(a => ({ ...a, direction: parseFloat(e.target.value) }))}
                                         className="w-full accent-indigo-500"
+                                        title="Affect Direction"
+                                        aria-label="Affect Direction"
                                     />
                                 </div>
                                 <div>
@@ -395,6 +406,8 @@ export default function MirrorReflect() {
                                         value={affect.trigger}
                                         onChange={e => setAffect(a => ({ ...a, trigger: e.target.value }))}
                                         className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-slate-500"
+                                        title="Affect Trigger"
+                                        aria-label="Affect Trigger"
                                     />
                                 </div>
                             </div>

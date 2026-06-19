@@ -155,15 +155,15 @@ export function resetSession(session_id: string): void {
 // No WebSocket. No transport. No side effects.
 // Tests import and call this directly.
 
-export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardReport {
+export async function runPipeline(msg: ExchangeMessage, state: SessionState): Promise<StewardReport> {
     const findings: Finding[] = [];
     let gated_signal: GatedAffectSignal | undefined;
 
-    // 0. IBL — Intent Boundary Layer (pre-pipeline intake gate)
-    const ibl_result = runIBL(msg, state);
-
-    // 0.5. Centrifuge — four-lens signal separation (upstream of interpretation)
-    const centrifuge_result = runCentrifuge(msg.content);
+    // 0. IBL & Centrifuge concurrent passes
+    const [ibl_result, centrifuge_result] = await Promise.all([
+        Promise.resolve(runIBL(msg, state)),
+        Promise.resolve(runCentrifuge(msg.content)),
+    ]);
 
     // 0.6. PEER — record this exchange as an experiential entry
     // Creates an incident-level record before pattern matching.
@@ -194,26 +194,25 @@ export function runPipeline(msg: ExchangeMessage, state: SessionState): StewardR
         });
     }
 
-    // 0.7. Advocate — Soul faculty (SPINE + PEER axis)
-    // Reads from shared DataQuad: content, affect_hint, IBL result, Centrifuge result, session state.
-    // Runs in parallel with the Steward's structural pass — does NOT read from findings.
-    const advocate_result = runAdvocate({
-        content: msg.content,
-        role: msg.role,
-        affect_hint: msg.affect_hint,
-        centrifuge_result,
-        ibl_result,
-        session_state: state,
-    });
+    // 0.7. Advocate & Scans concurrent passes
+    const [advocate_result, forceFindings, mopFindings, shadowFindings] = await Promise.all([
+        Promise.resolve(runAdvocate({
+            content: msg.content,
+            role: msg.role,
+            affect_hint: msg.affect_hint,
+            centrifuge_result,
+            ibl_result,
+            session_state: state,
+        })),
+        Promise.resolve(scanForceLanguage(msg.content, msg.role)),
+        Promise.resolve(scanMOPViolations(msg.content, msg.role)),
+        Promise.resolve(scanShadowAffects(msg.content, msg.role)),
+    ]);
 
-    // 1. Force language scan
-    findings.push(...scanForceLanguage(msg.content, msg.role));
-
-    // 2. MOP violations
-    findings.push(...scanMOPViolations(msg.content, msg.role));
-
-    // 3. Shadow affects
-    findings.push(...scanShadowAffects(msg.content, msg.role));
+    // Add findings from parallel scans
+    findings.push(...forceFindings);
+    findings.push(...mopFindings);
+    findings.push(...shadowFindings);
 
     // 4. Integrity Coherence Gate — requires affect hint
     if (msg.affect_hint) {

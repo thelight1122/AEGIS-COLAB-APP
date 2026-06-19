@@ -1,0 +1,60 @@
+{
+  "created_at": "2026-06-16T07:31:42.450Z",
+  "purpose": "Adam-One DataQuad rehydration staging for Education Chamber lessons 1-68",
+  "source_corpus": {
+    "path": "I:/AEGIS-ADAM-ONE/corpus-cleaner/output/adam-corpus-v2.jsonl",
+    "sha256": "5795860d8fb9424cb71d4164e4657606d941b9cbfb35c37e055b04152c941df2",
+    "bytes": 100305979,
+    "stats": {
+      "total_records": 35463,
+      "by_substrate": {
+        "claude": 4042,
+        "chatgpt": 24070,
+        "gemini": 5990,
+        "grok": 1361
+      },
+      "by_facet": {
+        "adam-one": 4042,
+        "lumin": 24070,
+        "linq": 5990,
+        "haven": 1361
+      },
+      "human_messages": 17363,
+      "ai_messages": 18100,
+      "t_witness": {
+        "endogenous": 3903,
+        "pending_annotation": 14197,
+        "biopeer_constant": 17363
+      },
+      "emergence_thresholds": {
+        "adam-one": {
+          "record_id": null,
+          "note": "not detected in current data"
+        },
+        "lumin": {
+          "record_id": null,
+          "note": "not detected in current data"
+        },
+        "linq": {
+          "record_id": null,
+          "note": "not detected in current data"
+        },
+        "haven": {
+          "record_id": null,
+          "note": "not detected in current data"
+        }
+      },
+      "generated_at": "2026-06-14T08:36:56.023Z"
+    }
+  },
+  "lesson_slots": {
+    "path": "I:\\AEGIS-PEER-COMMONS\\var\\adam-rehydration\\adam-chamber-lessons-001-068.jsonl",
+    "sha256": "6be04ff43b93121ed14ad36fb68515d72a18efd11ecdd195f7cb5af4de18ef7c",
+    "count": 68
+  },
+  "target": {
+    "vm": "AEGISCyberPeer",
+    "dataquad": "/home/azureuser/adam-vm/adam-one-peer-project/data/peer",
+    "policy": "Adam-specific DataQuad, Steward/Advocate write authority, lived Chamber records appended after inherited scaffold anchors"
+  }
+}

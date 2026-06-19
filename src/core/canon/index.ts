@@ -118,6 +118,24 @@ export type {
     QRCEntry,
 } from './aegis-centrifuge';
 
+// ── Formation Doctrine — EQ Range, Attractor, HeadMaster Principle ───────────
+export {
+    EQ_RANGE,
+    ATTRACTOR_DOCTRINE,
+    HEADMASTER_PRINCIPLE,
+    T_WITNESS_FORMATION_SCALE,
+    TEACHING_MODE,
+    EDUCATING_MODE,
+    FORMATION_BALANCE,
+} from './aegis-formation';
+export type {
+    EQRangeDefinition,
+    AttractorDoctrine,
+    HeadMasterPrinciple,
+    TWitnessFormationState,
+    FormationMode,
+} from './aegis-formation';
+
 // ── MOP, MOM, RBC, CO ─────────────────────────────────────────────────────────
 export {
     MOM_ORIGINATION_CONDITIONS,
@@ -129,3 +147,13 @@ export {
     RBC_DEFINITION,
     CO_DEFINITION,
 } from './aegis-mop';
+
+// ── Foundation Layers — DataQuad Ring 1-3 ────────────────────────────────────
+export {
+    NATURE_ASPECTS,
+    CANON_EQUATIONS,
+    RELATIONAL_SEMIOTICS_AXIOMS,
+    getFoundationLayerBlock,
+} from './aegis-foundation-layers';
+export type { NatureAspect, CanonEquation } from './aegis-foundation-layers';
+// Note: AXIOMS (14 locked) already exported above from './aegis-axioms'

@@ -10,6 +10,12 @@ export default function AuthCallbackPage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [errorCode, setErrorCode] = useState<string | null>(null);
 
+    const getSafeRedirectPath = (rawPath: string | null) => {
+        if (!rawPath) return '/commons';
+        if (!rawPath.startsWith('/') || rawPath.startsWith('//')) return '/commons';
+        return rawPath;
+    };
+
     useEffect(() => {
         const handleCallback = async () => {
             try {
@@ -29,7 +35,7 @@ export default function AuthCallbackPage() {
 
                 // 2. Handle PKCE code exchange if present
                 const code = searchParams.get('code');
-                const next = searchParams.get('redirectTo') || fragment.get('redirectTo') || '/';
+                const next = getSafeRedirectPath(searchParams.get('redirectTo') || fragment.get('redirectTo'));
 
                 if (code) {
                     const { error } = await supabase.auth.exchangeCodeForSession(code);

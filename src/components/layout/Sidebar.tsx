@@ -1,7 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useAuthSession } from '../../core/auth/useAuthSession';
-import { supabase } from '../../core/supabase/client';
 import { isToolsEnabled } from '../../features/tools/env';
 
 interface SidebarProps {
@@ -15,6 +13,7 @@ export function Sidebar({ className }: SidebarProps) {
         { to: "/sessions", icon: "schedule", label: "Sessions" },
         { to: "/peers", icon: "groups", label: "Peers" },
         { to: "/lenses", icon: "visibility", label: "Lenses" },
+        { to: "/lessons", icon: "school", label: "Lessons" },
     ];
 
     if (isToolsEnabled()) {
@@ -22,12 +21,6 @@ export function Sidebar({ className }: SidebarProps) {
     }
     
     navItems.push({ to: "/settings", icon: "settings", label: "Settings" });
-
-    const { session, user } = useAuthSession();
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-    };
 
     return (
         <aside className={cn("w-16 lg:w-64 border-r border-white/10 bg-background-dark/50 flex flex-col shrink-0 overflow-y-auto", className)}>
@@ -73,32 +66,18 @@ export function Sidebar({ className }: SidebarProps) {
                         </div>
                     </div>
 
-                    {/* User Profile */}
+                    {/* Architect */}
                     <div className="flex items-center gap-3 group cursor-pointer pt-2">
                         <div className="relative">
                             <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
-                                {user?.email ? (
-                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                        {user.email[0].toUpperCase()}
-                                    </div>
-                                ) : (
-                                    <span className="material-symbols-outlined text-white/40">person</span>
-                                )}
+                                <span className="material-symbols-outlined text-white/40">person</span>
                             </div>
                             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-background-dark rounded-full"></div>
                         </div>
                         <div className="hidden lg:block overflow-hidden flex-1">
-                            <p className="text-xs font-bold text-white leading-none truncate">{user?.email?.split('@')[0] || 'Guest'}</p>
-                            <p className="text-[10px] text-white/40 truncate">{session ? 'Online' : 'Offline'}</p>
+                            <p className="text-xs font-bold text-white leading-none truncate">Tracey</p>
+                            <p className="text-[10px] text-white/40 truncate">Architect</p>
                         </div>
-                        {session && (
-                            <button 
-                                onClick={handleLogout}
-                                className="hidden lg:block opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                <span className="material-symbols-outlined text-white/40 hover:text-destructive text-sm">logout</span>
-                            </button>
-                        )}
                     </div>
                 </div>
 

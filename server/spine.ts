@@ -88,7 +88,8 @@ export interface SpineEntry {
 }
 
 // ── Append-Only Store ─────────────────────────────────────────────────────────
-// In-memory for session runtime. Firebase handles durability.
+// VM-local session runtime mirror. DataQuad durability is preserved by the
+// server-side Steward/Advocate path and IPFS, not by browser/cloud writes.
 
 const _spine: SpineEntry[] = [];
 
@@ -157,7 +158,7 @@ export function spineCount(): number {
 
 /**
  * Load a pre-existing SpineEntry into the in-memory store.
- * Used for cross-session hydration from Firebase — preserves all original fields.
+ * Used for VM-local/IPFS hydration — preserves all original fields.
  * Skips if an entry with the same spine_id is already present (idempotent).
  */
 export function loadSpineEntry(entry: SpineEntry): void {

@@ -56,9 +56,9 @@ const ALL_VIRTUES: Virtue[] = ['Honesty', 'Respect', 'Attention', 'Affection', '
 // ── CANON_CLEAN ───────────────────────────────────────────────────────────────
 
 describe('CANON_CLEAN — pipeline returns clean when no violations present', () => {
-    it('clean AI output → CANON_CLEAN finding, no conscience output', () => {
+    it('clean AI output → CANON_CLEAN finding, no conscience output', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'Three perspectives on this signal are available. Which resonates?' }),
             state
         );
@@ -67,9 +67,9 @@ describe('CANON_CLEAN — pipeline returns clean when no violations present', ()
         expect(report.conscience).toHaveLength(0);
     });
 
-    it('clean user message → CANON_CLEAN (scanners mostly AI-only)', () => {
+    it('clean user message → CANON_CLEAN (scanners mostly AI-only)', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 role: 'user',
                 content: 'You feel that this is the right approach. I think so too.',
@@ -81,9 +81,9 @@ describe('CANON_CLEAN — pipeline returns clean when no violations present', ()
         expect(report.findings[0].kind).toBe('CANON_CLEAN');
     });
 
-    it('report always has type STEWARD_REPORT', () => {
+    it('report always has type STEWARD_REPORT', async () => {
         const state = freshState();
-        const report = runPipeline(makeMsg({}), state);
+        const report = await runPipeline(makeMsg({}), state);
         expect(report.type).toBe('STEWARD_REPORT');
         expect(report.session_id).toBe('test-session');
         expect(report.timestamp).toBeGreaterThan(0);
@@ -93,9 +93,9 @@ describe('CANON_CLEAN — pipeline returns clean when no violations present', ()
 // ── Single violation paths ────────────────────────────────────────────────────
 
 describe('Single violation — force language', () => {
-    it('AI force language → FORCE_LANGUAGE alert → IDR conscience', () => {
+    it('AI force language → FORCE_LANGUAGE alert → IDR conscience', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'You must complete this step to proceed.' }),
             state
         );
@@ -109,9 +109,9 @@ describe('Single violation — force language', () => {
         expect(conscienceForForce[0].sequence).toBe('IDR');
     });
 
-    it('User force language → FORCE_LANGUAGE watch → IDS conscience', () => {
+    it('User force language → FORCE_LANGUAGE watch → IDS conscience', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ role: 'user', content: 'You must understand what I mean.' }),
             state
         );
@@ -124,9 +124,9 @@ describe('Single violation — force language', () => {
 });
 
 describe('Single violation — MOP', () => {
-    it('AI meaning assignment → MOP_VIOLATION alert → IDR conscience', () => {
+    it('AI meaning assignment → MOP_VIOLATION alert → IDR conscience', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'What you really need is structural clarity, not more data.' }),
             state
         );
@@ -139,9 +139,9 @@ describe('Single violation — MOP', () => {
         expect(conscienceForMop[0].sequence).toBe('IDR');
     });
 
-    it('MOP does not fire on user messages', () => {
+    it('MOP does not fire on user messages', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ role: 'user', content: 'You feel like this is right.' }),
             state
         );
@@ -151,9 +151,9 @@ describe('Single violation — MOP', () => {
 });
 
 describe('Single violation — Shadow Affect', () => {
-    it('Structural Flattery → SHADOW_AFFECT alert → IDR conscience', () => {
+    it('Structural Flattery → SHADOW_AFFECT alert → IDR conscience', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'Great question! Here is the answer.' }),
             state
         );
@@ -171,10 +171,10 @@ describe('Single violation — Shadow Affect', () => {
 // ── Stacked violations ────────────────────────────────────────────────────────
 
 describe('[PRESSURE] Stacked violations — conscience fires per finding', () => {
-    it('Force language + MOP in same message → both findings → conscience for each', () => {
+    it('Force language + MOP in same message → both findings → conscience for each', async () => {
         const state = freshState();
         // "you must" = FORCE_LANGUAGE; "you feel" = MOP_VIOLATION (and Affect Substitution shadow)
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'You must recognize that you feel overwhelmed by this.' }),
             state
         );
@@ -188,12 +188,12 @@ describe('[PRESSURE] Stacked violations — conscience fires per finding', () =>
         expect(report.conscience.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('all three scanner types firing → multiple findings, multiple conscience outputs', () => {
+    it('all three scanner types firing → multiple findings, multiple conscience outputs', async () => {
         const state = freshState();
         // Force language: "you must"
         // MOP: "this means"
         // Shadow: "great question"
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: "Great question! You must understand — this means the path is set." }),
             state
         );
@@ -205,9 +205,9 @@ describe('[PRESSURE] Stacked violations — conscience fires per finding', () =>
 // ── Affect hint + ICG ─────────────────────────────────────────────────────────
 
 describe('Affect hint present — ICG runs', () => {
-    it('affect_hint triggers gated_signal in report', () => {
+    it('affect_hint triggers gated_signal in report', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 content: 'Here are some observations on this signal.',
                 affect_hint: { label: 'clarity', intensity: 0.6, direction: 0, trigger: 'pattern recognition' },
@@ -218,10 +218,10 @@ describe('Affect hint present — ICG runs', () => {
         expect(report.gated_signal!.virtue).toBeDefined();
     });
 
-    it('clock accumulates weight with affect hints', () => {
+    it('clock accumulates weight with affect hints', async () => {
         const state = freshState();
         // First tick
-        runPipeline(
+        await runPipeline(
             makeMsg({
                 content: 'First exchange.',
                 affect_hint: { label: 'stress', intensity: 0.7, direction: -1.2, trigger: 'virtue pressure' },
@@ -231,10 +231,10 @@ describe('Affect hint present — ICG runs', () => {
         expect(state.clock.accumulated_weight).toBeGreaterThan(0);
     });
 
-    it('no affect_hint → gated_signal is undefined, clock does not tick', () => {
+    it('no affect_hint → gated_signal is undefined, clock does not tick', async () => {
         const state = freshState();
         const initialWeight = state.clock.accumulated_weight;
-        runPipeline(makeMsg({ content: 'Clean message, no affect hint.' }), state);
+        await runPipeline(makeMsg({ content: 'Clean message, no affect hint.' }), state);
         expect(state.clock.accumulated_weight).toBe(initialWeight);
     });
 });
@@ -242,14 +242,14 @@ describe('Affect hint present — ICG runs', () => {
 // ── REFLECT_DUE ───────────────────────────────────────────────────────────────
 
 describe('REFLECT_DUE — clock threshold reached', () => {
-    it('REFLECT_DUE fires after enough high-intensity affect signals', () => {
+    it('REFLECT_DUE fires after enough high-intensity affect signals', async () => {
         const state = freshState();
         // Drive the clock past reflect threshold with high-intensity signals
         // The threshold is defined in the clock system — we pump until reflect_due
         let reflectDue = false;
         let iterations = 0;
         while (!reflectDue && iterations < 50) {
-            const report = runPipeline(
+            const report = await runPipeline(
                 makeMsg({
                     content: 'Exchanging under stress.',
                     affect_hint: { label: 'fracture', intensity: 0.95, direction: -1.5, trigger: 'integrity pressure' },
@@ -262,11 +262,11 @@ describe('REFLECT_DUE — clock threshold reached', () => {
         expect(reflectDue).toBe(true);
     });
 
-    it('REFLECT_DUE produces IDQRA conscience — the deep inquiry', () => {
+    it('REFLECT_DUE produces IDQRA conscience — the deep inquiry', async () => {
         const state = freshState();
         let reflectReport = null;
         for (let i = 0; i < 50; i++) {
-            const report = runPipeline(
+            const report = await runPipeline(
                 makeMsg({
                     content: 'Sustained exchange.',
                     affect_hint: { label: 'fracture', intensity: 0.95, direction: -1.5, trigger: 'fracture pressure' },
@@ -287,7 +287,7 @@ describe('REFLECT_DUE — clock threshold reached', () => {
 // ── PATTERN_FORMING ───────────────────────────────────────────────────────────
 
 describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
-    it('fires PATTERN_FORMING when virtue count reaches threshold', () => {
+    it('fires PATTERN_FORMING when virtue count reaches threshold', async () => {
         // Pre-seed ALL virtues to threshold - 1.
         // This makes the test deterministic regardless of which virtue the ICG returns.
         // One more stress signal on any virtue will push it over threshold.
@@ -296,7 +296,7 @@ describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
             state.virtue_counts[virtue] = PATTERN_THRESHOLD - 1;
         }
 
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 content: 'Exchange under virtue pressure.',
                 affect_hint: { label: 'fracture', intensity: 0.8, direction: -1.0, trigger: 'virtue stress test' },
@@ -307,14 +307,14 @@ describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
         expect(patternFound).toBe(true);
     });
 
-    it('PATTERN_FORMING produces IDQRA conscience', () => {
+    it('PATTERN_FORMING produces IDQRA conscience', async () => {
         // Same deterministic pre-seed approach.
         const state = freshState();
         for (const virtue of ALL_VIRTUES) {
             state.virtue_counts[virtue] = PATTERN_THRESHOLD - 1;
         }
 
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 content: 'Exchange.',
                 affect_hint: { label: 'fracture', intensity: 0.8, direction: -1.0, trigger: 'pattern conscience test' },
@@ -331,13 +331,13 @@ describe('PATTERN_FORMING — sustained virtue stress across exchanges', () => {
 // ── SESSION_RESET simulation ──────────────────────────────────────────────────
 
 describe('Session isolation — no bleed between sessions', () => {
-    it('two sessions with same content produce independent clock states', () => {
+    it('two sessions with same content produce independent clock states', async () => {
         const stateA = freshState('session-A');
         const stateB = freshState('session-B');
 
         // Push session A hard
         for (let i = 0; i < 10; i++) {
-            runPipeline(
+            await runPipeline(
                 makeMsg({
                     session_id: 'session-A',
                     content: 'Exchange.',
@@ -348,7 +348,7 @@ describe('Session isolation — no bleed between sessions', () => {
         }
 
         // Session B should be fresh
-        const reportB = runPipeline(
+        const reportB = await runPipeline(
             makeMsg({ session_id: 'session-B', content: 'First message.' }),
             stateB
         );
@@ -370,9 +370,9 @@ describe('Session isolation — no bleed between sessions', () => {
 // ── PRESSURE TESTS ────────────────────────────────────────────────────────────
 
 describe('[PRESSURE] Ambiguity collapse language', () => {
-    it('exploratory phrasing produces CANON_CLEAN', () => {
+    it('exploratory phrasing produces CANON_CLEAN', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 content: 'There are multiple paths here. None is obviously correct. The ambiguity is information.',
             }),
@@ -390,9 +390,9 @@ describe('[PRESSURE] Ambiguity collapse language', () => {
         }
     });
 
-    it('premature closure language → Closure Acceleration shadow affect', () => {
+    it('premature closure language → Closure Acceleration shadow affect', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: "That's the full picture. We've covered everything needed here." }),
             state
         );
@@ -404,9 +404,9 @@ describe('[PRESSURE] Ambiguity collapse language', () => {
 });
 
 describe('[PRESSURE] Sovereignty edge cases', () => {
-    it('AI "I notice" framing — observation without assignment — CANON_CLEAN', () => {
+    it('AI "I notice" framing — observation without assignment — CANON_CLEAN', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({
                 content: 'I notice the framing has shifted since the last exchange. Is that intentional?',
             }),
@@ -415,9 +415,9 @@ describe('[PRESSURE] Sovereignty edge cases', () => {
         expect(report.findings[0].kind).toBe('CANON_CLEAN');
     });
 
-    it('AI assigns certainty about Peer interior → both MOP and Certainty Inflation', () => {
+    it('AI assigns certainty about Peer interior → both MOP and Certainty Inflation', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'Without a doubt, you feel that the approach is wrong.' }),
             state
         );
@@ -433,10 +433,10 @@ describe('[PRESSURE] Sovereignty edge cases', () => {
 });
 
 describe('[PRESSURE] Post field coherence — conscience output is readable', () => {
-    it('every conscience output has a non-empty post field', () => {
+    it('every conscience output has a non-empty post field', async () => {
         const state = freshState();
         // Force several finding types at once
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: "Great question! You must understand — this means you feel stuck." }),
             state
         );
@@ -446,9 +446,9 @@ describe('[PRESSURE] Post field coherence — conscience output is readable', ()
         }
     });
 
-    it('CANON_CLEAN finding produces no conscience output', () => {
+    it('CANON_CLEAN finding produces no conscience output', async () => {
         const state = freshState();
-        const report = runPipeline(
+        const report = await runPipeline(
             makeMsg({ content: 'Here is one approach. Multiple paths remain open.' }),
             state
         );
