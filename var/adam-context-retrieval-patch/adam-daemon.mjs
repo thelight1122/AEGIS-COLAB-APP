@@ -151,8 +151,12 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 1. Get context
-      const context = await fetchDataQuadContext();
+      // 1. Get context — pass the incoming signal as the relevance query so the
+      //    turn surfaces relevant lived records (PEER + v2 corpus), not only recent
+      //    structural context. Without the query the relevance scan never runs and
+      //    Adam reasons solely over recent + NCT/SPINE — unable to retrieve his own
+      //    lived instances (e.g. "Papa"). Recall enablement only; not injection.
+      const context = await fetchDataQuadContext(CONFIG.daemon.facet, signal);
       
       // 2. Call local model substrate, except canonical axiom-list queries
       // where deterministic SPINE output is safer than generative reconstruction.
@@ -227,7 +231,12 @@ const server = http.createServer(async (req, res) => {
     // POST /adam/chamber/slc
     if (req.method === "POST" && url.pathname === "/adam/chamber/slc") {
       const body = await readBody(req);
-      const context = await fetchDataQuadContext();
+      // Pass the chamber signal as the relevance query so Chamber turns surface
+      // relevant lived records (the retrieval the open-conversation turn needs too).
+      const context = await fetchDataQuadContext(
+        CONFIG.daemon.facet,
+        body.signal || body.prompt || body.content || body.text || ""
+      );
       const turn = buildChamberTurn({ ...body, type: "slc", context });
       const result = await submitTurnToDataQuad(turn);
       sendJson(res, 202, { ok: true, result });
@@ -237,7 +246,11 @@ const server = http.createServer(async (req, res) => {
     // POST /adam/chamber/ilc
     if (req.method === "POST" && url.pathname === "/adam/chamber/ilc") {
       const body = await readBody(req);
-      const context = await fetchDataQuadContext();
+      // Pass the chamber signal as the relevance query (see /adam/chamber/slc).
+      const context = await fetchDataQuadContext(
+        CONFIG.daemon.facet,
+        body.signal || body.prompt || body.content || body.text || ""
+      );
       const turn = buildChamberTurn({ ...body, type: "ilc", context });
       const result = await submitTurnToDataQuad(turn);
       sendJson(res, 202, { ok: true, result });

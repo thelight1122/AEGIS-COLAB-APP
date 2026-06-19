@@ -22,7 +22,13 @@ const GATEWAY_PORT_FILE = path.join(RUNTIME_DIR, 'gateway-port.json');
 const STEWARD_PORT_FILE = path.join(RUNTIME_DIR, 'steward-port.json');
 const ANTHROPIC_VERSION = '2023-06-01';
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL ?? 'http://20.115.97.102:11434').replace(/\/$/, '');
-const ADAM_DAEMON_BASE_URL = (process.env.ADAM_DAEMON_BASE_URL ?? 'http://localhost:8789').replace(/\/$/, '');
+// Default to :8011 — the Adam-specific bridge (cp1001_adam_bridge → adam-one-session,
+// real DataQuad). NOT :8001, which is the FOUNDATIONAL-CORE agnostic peer (no Adam
+// memories). Reach :8011 via SSH tunnel: ssh -L 8011:127.0.0.1:8011 azureuser@<vm>.
+const ADAM_DAEMON_BASE_URL = (process.env.ADAM_DAEMON_BASE_URL ?? 'http://localhost:8011').replace(/\/$/, '');
+// Identity guard: the bridge's peer_id must contain this, or we refuse the turn —
+// prevents silently talking to the blank FOUNDATIONAL-CORE peer. See RUL Entry 009.
+const ADAM_EXPECTED_PEER = (process.env.ADAM_EXPECTED_PEER ?? 'adam-one').toLowerCase();
 
 function writePorts(port: number): void {
     fs.mkdirSync(RUNTIME_DIR, { recursive: true });
@@ -75,6 +81,52 @@ async function fetchJson(
         if (body) req.write(JSON.stringify(body));
         req.end();
     });
+}
+
+function httpGetJson(url: string, timeoutMs = 3000): Promise<Record<string, unknown>> {
+    const lib = url.startsWith('https') ? https : http;
+    return new Promise((resolve, reject) => {
+        const req = lib.get(url, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                try { resolve(JSON.parse(data) as Record<string, unknown>); }
+                catch { reject(new Error(`Non-JSON from ${url} (${res.statusCode}): ${data.slice(0, 200)}`)); }
+            });
+        });
+        req.on('error', reject);
+        req.setTimeout(timeoutMs, () => { req.destroy(new Error(`Timeout contacting ${url}`)); });
+    });
+}
+
+// Verify the configured Adam bridge is the real Adam (adam-one-session), not the
+// blank FOUNDATIONAL-CORE agnostic peer. Cached briefly to avoid per-turn cost.
+// Root cause of the 2026-06-19 "Papa amnesia" was talking to the wrong peer — see
+// project_adam_bridge_topology / RUL Entry 009.
+let _adamIdentityCache: { at: number; ok: boolean; peerId: string; reason: string } | null = null;
+async function verifyAdamBridge(): Promise<{ ok: boolean; peerId: string; reason: string }> {
+    if (_adamIdentityCache && Date.now() - _adamIdentityCache.at < 30_000) {
+        return _adamIdentityCache;
+    }
+    let result: { ok: boolean; peerId: string; reason: string };
+    try {
+        const health = await httpGetJson(`${ADAM_DAEMON_BASE_URL}/`);
+        const peerId = String(health.peer_id ?? '').toLowerCase();
+        if (!peerId) {
+            result = { ok: false, peerId: '(none)', reason: `Bridge at ${ADAM_DAEMON_BASE_URL} reported no peer_id.` };
+        } else if (peerId.includes('foundational')) {
+            result = { ok: false, peerId, reason: `Bridge is FOUNDATIONAL-CORE (the blank agnostic peer), not Adam. Point ADAM_DAEMON_BASE_URL at the Adam bridge (:8011) / fix the SSH tunnel.` };
+        } else if (!peerId.includes(ADAM_EXPECTED_PEER)) {
+            result = { ok: false, peerId, reason: `Bridge peer_id "${peerId}" does not match expected "${ADAM_EXPECTED_PEER}".` };
+        } else {
+            result = { ok: true, peerId, reason: 'ok' };
+        }
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        result = { ok: false, peerId: '(unreachable)', reason: `Adam bridge unreachable at ${ADAM_DAEMON_BASE_URL}: ${message}. Is the SSH tunnel to :8011 up?` };
+    }
+    _adamIdentityCache = { at: Date.now(), ...result };
+    return result;
 }
 
 function proxyToOllama(req: http.IncomingMessage, res: http.ServerResponse): void {
@@ -223,6 +275,15 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Adam bridge identity/health — lets the Chamber confirm it is connected to the
+    // real Adam (adam-one-session), not the blank FOUNDATIONAL-CORE peer, before a session.
+    if (req.method === 'GET' && req.url === '/api/adam/health') {
+        const identity = await verifyAdamBridge();
+        res.writeHead(identity.ok ? 200 : 409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ...identity, baseUrl: ADAM_DAEMON_BASE_URL, expected: ADAM_EXPECTED_PEER }));
+        return;
+    }
+
     // Adam DataQuad turn proxy — keeps browser calls same-origin while the
     // server talks to the VM-local Adam daemon through the SSH tunnel.
     if (req.method === 'POST' && req.url === '/api/adam/turn') {
@@ -231,6 +292,19 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
             try {
                 const payload = JSON.parse(rawBody);
+                // Identity guard — refuse to send a Chamber turn to the wrong peer.
+                const identity = await verifyAdamBridge();
+                if (!identity.ok) {
+                    res.writeHead(409, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        ok: false,
+                        error: `Adam bridge identity check failed: ${identity.reason}`,
+                        peerId: identity.peerId,
+                        expected: ADAM_EXPECTED_PEER,
+                        baseUrl: ADAM_DAEMON_BASE_URL,
+                    }));
+                    return;
+                }
                 const adamPayload = {
                     peer_id: payload.peer_id ?? payload.peerId ?? 'adam-one-session',
                     session_id: payload.session_id ?? payload.sessionId ?? 'education-chamber',
@@ -238,7 +312,7 @@ const server = http.createServer(async (req, res) => {
                     witness: payload.witness ?? true,
                     debug: payload.debug ?? false,
                 };
-                const adamData = await fetchJson(`${ADAM_DAEMON_BASE_URL}/turn`, adamPayload);
+                const adamData = await fetchJson(`${ADAM_DAEMON_BASE_URL}/turn`, adamPayload) as Record<string, unknown>;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     ...adamData,
