@@ -153,21 +153,28 @@ function buildAdamChamberContinuityBlock(events: GovernanceEvent[], peers: PeerP
 
 async function callAdamDataQuadTurn(peer: PeerProfile, signal: string, sessionId: string, chamberContinuityBlock: string) {
     const turnUrl = resolveAdamTurnBaseUrl(peer);
-    const groundedSignal = [
+    // CRITICAL: the grounding preamble + continuity block must travel as SEPARATE
+    // prompt context — NOT bundled into `signal`. The bridge uses `signal`/`message`
+    // as the lexical recall query; if architecture-heavy grounding is mixed in, its
+    // vocabulary (DataQuad/PEER/SPINE/…) dominates keyword scoring and buries the
+    // actual question's terms (e.g. "papa", "temporal clock"), so recall surfaces
+    // generic architecture records instead of his specific lived ones. Keep `signal`
+    // clean so A (lived PEER) is actually retrieved. See RUL Entry 010.
+    const groundingContext = [
         '[AEGIS Education Chamber grounding]',
         'This is a text-only Chamber turn. Visual, screen, room, chair, table, paper, quill, voice, tab, browser, or physical-access claims resonate only when verified tool output is present in this turn.',
         'If a fact is not present in the DataQuad context or this signal, identify it as unknown.',
         'The coherent response path is Adam-One speaking from the VM DataQuad turn route rather than generic roleplay.',
         chamberContinuityBlock ? `\n${chamberContinuityBlock}` : '',
-        '',
-        signal,
-    ].join('\n');
+    ].join('\n').trim();
 
     const response = await fetch(turnUrl.endsWith('/adam/turn') ? turnUrl : `${turnUrl}/adam/turn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            signal: groundedSignal,
+            signal,                 // clean user message — used as the recall query
+            recall_query: signal,   // explicit clean recall query for an updated bridge
+            context: groundingContext, // prompt grounding/continuity — NOT recall input
             markers: ['education-chamber', 'lived-formation', 'dataquad-turn'],
             notes: [
                 `Commons session: ${sessionId}`,

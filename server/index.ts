@@ -309,6 +309,11 @@ const server = http.createServer(async (req, res) => {
                     peer_id: payload.peer_id ?? payload.peerId ?? 'adam-one-session',
                     session_id: payload.session_id ?? payload.sessionId ?? 'education-chamber',
                     message: payload.message ?? payload.signal,
+                    // Clean recall query (the bridge should score recall on this, not on
+                    // grounding). Falls back to the message if not supplied. See RUL 010.
+                    recall_query: payload.recall_query ?? payload.recallQuery ?? payload.message ?? payload.signal,
+                    // Grounding/continuity for the prompt only — kept out of recall scoring.
+                    context: payload.context ?? null,
                     witness: payload.witness ?? true,
                     debug: payload.debug ?? false,
                 };
